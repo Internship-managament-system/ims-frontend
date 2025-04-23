@@ -1,0 +1,224 @@
+/* Footer.css */
+
+/* Genel Stiller */
+.footer-bg {
+  background-color: #082443; /* Koyu mavi arka plan */
+  background: url(https://bm.erciyes.edu.tr/images/footer_bg.jpg) no-repeat center center;
+  background-size: cover;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  width: 100%; /* 100vw yerine 100% kullanıldı */
+  box-sizing: border-box; /* Box-sizing eklendi */
+}
+
+.footer-bg-color {
+  background-color: #001529; /* Alt footer için daha koyu arka plan */
+  padding: 1rem 0;
+  width: 100%; /* 100vw yerine 100% kullanıldı */
+  box-sizing: border-box; /* Box-sizing eklendi */
+}
+
+/* Logo */
+.footer-logo {
+  display: inline-block;
+  background-size: 153px;
+  height: 154px;
+  margin: -100px 0 0 0;
+  width: 160px;
+  padding: 10px;
+  border-radius: 50%;
+}
+
+.footer-logo img {
+  width: 100%;
+  height: auto;
+}
+
+/* Metin stili */
+.text-white {
+  color: #fff;
+}
+
+.text-grey {
+  color: #ccc;
+}
+
+.fs15 {
+  font-size: 15px;
+}
+
+.small {
+  font-size: 12px;
+}
+
+/* Container ve grid sistemi */
+.container {
+  width: 100%;
+  max-width: 1140px;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: 15px;
+  padding-left: 15px;
+  box-sizing: border-box; /* Box-sizing eklendi */
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -15px;
+  margin-left: -15px;
+  box-sizing: border-box; /* Box-sizing eklendi */
+}
+
+.col-md-4,
+.col-md-8,
+.col-md-12,
+.col-6,
+.col-lg-5,
+.col-lg-7 {
+  position: relative;
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  box-sizing: border-box; /* Box-sizing eklendi */
+}
+
+/* Margin ve padding yardımcıları */
+.mt-5 {
+  margin-top: 3rem;
+}
+
+.mb-5 {
+  margin-bottom: 3rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.mt-7 {
+  margin-top: 5rem;
+}
+
+.p-0 {
+  padding: 0;
+}
+
+.m-0 {
+  margin: 0;
+}
+
+.p-2 {
+  padding: 0.5rem;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+/* Liste stilleri */
+.ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+/* Link stilleri */
+a {
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+a:hover {
+  color: #6c9bd1;
+  text-decoration: none;
+}
+
+.hover-top {
+  position: relative;
+  top: 0;
+  transition: top 0.3s ease;
+}
+
+.hover-top:hover {
+  top: -3px;
+}
+
+/* Sosyal medya ikonları */
+.sosyalhover {
+  display: inline-block;
+  margin-right: 15px;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.sosyalhover:hover {
+  transform: scale(1.2);
+  color: #6c9bd1;
+}
+
+/* Yardımcı sınıflar */
+.clearfix::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-md-left {
+  text-align: left;
+}
+
+.d-inline-block {
+  display: inline-block;
+}
+
+/* Duyarlı tasarım için medya sorguları */
+@media (min-width: 768px) {
+  .col-md-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+  }
+  
+  .col-md-8 {
+    flex: 0 0 66.666667%;
+    max-width: 66.666667%;
+  }
+  
+  .col-md-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  
+  .text-md-left {
+    text-align: left;
+  }
+}
+
+@media (min-width: 992px) {
+  .col-lg-5 {
+    flex: 0 0 41.666667%;
+    max-width: 41.666667%;
+  }
+  
+  .col-lg-7 {
+    flex: 0 0 58.333333%;
+    max-width: 58.333333%;
+  }
+  
+  .text-lg-left {
+    text-align: left;
+  }
+  
+  .text-lg-right {
+    text-align: right;
+  }
+}

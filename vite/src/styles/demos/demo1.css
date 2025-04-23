@@ -1,0 +1,55 @@
+/* Header görünürlük düzeltmeleri */
+.demo1 {
+	/* Mevcut değişkenlere ek */
+	--tw-header-visibility: visible;
+	--tw-header-display: block;
+	--tw-header-zindex: 1000;
+  }
+  
+  /* Header fix için temel stiller */
+  html, body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	scroll-padding-top: 0;
+  }
+  
+  /* Header elementi için düzeltmeler */
+  .header-wrapper {
+	display: var(--tw-header-display) !important;
+	visibility: var(--tw-header-visibility) !important;
+	min-height: var(--tw-header-height);
+	position: sticky;
+	top: 0;
+	z-index: var(--tw-header-zindex);
+	background-color: white;
+	width: 100%;
+  }
+  
+  /* Login/Auth sayfaları için header düzeltmeleri */
+  body.auth .header-wrapper,
+  .auth-layout .header-wrapper,
+  .auth-page .header-wrapper {
+	position: relative;
+	display: block !important;
+	visibility: visible !important;
+  }
+  
+  /* Login form için spacing */
+  .auth-layout form,
+  .auth-page form,
+  .login-page form {
+	margin-top: 1rem;
+  }
+  
+  /* Desktop modu için ek düzeltmeler */
+  @media (min-width: theme('screens.lg')) {
+	.demo1.sidebar-fixed.header-fixed .header-wrapper {
+	  inset-inline-start: var(--tw-sidebar-width);
+	  width: calc(100% - var(--tw-sidebar-width));
+	}
+	
+	.demo1.layout-initialized .header-wrapper {
+	  transition: inset-inline-start var(--tw-sidebar-transition-duration) var(--tw-sidebar-transition-timing);
+	}
+  }
