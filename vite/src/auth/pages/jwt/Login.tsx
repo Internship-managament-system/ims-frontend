@@ -169,11 +169,7 @@ const Login = () => {
               <div className="flex items-center justify-between gap-1">
                 <label className="form-label text-gray-900">Şifre</label>
                 <Link
-                  to={
-                    currentLayout?.name === 'auth-branded'
-                      ? '/auth/reset-password'
-                      : '/auth/classic/reset-password'
-                  }
+                  to="/auth/reset-password"
                   className="text-2sm link shrink-0"
                 >
                   Şifreni mi unuttun?
@@ -224,7 +220,7 @@ const Login = () => {
             <button
               type="button"
               className="btn flex justify-center grow mt-2 register-button"
-              onClick={() => navigate('/auth/classic/signup')}
+              onClick={() => navigate('/auth/signup')}
             >
               Kayıt Ol
             </button>

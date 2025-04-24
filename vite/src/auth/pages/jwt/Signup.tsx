@@ -241,7 +241,7 @@ const Signup = () => {
             
             <div className="text-center mt-3">
               <span className="text-gray-600">Zaten hesabınız var mı?</span>{' '}
-              <Link to="/auth/classic/login" className="text-primary font-medium">
+              <Link to="/auth/login" className="text-primary font-medium">
                 Giriş Yap
               </Link>
             </div>

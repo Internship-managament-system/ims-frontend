@@ -52,11 +52,7 @@ const ResetPasswordCheckEmail = () => {
 
           <div className="flex justify-center mb-5">
             <Link
-              to={
-                currentLayout?.name === 'auth-branded'
-                  ? '/auth/reset-password/changed'
-                  : '/auth/classic/reset-password/changed'
-              }
+              to={'/auth/reset-password/changed'}
               className="btn flex justify-center"
               style={{ backgroundColor: '#13126e', color: 'white' }}
             >
@@ -67,11 +63,7 @@ const ResetPasswordCheckEmail = () => {
           <div className="flex items-center justify-center gap-1">
             <span className="text-xs text-gray-600">Link almadınız mı?</span>
             <Link
-              to={
-                currentLayout?.name === 'auth-branded'
-                  ? '/auth/reset-password/enter-email'
-                  : '/auth/classic/reset-password/enter-email'
-              }
+              to={'/auth/reset-password/enter-email'}
               className="text-xs font-medium link"
             >
               Tekrar Gönder

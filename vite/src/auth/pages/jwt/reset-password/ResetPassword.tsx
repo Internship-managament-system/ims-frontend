@@ -46,9 +46,7 @@ const ResetPassword = () => {
         params.append('email', values.email);
         navigate({
           pathname:
-            currentLayout?.name === 'auth-branded'
-              ? '/auth/reset-password/check-email'
-              : '/auth/classic/reset-password/check-email',
+            '/auth/reset-password/check-email',
           search: params.toString()
         });
       } catch (error) {
@@ -119,7 +117,7 @@ const ResetPassword = () => {
           </button>
 
           <Link
-            to={currentLayout?.name === 'auth-branded' ? '/auth/login' : '/auth/classic/login'}
+            to={'/auth/login'}
             className="flex items-center justify-center text-sm gap-2 text-gray-700 hover:text-primary"
           >
             <KeenIcon icon="black-left" />
