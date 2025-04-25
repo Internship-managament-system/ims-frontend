@@ -9,22 +9,24 @@ import { useLayout } from '@/providers';
 import { Alert } from '@/components';
 import Header from '@/layouts/eru/Header/Header';
 import Footer from '@/layouts/eru/Footer/Footer';
+import { useLanguage } from '../../../contexts/languageContext'; // 🌐 Dil desteği eklendi
 
 // CSS dosyasını import ediyoruz
 import './Login.css';
 
-const loginSchema = Yup.object().shape({
+const loginSchema = Yup.object().shape({ 
   email: Yup.string()
-    .email('Wrong email format')
-    .min(3, 'Minimum 3 symbols')
-    .max(50, 'Maximum 50 symbols')
-    .required('Email is required'),
+    .email('Geçersiz email formatı')
+    .min(3, 'En az 3 karakter olmalı')
+    .max(50, 'En fazla 50 karakter olabilir')
+    .required('E-posta zorunludur'),
   password: Yup.string()
-    .min(3, 'Minimum 3 symbols')
-    .max(50, 'Maximum 50 symbols')
-    .required('Password is required'),
+    .min(3, 'En az 3 karakter olmalı')
+    .max(50, 'En fazla 50 karakter olabilir')
+    .required('Şifre zorunludur'),
   remember: Yup.boolean()
 });
+
 
 const initialValues = {
   email: '',
@@ -40,29 +42,25 @@ const Login = () => {
   const from = location.state?.from?.pathname || '/';
   const [showPassword, setShowPassword] = useState(false);
   const { currentLayout } = useLayout();
-  
-  // Header sorunu çözümü için özel state
+  const { t } = useLanguage(); // 🌍 Çeviri fonksiyonu çağrıldı
+
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
 
-  // Sayfa yüklendiğinde gerekli düzenlemeleri yap
   useEffect(() => {
-    // Document yapısını düzelt
     document.documentElement.style.height = '100%';
     document.documentElement.style.overflowX = 'hidden';
     document.documentElement.style.margin = '0';
     document.documentElement.style.padding = '0';
-    
+
     document.body.style.height = '100%';
     document.body.style.overflowX = 'hidden';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
     document.body.style.display = 'flex';
     document.body.style.flexDirection = 'column';
-    
-    // Sayfayı en üste kaydır
+
     window.scrollTo(0, 0);
-    
-    // Header görünürlüğünü zorla
+
     const fixHeader = () => {
       const headerElement = document.getElementById('header-container');
       if (headerElement) {
@@ -77,17 +75,11 @@ const Login = () => {
         setIsHeaderFixed(false);
       }
     };
-    
-    // Hemen çalıştır
+
     fixHeader();
-    
-    // İçeriğin yüklenmesi için 100ms bekle ve tekrar dene
     const timeoutId = setTimeout(fixHeader, 100);
-    
-    // Pencere boyutu değiştiğinde tekrar uygula
     window.addEventListener('resize', fixHeader);
-    
-    // Temizleme fonksiyonu
+
     return () => {
       clearTimeout(timeoutId);
       window.removeEventListener('resize', fixHeader);
@@ -114,9 +106,9 @@ const Login = () => {
         }
 
         navigate(from, { replace: true });
-        
+
       } catch {
-        setStatus('Kullanıcı adı veya şifre hatalı.');
+        setStatus(t('loginError')); // 🌐 Hata mesajı çeviriyle
         setSubmitting(false);
       }
       setLoading(false);
@@ -130,13 +122,10 @@ const Login = () => {
 
   return (
     <div className="login-container" id="login-page-root">
-      {/* Sayfanın başlangıcında bir işaretçi */}
       <div id="page-top-anchor" style={{ position: 'absolute', top: 0, left: 0, height: 0, width: '100%' }}></div>
-      
-      {/* Header */}
+
       <Header />
-      
-      {/* Content */}
+
       <div className="content-container">
         <div className="card max-w-[390px] w-full">
           <form
@@ -147,10 +136,10 @@ const Login = () => {
             {formik.status && <Alert variant="danger">{formik.status}</Alert>}
 
             <div className="flex flex-col gap-1">
-              <label className="form-label text-gray-900">Email</label>
+              <label className="form-label text-gray-900">{t('email')}</label>
               <label className="input">
                 <input
-                  placeholder="Emailinizi girin"
+                  placeholder={t('enterEmail')}
                   autoComplete="off"
                   {...formik.getFieldProps('email')}
                   className={clsx('form-control', {
@@ -167,18 +156,15 @@ const Login = () => {
 
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between gap-1">
-                <label className="form-label text-gray-900">Şifre</label>
-                <Link
-                  to="/auth/reset-password"
-                  className="text-2sm link shrink-0"
-                >
-                  Şifreni mi unuttun?
+                <label className="form-label text-gray-900">{t('password')}</label>
+                <Link to="/auth/reset-password" className="text-2sm link shrink-0">
+                  {t('forgotPassword')}
                 </Link>
               </div>
               <label className="input">
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Şifrenizi girin"
+                  placeholder={t('password')}
                   autoComplete="off"
                   {...formik.getFieldProps('password')}
                   className={clsx('form-control', {
@@ -206,15 +192,16 @@ const Login = () => {
                 type="checkbox"
                 {...formik.getFieldProps('remember')}
               />
-              <span className="checkbox-label">Beni hatırla</span>
+              <span className="checkbox-label">{t('rememberMe')}</span>
             </label>
 
             <button
               type="submit"
-              className="btn btn-primary flex justify-center grow login-button"
+              className="btn flex justify-center grow login-button"
+              style={{ backgroundColor: '#13126e', color: 'white' }}
               disabled={loading || formik.isSubmitting}
             >
-              {loading ? 'Lütfen bekleyin...' : 'Giriş Yap'}
+              {loading ? t('pleaseWait') : t('login')}
             </button>
 
             <button
@@ -222,13 +209,12 @@ const Login = () => {
               className="btn flex justify-center grow mt-2 register-button"
               onClick={() => navigate('/auth/signup')}
             >
-              Kayıt Ol
+              {t('register')}
             </button>
           </form>
         </div>
       </div>
-      
-      {/* Footer */}
+
       <div className="footer-container">
         <Footer />
       </div>

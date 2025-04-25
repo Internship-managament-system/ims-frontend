@@ -1,16 +1,25 @@
 import React, { useEffect, useRef } from 'react';
 import './Header.css';
+import { useLocation } from 'react-router-dom';
+import { useLanguage } from '../../../contexts/languageContext';
 
 const Header: React.FC = () => {
-    // Header elementini referans olarak tutuyoruz
     const headerRef = useRef<HTMLDivElement>(null);
+    const location = useLocation();
+    const { language, setLanguage, t } = useLanguage();
 
-    // Component yüklendiğinde ve güncellenmesinde header'ın görünürlüğünü zorla
+    const changeLanguage = (lang: 'tr' | 'en') => {
+        setLanguage(lang);
+
+        const currentPath = location.pathname;
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.set('lang', lang);
+        window.history.pushState({}, '', `${currentPath}?${searchParams.toString()}`);
+    };
+
     useEffect(() => {
-        // 1. Sayfa başlangıcında header'ı görünür kılma
         const forceHeaderVisible = () => {
             if (headerRef.current) {
-                // Doğrudan stil atamalarıyla görünürlüğü zorla
                 const headerStyles = {
                     display: 'block',
                     visibility: 'visible',
@@ -25,37 +34,27 @@ const Header: React.FC = () => {
 
                 Object.assign(headerRef.current.style, headerStyles);
 
-                // Header içerisindeki elementlerin görünürlüğünü de kontrol et
                 const innerHeader = headerRef.current.querySelector('header');
                 if (innerHeader) {
                     Object.assign(innerHeader.style, headerStyles);
                 }
 
-                // Header'ın üzerinde başka bir element olmadığından emin ol
                 headerRef.current.parentElement?.classList.add('header-parent-container');
             }
 
-            // Sayfanın en üstüne scroll yap
             window.scrollTo(0, 0);
         };
 
-        // İlk yüklemede çalıştır
         forceHeaderVisible();
-
-        // Sayfa boyutu değiştiğinde tekrar çalıştır
         window.addEventListener('resize', forceHeaderVisible);
-
-        // Sayfa scroll olduğunda tekrar kontrol et
         window.addEventListener('scroll', () => {
             if (window.scrollY === 0) {
                 forceHeaderVisible();
             }
         });
 
-        // 100ms sonra tekrar çalıştır (bazı tarayıcı render sorunlarını çözmek için)
         const timeoutId = setTimeout(forceHeaderVisible, 100);
-        
-        // Bileşen temizlendiğinde event listener'ları kaldır
+
         return () => {
             window.removeEventListener('resize', forceHeaderVisible);
             window.removeEventListener('scroll', forceHeaderVisible);
@@ -64,41 +63,49 @@ const Header: React.FC = () => {
     }, []);
 
     return (
-        <div ref={headerRef} className="header-wrapper" id="header-container" style={{display: 'block', visibility: 'visible'}}>
-            {/* Sayfa başında referans noktası */}
+        <div
+            ref={headerRef}
+            className="header-wrapper"
+            id="header-container"
+            style={{ display: 'block', visibility: 'visible' }}
+        >
             <div id="header-anchor"></div>
-            
+
             <header className="w-full bg-white text-blue-900 shadow-md z-50">
-                {/* Üst Çubuk - Sosyal Medya ve Dil Seçenekleri */}
                 <div className="header-top-bar">
                     <div className="flex items-center space-x-3">
                         <div className="border-l border-gray-400 h-4 mx-2"></div>
-                        <a href="/" className="text-xs hover:text-gray-300">ERÜ Anasayfa</a>
+                        <a href="https://www.erciyes.edu.tr/" className="text-xs hover:text-gray-300">
+                            {t('homepage')}
+                        </a>
                         <div className="border-l border-gray-400 h-4 mx-2"></div>
-                        <a href="/" className="text-xs font-bold hover:text-gray-300">TR</a>
-                        <a href="/" className="text-xs hover:text-gray-300 ml-1">EN</a>
+                        <button
+                            onClick={() => changeLanguage('tr')}
+                            className={`text-xs hover:text-gray-300 ${language === 'tr' ? 'font-bold' : ''}`}
+                        >
+                            TR
+                        </button>
+                        <button
+                            onClick={() => changeLanguage('en')}
+                            className={`text-xs hover:text-gray-300 ml-1 ${language === 'en' ? 'font-bold' : ''}`}
+                        >
+                            EN
+                        </button>
                     </div>
                 </div>
 
-                {/* Ana Header - Logo ve Menü */}
                 <div className="header-main-content">
-                    {/* Logo - Absolute pozisyonda */}
-                    <a
-                        href="/"
-                        className="header-logo"
-                    ></a>
+                    <a href="/" className="header-logo"></a>
 
-                    {/* Başlık - Logonun yanında yer alacak şekilde kenara itilmiş */}
                     <div className="flex items-center ml-28">
                         <div className="ml-4">
-                            <h1 className="text-xl header-title">BİLGİSAYAR MÜHENDİSLİĞİ</h1>
-                            <h2 className="text-2xl font-black header-title">STAJ BİLGİ SİSTEMİ</h2>
+                            <h1 className="text-xl header-title">{t('computerEngineering')}</h1>
+                            <h2 className="text-2xl font-black header-title">{t('internshipSystem')}</h2>
                         </div>
                     </div>
 
-                    {/* Sağ Taraf: Navbar */}
                     <nav>
-                        {/* Buraya menü öğeleri eklenebilir */}
+                        {/* Menü öğeleri eklenebilir */}
                     </nav>
                 </div>
             </header>

@@ -44,7 +44,8 @@ interface AuthContextProps {
   verify: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextProps | null>(null);
+const AuthContext = createContext<AuthContextProps | undefined>(undefined);
+
 
 const AuthProvider = ({ children }: PropsWithChildren) => {
   const [loading, setLoading] = useState(true);

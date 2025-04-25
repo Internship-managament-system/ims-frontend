@@ -1,6 +1,5 @@
 import { ReactElement } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
-import { DefaultPage, Demo1DarkSidebarPage } from '@/pages/dashboards';
 import {
   ProfileActivityPage,
   ProfileBloggerPage,
@@ -72,7 +71,6 @@ import {
   NetworkUserTableTeamCrewPage,
   NetworkVisitorsPage
 } from '@/pages/network';
-
 import { AuthPage } from '@/auth';
 import { RequireAuth } from '@/auth/RequireAuth';
 import { Demo1Layout } from '@/layouts/demo1';
@@ -82,6 +80,7 @@ import {
   AuthenticationAccountDeactivatedPage,
   AuthenticationGetStartedPage
 } from '@/pages/authentication';
+import { Demo6Layout } from '@/layouts/demo6';
 
 const AppRoutingSetup = (): ReactElement => {
   return (
@@ -189,6 +188,7 @@ const AppRoutingSetup = (): ReactElement => {
       </Route> */}
       <Route path="error/*" element={<ErrorsRouting />} />
       <Route path="auth/*" element={<AuthPage />} />
+      <Route path="dashboard/*" element={<Demo6Layout />} />
       <Route path="*" element={<Navigate to="/error/404" />} />
     </Routes>
   );
