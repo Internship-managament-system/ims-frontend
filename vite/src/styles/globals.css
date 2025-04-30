@@ -8,3 +8,70 @@
 
 /* Shadcn UI */
 @import "shadcn.ui";
+/* Bu CSS global stil dosyanıza eklenebilir */
+
+/* Sidebar genişliğini ayarlama */
+:root {
+    --tw-sidebar-width: 290px !important; /* Varsayılan 270px yerine */
+  }
+  
+  /* Menü yazılarını biraz daha büyütme */
+  .sidebar-menu-primary .menu-title {
+    font-size: 0.95rem !important; /* Biraz daha büyük font */
+  }
+  
+  /* Menü öğelerinin arasındaki boşluğu artırma */
+  .sidebar-menu-primary .menu-item {
+    margin-bottom: 4px !important;
+  }
+  
+  /* Menü öğelerinin padding'ini artırma */
+  .sidebar-menu-primary .menu-link {
+    padding: 0.6rem 0.75rem !important;
+  }
+  
+  /* Profil kartı stilini düzenleme */
+  .sidebar-footer-profile {
+    background-color: rgba(19, 18, 110, 0.03);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin-top: auto;
+    border: 1px solid rgba(19, 18, 110, 0.1);
+  }
+  
+  /* Sistem başlığı stilini düzenleme */
+  .sidebar-system-title {
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  /* Responsive sidebar genişliği */
+@media (max-width: 1200px) {
+    :root {
+      --tw-sidebar-width: var(--tw-sidebar-width-sm, 250px) !important;
+    }
+    
+    .sidebar-menu-primary .menu-title {
+      font-size: 0.85rem !important;
+    }
+    
+    .sidebar-menu-primary .menu-link {
+      padding: 0.5rem 0.6rem !important;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .sidebar-footer-profile {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    
+    .sidebar-system-title {
+      font-size: 0.9rem;
+    }
+  }
+  
+ 

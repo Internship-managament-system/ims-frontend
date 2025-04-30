@@ -81,7 +81,8 @@ import {
   AuthenticationGetStartedPage
 } from '@/pages/authentication';
 import { Demo6Layout } from '@/layouts/demo6';
-
+import { RequiredDocuments } from '../layouts/demo6/pages/RequiredDocuments/RequiredDocuments';
+//import { InternshipApplicationPage } from '../layouts/demo6/pages/InternshipApplication/InternshipApplicationPage';
 const AppRoutingSetup = (): ReactElement => {
   return (
     <Routes>
@@ -188,7 +189,10 @@ const AppRoutingSetup = (): ReactElement => {
       </Route> */}
       <Route path="error/*" element={<ErrorsRouting />} />
       <Route path="auth/*" element={<AuthPage />} />
-      <Route path="dashboard/*" element={<Demo6Layout />} />
+      <Route path="dashboard/*" element={<Demo6Layout />}>
+        <Route path="documents/required" element={<RequiredDocuments />} />
+      </Route>
+      {/* <Route path="internship/application" element={<InternshipApplicationPage />} /> */}
       <Route path="*" element={<Navigate to="/error/404" />} />
     </Routes>
   );

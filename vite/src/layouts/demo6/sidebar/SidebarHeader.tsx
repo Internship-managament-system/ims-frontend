@@ -1,4 +1,3 @@
-//SidebarHeader.tsx
 import React, { forwardRef, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { toAbsoluteUrl } from '@/utils';
@@ -20,7 +19,7 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
   const { pathname } = useLocation();
   const [selectedMenuItem, setSelectedMenuItem] = useState(MENU_ROOT[1]);
   const { isRTL } = useLanguage();
-
+  
   const handleInputChange = () => {};
 
   useEffect(() => {
@@ -33,74 +32,22 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
 
   return (
     <div ref={ref}>
-      <div className="flex items-center gap-2.5 px-3.5 h-[70px]">
-        <Link to="/">
-          <img
-            src={toAbsoluteUrl('/media/eru/erciyes-logo.png')}
-            className="dark:hidden h-[50px] w-[55px]"
-          />
-          <img
-            src={toAbsoluteUrl('/media/app/mini-logo-circle-dark.svg')}
-            className="hidden dark:inline-block h-[42px]"
-          />
+      <div className="flex flex-col items-center px-3.5 h-auto py-4">
+        {/* Logo ve Sistem Adı */}
+        <Link to="/" className="flex flex-col items-center gap-1 mb-4">
+          <div className="flex items-center gap-2">
+            <img
+              src={toAbsoluteUrl('/media/eru/erciyes-logo.png')}
+              className="dark:hidden h-[50px] w-[55px]"
+            />
+            <img
+              src={toAbsoluteUrl('/media/app/mini-logo-circle-dark.svg')}
+              className="hidden dark:inline-block h-[42px]"
+            />
+            <span className="text-base md:text-lg font-bold tracking-wider text-[#13126e] uppercase whitespace-normal break-words md:whitespace-nowrap">STAJ BİLGİ SİSTEMİ</span>
+          </div>
         </Link>
-
-        <Menu className="menu-default grow">
-          <MenuItem
-            className="grow"
-            toggle="dropdown"
-            trigger="hover"
-            dropdownProps={{
-              placement: isRTL() ? 'bottom-end' : 'bottom-start',
-              modifiers: [
-                {
-                  name: 'offset',
-                  options: {
-                    offset: [0, 15] // [skid, distance]
-                  }
-                }
-              ]
-            }}
-          >
-            <MenuLabel className="cursor-pointer text-gray-900 font-medium grow justify-between">
-              <span className="text-base font-medium text-gray-900 grow justify-start">
-                Mikdat Can Şimşek
-              </span>
-              <MenuArrow>
-                <KeenIcon icon="down" />
-              </MenuArrow>
-            </MenuLabel>
-            <MenuSub className="menu-default w-48 py-2">
-              {MENU_ROOT.map((item, index) => (
-                <MenuItem key={index} className={item === selectedMenuItem ? 'active' : ''}>
-                  <MenuLink path={item.path}>
-                    {item.icon && (
-                      <MenuIcon>
-                        <KeenIcon icon={item.icon} />
-                      </MenuIcon>
-                    )}
-                    <MenuTitle>{item.title}</MenuTitle>
-                  </MenuLink>
-                </MenuItem>
-              ))}
-            </MenuSub>
-          </MenuItem>
-        </Menu>
       </div>
-
-      {/* <div className="pt-2.5 px-3.5 mb-1">
-        <div className="input">
-          <KeenIcon icon="magnifier" />
-          <input
-            placeholder="Search"
-            type="text"
-            onChange={handleInputChange}
-            className="min-w-0"
-            value=""
-          />
-          <span className="text-2sm text-gray-700 text-nowrap"></span>
-        </div>
-      </div> */}
     </div>
   );
 });

@@ -11,7 +11,8 @@ const Demo6Layout = () => {
     [--tw-content-bg-dark:var(--tw-coal-500)]
     [--tw-content-scrollbar-color:#e8e8e8]
     [--tw-header-height:60px]
-    [--tw-sidebar-width:270px]
+    [--tw-sidebar-width:290px]
+    [--tw-sidebar-width-sm:250px]
     bg-[--tw-page-bg]
     dark:bg-[--tw-page-bg-dark]
     lg:overflow-hidden
