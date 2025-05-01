@@ -1,4 +1,4 @@
-// /layouts/demo6/pages/admin/Dashboard/components/PendingApplications.tsx
+// /src/layouts/demo6/pages/admin/Dashboard/components/PendingApplications.tsx
 import React from 'react';
 
 const PendingApplications: React.FC = () => {

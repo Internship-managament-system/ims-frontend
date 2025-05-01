@@ -1,4 +1,4 @@
-// /layouts/demo6/pages/admin/Dashboard/components/DocumentsViewer.tsx
+// /src/layouts/demo6/pages/admin/Dashboard/components/DocumentsViewer.tsx
 import React, { useState } from 'react';
 
 const DocumentsViewer: React.FC = () => {

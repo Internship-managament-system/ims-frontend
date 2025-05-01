@@ -1,8 +1,9 @@
+// /src/routing/RoleBasedDashboard.tsx
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthContext } from '@/auth';
 
-// Kullanıcı rolüne göre yönlendirme komponenti
+// Redirects users to the appropriate dashboard based on their role
 const RoleBasedDashboard: React.FC = () => {
   const { currentUser, loading, hasRole } = useAuthContext();
   

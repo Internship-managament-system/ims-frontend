@@ -1,4 +1,4 @@
-// /layouts/demo6/pages/admin/Dashboard/components/CommissionStats.tsx
+// /src/layouts/demo6/pages/admin/Dashboard/components/CommissionStats.tsx
 import React from 'react';
 
 const CommissionStats: React.FC = () => {

@@ -1,9 +1,20 @@
-//Demo6Layout.tsx
+// /src/layouts/demo6/Demo6Layout.tsx
 import useBodyClasses from '@/hooks/useBodyClasses';
 import { Demo6LayoutProvider, Main } from './';
+import { useAuthContext } from '@/auth';
+import { useEffect, useState } from 'react';
+import { SidebarMenuAdmin } from './sidebar/SidebarMenuAdmin';
+import { MENU_SIDEBAR } from '@/config';
+import { useMenus } from '@/providers';
 
 const Demo6Layout = () => {
-  // Using the custom hook to set multiple CSS variables and class properties
+  const { currentUser } = useAuthContext();
+  const { setMenuConfig } = useMenus();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isCommissionMember, setIsCommissionMember] = useState(false);
+  const [isStudent, setIsStudent] = useState(false);
+
+  // Set body classes for layout styling
   useBodyClasses(`
     [--tw-page-bg:#F6F6F9]
     [--tw-page-bg-dark:var(--tw-coal-200)]
@@ -17,6 +28,25 @@ const Demo6Layout = () => {
     dark:bg-[--tw-page-bg-dark]
     lg:overflow-hidden
   `);
+
+  // Determine user role
+  useEffect(() => {
+    if (currentUser) {
+      setIsAdmin(currentUser.role === 'ADMIN');
+      setIsCommissionMember(currentUser.role === 'COMMISSION_MEMBER');
+      setIsStudent(currentUser.role === 'STUDENT');
+    }
+  }, [currentUser]);
+
+  // Set appropriate menu config based on role
+  useEffect(() => {
+    // By default, use the standard sidebar menu
+    setMenuConfig('primary', MENU_SIDEBAR);
+
+    // If the user is an admin, we'll override with admin-specific menu in the SidebarMenuPrimary component
+    // Similarly for other roles
+
+  }, [isAdmin, isCommissionMember, isStudent, setMenuConfig]);
 
   return (
     // Providing layout context and rendering the main content

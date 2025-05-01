@@ -1,4 +1,4 @@
-// /layouts/demo6/pages/admin/Dashboard/components/StatusCards.tsx
+// /src/layouts/demo6/pages/admin/Dashboard/components/StatusCards.tsx
 import React from 'react';
 
 const StatusCards: React.FC = () => {

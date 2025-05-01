@@ -1,23 +1,31 @@
+// /src/layouts/demo6/sidebar/SidebarMenuPrimary.tsx
+import { useMenus } from '@/providers';
+import { useAuthContext } from '@/auth';
+import { SidebarMenuAdmin } from './SidebarMenuAdmin';
 import clsx from 'clsx';
 import { KeenIcon } from '@/components/keenicons';
 import {
   IMenuItemConfig,
   Menu,
   MenuArrow,
-  TMenuConfig,
   MenuIcon,
   MenuItem,
   MenuLink,
   MenuSub,
-  MenuTitle
+  MenuTitle,
+  TMenuConfig
 } from '@/components/menu';
-import { useMenus } from '@/providers';
 
 const SidebarMenuPrimary = () => {
+  const { getMenuConfig } = useMenus();
+  const menuConfig = getMenuConfig('primary');
+  const { currentUser } = useAuthContext();
+
+  // Standard menu building functions for non-admin users
   const subIndetion = ['ps-7', 'ps-2.5', 'ps-2.5'];
 
   const buildMenu = (items: TMenuConfig) => {
-    return items.map((item, index) => {
+    return items.map((item: IMenuItemConfig, index: number) => {
       if (!item.heading && !item.disabled && item.title != 'Dashboards') {
         return buildMenuItemRoot(item, index, 0);
       }
@@ -125,14 +133,25 @@ const SidebarMenuPrimary = () => {
     );
   };
 
-  const { getMenuConfig } = useMenus();
-  const menuConfig = getMenuConfig('primary');
-
-  return (
-    <Menu highlight={true} multipleExpand={false} className="sidebar-menu-primary flex flex-col w-full gap-1.5 px-3.5">
-      {menuConfig && buildMenu(menuConfig)}
-    </Menu>
-  );
+  // Render the appropriate menu based on user role
+  if (currentUser?.role === 'ADMIN') {
+    return <SidebarMenuAdmin />;
+  } else if (currentUser?.role === 'COMMISSION_MEMBER') {
+    // If we had a commission member menu, we'd use it here
+    // return <SidebarMenuCommission />;
+    return (
+      <Menu highlight={true} multipleExpand={false} className="sidebar-menu-primary flex flex-col w-full gap-1.5 px-3.5">
+        {menuConfig && buildMenu(menuConfig)}
+      </Menu>
+    );
+  } else {
+    // Default to standard menu for students and other roles
+    return (
+      <Menu highlight={true} multipleExpand={false} className="sidebar-menu-primary flex flex-col w-full gap-1.5 px-3.5">
+        {menuConfig && buildMenu(menuConfig)}
+      </Menu>
+    );
+  }
 };
 
 export { SidebarMenuPrimary };

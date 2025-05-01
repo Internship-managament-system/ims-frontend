@@ -1,4 +1,4 @@
-// /layouts/demo6/pages/admin/Dashboard/components/SystemStatus.tsx
+// /src/layouts/demo6/pages/admin/Dashboard/components/SystemStatus.tsx
 import React from 'react';
 
 const SystemStatus: React.FC = () => {

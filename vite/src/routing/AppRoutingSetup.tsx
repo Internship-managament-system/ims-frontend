@@ -1,3 +1,4 @@
+// /src/routing/AppRoutingSetup.tsx
 import { ReactElement } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
 import { ErrorsRouting } from '@/errors';
@@ -5,16 +6,20 @@ import { Demo6Layout } from '@/layouts/demo6';
 import { RequireAuth } from '@/auth/RequireAuth';
 import { AuthPage } from '@/auth';
 
-// Rol bazlı dashboard sayfaları
-import AdminDashboard from '../layouts/demo6/pages/admin/Dashboard';
+// Admin Pages
+import Dashboard from '../layouts/demo6/pages/admin/Dashboard';
+import CommissionManagement from '../layouts/demo6/pages/admin/commission';
+import ApplicationManagement from '../layouts/demo6/pages/admin/applications';
+import DocumentManagement from '../layouts/demo6/pages/admin/documents';
+import StudentQuery from '../layouts/demo6/pages/admin/students';
+import Reports from '../layouts/demo6/pages/admin/reports';
+import Settings from '../layouts/demo6/pages/admin/settings';
+
+// Student & Commission Pages
 import StudentDashboard from '../layouts/demo6/pages/student/Dashboard';
 import CommissionDashboard from '../layouts/demo6/pages/commission/Dashboard';
 import Unauthorized from '../layouts/demo6/Unauthorized';
 import RoleBasedDashboard from './RoleBasedDashboard';
-
-// Öğrenci sayfaları
-import { RequiredDocuments } from '../layouts/demo6/pages/student/RequiredDocuments/RequiredDocuments';
-import InternshipApplicationPage from '../layouts/demo6/pages/student/InternshipApplication/InternshipApplicationPage';
 
 const AppRoutingSetup = (): ReactElement => {
   return (
@@ -29,11 +34,17 @@ const AppRoutingSetup = (): ReactElement => {
       {/* Admin Routes */}
       <Route path="admin/*" element={
         <RequireAuth allowedRoles={['ADMIN']}>
-          <AdminDashboard />
+          <Demo6Layout />
         </RequireAuth>
       }>
-        <Route path="dashboard" element={<AdminDashboard />} />
-        {/* Diğer admin sayfaları buraya eklenebilir */}
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="commission" element={<CommissionManagement />} />
+        <Route path="applications" element={<ApplicationManagement />} />
+        <Route path="documents" element={<DocumentManagement />} />
+        <Route path="students" element={<StudentQuery />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
 
       {/* Student Routes */}
@@ -42,10 +53,8 @@ const AppRoutingSetup = (): ReactElement => {
           <Demo6Layout />
         </RequireAuth>
       }>
+        <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<StudentDashboard />} />
-        <Route path="documents/required" element={<RequiredDocuments />} />
-        <Route path="internship/application" element={<InternshipApplicationPage />} />
-        {/* Diğer öğrenci sayfaları buraya eklenebilir */}
       </Route>
 
       {/* Commission Member Routes */}
@@ -54,20 +63,11 @@ const AppRoutingSetup = (): ReactElement => {
           <Demo6Layout />
         </RequireAuth>
       }>
+        <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<CommissionDashboard />} />
-        {/* Diğer komisyon üyesi sayfaları buraya eklenebilir */}
       </Route>
 
-      {/* Eskiden varolan dashboard erişimi - geriye dönük uyumluluk için */}
-      <Route path="dashboard/*" element={
-        <RequireAuth>
-          <Demo6Layout />
-        </RequireAuth>
-      }>
-        <Route path="documents/required" element={<RequiredDocuments />} />
-      </Route>
-
-      {/* Ana Sayfa - Rol bazlı yönlendirme */}
+      {/* Home Route - Role-based redirection */}
       <Route path="/" element={<RoleBasedDashboard />} />
 
       {/* 404 Not Found */}

@@ -1,4 +1,4 @@
-// /layouts/demo6/pages/admin/Dashboard/components/ChatbotManagement.tsx
+// /src/layouts/demo6/pages/admin/Dashboard/components/ChatbotManagement.tsx
 import React, { useState } from 'react';
 
 const ChatbotManagement: React.FC = () => {
