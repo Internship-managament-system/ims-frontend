@@ -9,7 +9,7 @@ import { useLayout } from '@/providers';
 import { Alert } from '@/components';
 import Header from '@/layouts/eru/Header/Header';
 import Footer from '@/layouts/eru/Footer/Footer';
-import { useLanguage } from '../../../contexts/languageContext'; // 🌐 Dil desteği eklendi
+import { useLanguage } from '../../../contexts/languageContext';
 
 // CSS dosyasını import ediyoruz
 import './Login.css';
@@ -27,7 +27,6 @@ const loginSchema = Yup.object().shape({
   remember: Yup.boolean()
 });
 
-
 const initialValues = {
   email: '',
   password: '',
@@ -36,15 +35,30 @@ const initialValues = {
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
-  const { login } = useAuthContext();
+  const { login, currentUser, isAdmin, isStudent, isCommissionMember } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
   const [showPassword, setShowPassword] = useState(false);
   const { currentLayout } = useLayout();
-  const { t } = useLanguage(); // 🌍 Çeviri fonksiyonu çağrıldı
+  const { t } = useLanguage();
 
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
+
+  // Eğer kullanıcı zaten giriş yapmışsa, rolüne göre yönlendir
+  useEffect(() => {
+    if (currentUser) {
+      if (isAdmin()) {
+        navigate('/admin/dashboard', { replace: true });
+      } else if (isCommissionMember()) {
+        navigate('/commission/dashboard', { replace: true });
+      } else if (isStudent()) {
+        navigate('/student/dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    }
+  }, [currentUser, isAdmin, isStudent, isCommissionMember, navigate]);
 
   useEffect(() => {
     document.documentElement.style.height = '100%';
@@ -105,13 +119,14 @@ const Login = () => {
           localStorage.removeItem('email');
         }
 
-        navigate(from, { replace: true });
+        // Login başarılı olduktan sonra kullanıcı rolüne göre yönlendirme yapacak
+        // useEffect hook'u ile kontrol edilecek, burada bir şey yapmaya gerek yok
 
       } catch {
-        setStatus(t('loginError')); // 🌐 Hata mesajı çeviriyle
+        setStatus(t('loginError'));
         setSubmitting(false);
+        setLoading(false);
       }
-      setLoading(false);
     }
   });
 

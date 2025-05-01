@@ -11,13 +11,20 @@ import {
 
 import * as authHelper from '../_helpers';
 import { type AuthModel, type UserModel } from '@/auth';
-
+/*
 const API_URL = import.meta.env.VITE_APP_API_URL;
 export const LOGIN_URL = `${API_URL}/users/login`;
 export const REGISTER_URL = `${API_URL}/users/register`;
 export const FORGOT_PASSWORD_URL = `${API_URL}/forgot-password`;
 export const RESET_PASSWORD_URL = `${API_URL}/reset-password`;
-export const GET_USER_URL = `${API_URL}/users`;
+export const GET_USER_URL = `${API_URL}/users/info`; // '/info' endpoint'ini ekleyin*/
+
+export const LOGIN_URL = `/api/v1/users/login`;
+export const REGISTER_URL = `/api/v1/users/register`;
+export const FORGOT_PASSWORD_URL = `/api/v1/forgot-password`;
+export const RESET_PASSWORD_URL = `/api/v1/reset-password`;
+export const GET_USER_URL = `/api/v1/users/info`;
+
 
 
 interface AuthContextProps {
@@ -42,24 +49,41 @@ interface AuthContextProps {
   getUser: () => Promise<AxiosResponse<any>>;
   logout: () => void;
   verify: () => Promise<void>;
+  // Rol kontrolü için yardımcı fonksiyonlar
+  hasRole: (role: string) => boolean;
+  hasPermission: (permission: string) => boolean;
+  isAdmin: () => boolean;
+  isStudent: () => boolean;
+  isCommissionMember: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
-
 
 const AuthProvider = ({ children }: PropsWithChildren) => {
   const [loading, setLoading] = useState(true);
   const [auth, setAuth] = useState<AuthModel | undefined>(authHelper.getAuth());
   const [currentUser, setCurrentUser] = useState<UserModel | undefined>();
 
+  // Sayfa yüklendiğinde kullanıcı bilgilerini kontrol et
+  useEffect(() => {
+    if (auth) {
+      verify();
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
   const verify = async () => {
     if (auth) {
       try {
-        const { data: user } = await getUser();
-        setCurrentUser(user);
+        const { data } = await getUser();
+        // Backend'den Response<UserInfo> döndüğünü varsayalım
+        setCurrentUser(data.result);
+        setLoading(false);
       } catch {
         saveAuth(undefined);
         setCurrentUser(undefined);
+        setLoading(false);
       }
     }
   };
@@ -89,8 +113,9 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
       saveAuth(authData);
       
       try {
-        const { data: user } = await getUser();
-        setCurrentUser(user);
+        const { data: userData } = await getUser();
+        // Backend Response<UserInfo> döndüğü için result alanından bilgileri al
+        setCurrentUser(userData.result);
       } catch (getUserError) {
         console.error("User data fetch error:", getUserError);
       }
@@ -117,8 +142,9 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
       saveAuth(authData);
       
       try {
-        const { data: user } = await getUser();
-        setCurrentUser(user);
+        const { data: userData } = await getUser();
+        // Backend Response<UserInfo> döndüğü için result alanından bilgileri al
+        setCurrentUser(userData.result);
       } catch (getUserError) {
         console.error("User data fetch error:", getUserError);
       }
@@ -149,12 +175,33 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
   };
 
   const getUser = async () => {
-    return await axios.get<UserModel>(GET_USER_URL);
+    return await axios.get<{result: UserModel}>(GET_USER_URL);
   };
 
   const logout = () => {
     saveAuth(undefined);
     setCurrentUser(undefined);
+  };
+
+  // Rol kontrolü için yardımcı fonksiyonlar
+  const hasRole = (role: string): boolean => {
+    return currentUser?.role === role;
+  };
+
+  const hasPermission = (permission: string): boolean => {
+    return currentUser?.permissions?.includes(permission) || false;
+  };
+
+  const isAdmin = (): boolean => {
+    return hasRole('ADMIN');
+  };
+
+  const isStudent = (): boolean => {
+    return hasRole('STUDENT');
+  };
+
+  const isCommissionMember = (): boolean => {
+    return hasRole('COMMISSION_MEMBER');
   };
 
   return (
@@ -172,7 +219,12 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         changePassword,
         getUser,
         logout,
-        verify
+        verify,
+        hasRole,
+        hasPermission,
+        isAdmin,
+        isStudent,
+        isCommissionMember
       }}
     >
       {children}
