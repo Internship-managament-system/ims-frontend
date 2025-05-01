@@ -29,7 +29,7 @@ const AppRoutingSetup = (): ReactElement => {
       {/* Admin Routes */}
       <Route path="admin/*" element={
         <RequireAuth allowedRoles={['ADMIN']}>
-          <Demo6Layout />
+          <AdminDashboard />
         </RequireAuth>
       }>
         <Route path="dashboard" element={<AdminDashboard />} />
