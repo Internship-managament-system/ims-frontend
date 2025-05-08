@@ -74,4 +74,44 @@
     }
   }
   
- 
+ /* Make sidebar divider completely straight with no rounded edges */
+.demo6 [class*="sidebar"], 
+.sidebar, 
+.flex.grow > div:first-child,
+.sidebar-menu-primary,
+.sidebar-menu-primary .menu-accordion,
+/* Target any potential container creating that border */
+[class*="border-r"],
+[class*="border-l"] {
+  border-radius: 0 !important;
+}
+
+/* Also remove any potential overflow styling that might be causing rounded corners */
+.sidebar-wrapper,
+.sidebar-container {
+  overflow: visible !important;
+  border-radius: 0 !important;
+}
+
+/* If the divider is its own element */
+.sidebar-divider,
+.vertical-divider {
+  border-radius: 0 !important;
+}
+/* Sidebar'ı sağ taraftan net bir çizgiyle ayırma */
+.sidebar, 
+.flex.grow > div:first-child,
+[class*="sidebar-wrapper"] {
+  border-right: 1px solid #e5e7eb !important; /* açık gri border */
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.03); /* hafif gölge ekler */
+}
+
+/* Sidebar genişliğini ayarlama */
+:root {
+  --tw-sidebar-width: 290px !important; /* Varsayılan 270px yerine */
+}
+/* Daha belirgin bir border için */
+/* Kurumsal renkte border için */
+.sidebar {
+  border-right: 1px solid #13126e !important; /* mavi tonda border */
+}

@@ -14,27 +14,28 @@ import './Signup.css';
 
 const initialValues = {
   email: '',
-  password: '',
-  changepassword: '',
+  name: '',
+  surname: '',
   acceptTerms: false
 };
 
 const signupSchema = Yup.object().shape({
   email: Yup.string()
-    .email('Wrong email format')
-    .min(3, 'Minimum 3 symbols')
-    .max(50, 'Maximum 50 symbols')
-    .required('Email is required'),
-  password: Yup.string()
-    .min(3, 'Minimum 3 symbols')
-    .max(50, 'Maximum 50 symbols')
-    .required('Password is required'),
-  changepassword: Yup.string()
-    .min(3, 'Minimum 3 symbols')
-    .max(50, 'Maximum 50 symbols')
-    .required('Password confirmation is required')
-    .oneOf([Yup.ref('password')], "Password and Confirm Password didn't match"),
-  acceptTerms: Yup.bool().required('You must accept the terms and conditions')
+    .email('Geçersiz email formatı')
+    .min(3, 'En az 3 karakter olmalı')
+    .max(50, 'En fazla 50 karakter olabilir')
+    .required('E-posta zorunludur'),
+  name: Yup.string()
+    .min(2, 'En az 2 karakter olmalı')
+    .max(50, 'En fazla 50 karakter olabilir')
+    .required('Ad zorunludur'),
+  surname: Yup.string()
+    .min(2, 'En az 2 karakter olmalı')
+    .max(50, 'En fazla 50 karakter olabilir')
+    .required('Soyad zorunludur'),
+  acceptTerms: Yup.bool()
+    .oneOf([true], 'Kullanım koşullarını kabul etmelisiniz')
+    .required('Kullanım koşullarını kabul etmelisiniz')
 });
 
 const Signup = () => {
@@ -43,8 +44,6 @@ const Signup = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { currentLayout } = useLayout();
 
   // Sayfa yüklendiğinde gerekli düzenlemeleri yap
@@ -84,26 +83,17 @@ const Signup = () => {
         if (!register) {
           throw new Error('JWTProvider is required for this form.');
         }
-        await register(values.email, values.password, values.changepassword);
+        // Yeni kayıt işlevi - email, ad ve soyad kullanarak
+        await register(values.email, values.name, values.surname);
         navigate(from, { replace: true });
       } catch (error) {
         console.error(error);
-        setStatus('The sign up details are incorrect');
+        setStatus('Kayıt işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin.');
         setSubmitting(false);
         setLoading(false);
       }
     }
   });
-
-  const togglePassword = (event: { preventDefault: () => void }) => {
-    event.preventDefault();
-    setShowPassword(!showPassword);
-  };
-
-  const toggleConfirmPassword = (event: { preventDefault: () => void }) => {
-    event.preventDefault();
-    setShowConfirmPassword(!showConfirmPassword);
-  };
 
   return (
     <div className="signup-container">
@@ -143,70 +133,53 @@ const Signup = () => {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="form-label text-gray-900">Şifre</label>
+              <label className="form-label text-gray-900">Ad</label>
               <label className="input">
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Şifre"
+                  placeholder="Adınız"
+                  type="text"
                   autoComplete="off"
-                  {...formik.getFieldProps('password')}
+                  {...formik.getFieldProps('name')}
                   className={clsx(
                     'form-control bg-transparent',
                     {
-                      'is-invalid': formik.touched.password && formik.errors.password
+                      'is-invalid': formik.touched.name && formik.errors.name
                     },
                     {
-                      'is-valid': formik.touched.password && !formik.errors.password
+                      'is-valid': formik.touched.name && !formik.errors.name
                     }
                   )}
                 />
-                <button className="btn btn-icon" onClick={togglePassword}>
-                  <KeenIcon icon="eye" className={clsx('text-gray-500', { hidden: showPassword })} />
-                  <KeenIcon
-                    icon="eye-slash"
-                    className={clsx('text-gray-500', { hidden: !showPassword })}
-                  />
-                </button>
               </label>
-              {formik.touched.password && formik.errors.password && (
+              {formik.touched.name && formik.errors.name && (
                 <span role="alert" className="text-danger text-xs mt-1">
-                  {formik.errors.password}
+                  {formik.errors.name}
                 </span>
               )}
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="form-label text-gray-900">Şifreyi Onaylayın</label>
+              <label className="form-label text-gray-900">Soyad</label>
               <label className="input">
                 <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Şifre Tekrarı"
+                  placeholder="Soyadınız"
+                  type="text"
                   autoComplete="off"
-                  {...formik.getFieldProps('changepassword')}
+                  {...formik.getFieldProps('surname')}
                   className={clsx(
                     'form-control bg-transparent',
                     {
-                      'is-invalid': formik.touched.changepassword && formik.errors.changepassword
+                      'is-invalid': formik.touched.surname && formik.errors.surname
                     },
                     {
-                      'is-valid': formik.touched.changepassword && !formik.errors.changepassword
+                      'is-valid': formik.touched.surname && !formik.errors.surname
                     }
                   )}
                 />
-                <button className="btn btn-icon" onClick={toggleConfirmPassword}>
-                  <KeenIcon
-                    icon="eye"
-                    className={clsx('text-gray-500', { hidden: showConfirmPassword })}
-                  />
-                  <KeenIcon
-                    icon="eye-slash"
-                    className={clsx('text-gray-500', { hidden: !showConfirmPassword })}
-                  />
-                </button>
               </label>
-              {formik.touched.changepassword && formik.errors.changepassword && (
+              {formik.touched.surname && formik.errors.surname && (
                 <span role="alert" className="text-danger text-xs mt-1">
-                  {formik.errors.changepassword}
+                  {formik.errors.surname}
                 </span>
               )}
             </div>
@@ -235,6 +208,7 @@ const Signup = () => {
               type="submit"
               className="btn flex justify-center grow mt-2 signup-button"
               disabled={loading || formik.isSubmitting}
+              style={{ backgroundColor: '#13126e', color: 'white' }}
             >
               {loading ? 'Lütfen bekleyin...' : 'Kayıt Ol'}
             </button>

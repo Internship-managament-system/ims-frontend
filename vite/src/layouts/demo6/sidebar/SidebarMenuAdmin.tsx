@@ -10,7 +10,6 @@ import {
   MenuSub,
   MenuTitle
 } from '@/components/menu';
-import { useMenus } from '@/providers';
 
 const SidebarMenuAdmin = () => {
   const buildMenuArrow = () => {
@@ -44,40 +43,80 @@ const SidebarMenuAdmin = () => {
       icon: 'folder',
       path: '/admin/documents',
     },
-    // {
-    //   title: 'Öğrenci Sorgulama',
-    //   icon: 'search',
-    //   path: '/admin/students',
-    // },
-    // {
-    //   title: 'Raporlar',
-    //   icon: 'chart-simple',
-    //   path: '/admin/reports',
-    // },
-    // {
-    //   title: 'Sistem Ayarları',
-    //   icon: 'setting-2',
-    //   path: '/admin/settings',
-    // }
+    // New item: Internship Settings
+    {
+      title: 'Staj Ayarları',
+      icon: 'setting-2',
+      children: [
+        {
+          title: 'Başvuru Süresi',
+          path: '/admin/internship-settings/application-period',
+        },
+        {
+          title: 'Defter Toplama Tarihleri',
+          path: '/admin/internship-settings/notebook-dates',
+        },
+        {
+          title: 'Red Gerekçeleri',
+          path: '/admin/internship-settings/rejection-reasons',
+        },
+        {
+          title: 'Staj Detayları',
+          path: '/admin/internship-settings/internship-details',
+        },
+      ]
+    },
   ];
 
   // Build menu items from configuration
   const buildMenuItems = () => {
-    return adminMenuItems.map((item, index) => (
-      <MenuItem key={index}>
-        <MenuLink
-          path={item.path}
-          className="gap-2.5 py-2 px-2.5 rounded-md border border-transparent menu-item-active:border-[#13126e] menu-item-active:bg-[#e8e8f5] menu-link-hover:bg-[#e8e8f5] menu-link-hover:border-[#13126e]"
-        >
-          <MenuIcon className="items-start text-lg text-gray-600 menu-item-active:text-[#13126e] menu-item-here:text-[#13126e] menu-item-show:text-[#13126e] menu-link-hover:text-[#13126e]">
-            {item.icon && <KeenIcon icon={item.icon} />}
-          </MenuIcon>
-          <MenuTitle className="text-sm text-gray-800 font-medium menu-item-here:text-[#13126e] menu-item-show:text-[#13126e] menu-link-hover:text-[#13126e]">
-            {item.title}
-          </MenuTitle>
-        </MenuLink>
-      </MenuItem>
-    ));
+    return adminMenuItems.map((item, index) => {
+      if (item.children) {
+        return (
+          <MenuItem key={index} toggle="accordion" trigger="click">
+            <MenuLink className="gap-2.5 py-2 px-2.5 rounded-md border border-transparent hover:border-[#13126e] hover:bg-[#e8e8f5]">
+              <MenuIcon className="items-start text-gray-600 text-lg menu-item-here:text-[#13126e] menu-item-show:text-[#13126e] menu-link-hover:text-[#13126e]">
+                {item.icon && <KeenIcon icon={item.icon} />}
+              </MenuIcon>
+              <MenuTitle className="font-medium text-sm text-gray-800 menu-item-here:text-[#13126e] menu-item-show:text-[#13126e] menu-link-hover:text-[#13126e]">
+                {item.title}
+              </MenuTitle>
+              {buildMenuArrow()}
+            </MenuLink>
+            <MenuSub className="menu-accordion gap-px ps-7">
+              {item.children.map((childItem, childIndex) => (
+                <MenuItem key={childIndex}>
+                  <MenuLink
+                    path={childItem.path}
+                    className="py-2 px-2.5 rounded-md border border-transparent menu-item-active:border-[#13126e] menu-item-active:bg-[#e8e8f5] menu-link-hover:bg-[#e8e8f5] menu-link-hover:border-[#13126e]"
+                  >
+                    <MenuTitle className="text-2sm text-gray-800 menu-item-active:text-[#13126e] menu-link-hover:text-[#13126e]">
+                      {childItem.title}
+                    </MenuTitle>
+                  </MenuLink>
+                </MenuItem>
+              ))}
+            </MenuSub>
+          </MenuItem>
+        );
+      }
+      
+      return (
+        <MenuItem key={index}>
+          <MenuLink
+            path={item.path}
+            className="gap-2.5 py-2 px-2.5 rounded-md border border-transparent menu-item-active:border-[#13126e] menu-item-active:bg-[#e8e8f5] menu-link-hover:bg-[#e8e8f5] menu-link-hover:border-[#13126e]"
+          >
+            <MenuIcon className="items-start text-lg text-gray-600 menu-item-active:text-[#13126e] menu-item-here:text-[#13126e] menu-item-show:text-[#13126e] menu-link-hover:text-[#13126e]">
+              {item.icon && <KeenIcon icon={item.icon} />}
+            </MenuIcon>
+            <MenuTitle className="text-sm text-gray-800 font-medium menu-item-here:text-[#13126e] menu-item-show:text-[#13126e] menu-link-hover:text-[#13126e]">
+              {item.title}
+            </MenuTitle>
+          </MenuLink>
+        </MenuItem>
+      );
+    });
   };
 
   return (

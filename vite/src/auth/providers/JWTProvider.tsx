@@ -125,12 +125,13 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     }
   };
 
-  const register = async (email: string, password: string, password_confirmation: string) => {
+  const register = async (email: string, name: string, surname: string) => {
     try {
+      // API'ye göndermek için veri yapısını değiştir - şifre yerine ad ve soyad kullan
       const { data } = await axios.post(REGISTER_URL, {
         email,
-        password,
-        password_confirmation
+        name,     // Backend API'nin beklediği alan adı: name
+        surname   // Backend API'nin beklediği alan adı: surname
       });
       
       // Backend'den gelen token'ı frontend'in beklediği formata dönüştür
