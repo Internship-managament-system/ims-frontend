@@ -15,17 +15,33 @@ const CommissionManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([
     {
       id: 1,
-      name: 'Prof. Dr. Ali Demir',
-      title: 'Prof. Dr.',
-      email: 'ali.demir@university.edu',
-      role: 'COMMISSION_HEAD',
+      name: 'Arş. Gör. Mehmet ELMACI',
+      title: 'Arş. Gör.',
+      email: 'mehmetelmaci@erciyes.edu.tr',
+      role: 'COMMISSION_MEMBER',
       status: 'active'
     },
     {
       id: 2,
-      name: 'Dr. Mehmet Kaya',
-      title: 'Dr.',
-      email: 'mehmet.kaya@university.edu',
+      name: 'Arş. Gör. Osman Buğra KAHRAMAN',
+      title: 'Arş. Gör.',
+      email: 'obkahraman@erciyes.edu.tr',
+      role: 'COMMISSION_HEAD',
+      status: 'active'
+    },
+    {
+      id: 3,
+      name: 'Arş. Gör. Fatma AZİZOĞLU',
+      title: 'Arş. Gör.',
+      email: 'fatmaazizoglu@erciyes.edu.tr',
+      role: 'COMMISSION_MEMBER',
+      status: 'active'
+    },
+    {
+      id: 4,
+      name: 'Arş. Gör. Gökhan AZİZOĞLU',
+      title: 'Arş. Gör.',
+      email: 'gazizoglu@erciyes.edu.tr',
       role: 'COMMISSION_MEMBER',
       status: 'active'
     },

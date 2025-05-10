@@ -26,9 +26,9 @@ const NotebookDates: React.FC = () => {
       alert("Başlangıç tarihi bitiş tarihinden önce olmalıdır.");
       return;
     }
-    
+
     setIsSaving(true);
-    
+
     // Simulated API call to save the setting
     setTimeout(() => {
       setDateRange(tempDateRange);
@@ -47,13 +47,13 @@ const NotebookDates: React.FC = () => {
       <div className="p-5">
         <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
           <h2 className="text-xl font-semibold mb-6">Staj Defteri Toplama Tarihleri</h2>
-          
+
           <div className="mb-6">
             <p className="text-gray-600 mb-4">
-              Öğrencilerin staj defterlerini sisteme yükleyebileceği tarih aralığını belirleyin. 
+              Öğrencilerin staj defterlerini sisteme yükleyebileceği tarih aralığını belirleyin.
               Bu tarih aralığı dışında yalnızca mezun durumundaki öğrenciler staj defteri yükleyebilecektir.
             </p>
-            
+
             {isEditing ? (
               <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -61,34 +61,34 @@ const NotebookDates: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Başlangıç Tarihi
                     </label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       className="border border-gray-300 rounded-md p-2 w-full"
                       value={tempDateRange.startDate}
-                      onChange={(e) => setTempDateRange({...tempDateRange, startDate: e.target.value})}
+                      onChange={(e) => setTempDateRange({ ...tempDateRange, startDate: e.target.value })}
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Bitiş Tarihi
                     </label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       className="border border-gray-300 rounded-md p-2 w-full"
                       value={tempDateRange.endDate}
-                      onChange={(e) => setTempDateRange({...tempDateRange, endDate: e.target.value})}
+                      onChange={(e) => setTempDateRange({ ...tempDateRange, endDate: e.target.value })}
                     />
                   </div>
                 </div>
                 <div className="flex justify-end gap-2 mt-2">
-                  <button 
+                  <button
                     className="btn bg-[#13126e] text-white px-4 py-2 rounded"
                     onClick={handleSave}
                     disabled={isSaving}
                   >
                     {isSaving ? 'Kaydediliyor...' : 'Kaydet'}
                   </button>
-                  <button 
+                  <button
                     className="btn bg-gray-200 text-gray-800 px-4 py-2 rounded"
                     onClick={() => {
                       setTempDateRange(dateRange);
@@ -104,7 +104,7 @@ const NotebookDates: React.FC = () => {
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-medium text-gray-900">Mevcut Tarih Aralığı</h3>
-                  <button 
+                  <button
                     className="btn bg-blue-500 text-white px-4 py-2 rounded"
                     onClick={() => {
                       setTempDateRange(dateRange);
@@ -131,34 +131,28 @@ const NotebookDates: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           <div className="mb-6">
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div className="flex items-center gap-2">
                 <div className="font-medium text-gray-900">Defter Toplama Aktif</div>
-                <div className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                  isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
+                <div className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
                   {isActive ? 'Açık' : 'Kapalı'}
                 </div>
               </div>
-              <div className="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
-                <input 
-                  type="checkbox" 
-                  name="toggle" 
-                  id="toggle-notebook-collection" 
-                  className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
                   checked={isActive}
                   onChange={() => setIsActive(!isActive)}
                 />
-                <label 
-                  htmlFor="toggle-notebook-collection" 
-                  className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
-                ></label>
-              </div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+              </label>
             </div>
           </div>
-          
+
           <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
             <div className="flex">
               <div className="flex-shrink-0 text-yellow-500">
@@ -168,7 +162,7 @@ const NotebookDates: React.FC = () => {
               </div>
               <div className="ml-3">
                 <p className="text-sm text-yellow-700">
-                  Belirlenen tarih aralığında öğrenciler staj defterlerini sisteme yükleyebilecektir. 
+                  Belirlenen tarih aralığında öğrenciler staj defterlerini sisteme yükleyebilecektir.
                   Bu tarih aralığının dışında normal öğrenciler defter yükleyemez, yalnızca mezun durumundaki öğrenciler
                   herhangi bir zamanda defter yükleyebilir.
                 </p>

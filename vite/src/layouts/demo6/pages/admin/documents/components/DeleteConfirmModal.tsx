@@ -1,4 +1,4 @@
-// /pages/admin/documents/components/DeleteConfirmModal.tsx
+// /src/layouts/demo6/pages/admin/documents/components/DeleteConfirmModal.tsx
 import React from 'react';
 
 interface DeleteConfirmModalProps {
@@ -18,13 +18,13 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({ onClose, onConf
       <div className="flex justify-end gap-2">
         <button
           onClick={onClose}
-          className="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+          className="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors rounded"
         >
           İptal
         </button>
         <button
           onClick={onConfirm}
-          className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 transition-colors"
+          className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 transition-colors rounded"
         >
           Sil
         </button>
