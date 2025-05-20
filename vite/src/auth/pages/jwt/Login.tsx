@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
+import axios from 'axios';
 import { KeenIcon } from '@/components';
 import { useAuthContext } from '@/auth';
 import { useLayout } from '@/providers';
@@ -35,6 +36,7 @@ const initialValues = {
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
+  const [departmentUpdateStatus, setDepartmentUpdateStatus] = useState<'pending' | 'success' | 'error' | null>(null);
   const { login, currentUser, isAdmin, isStudent, isCommissionMember } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,21 +46,70 @@ const Login = () => {
   const { t } = useLanguage();
 
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
+  
+  // Kayıt sonrası success mesajı gösterme
+  const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(
+    location.state?.successMessage || null
+  );
+  
+  // Kayıt sonrası email otomatik doldurma
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(
+    location.state?.registeredEmail || null
+  );
 
-  // Eğer kullanıcı zaten giriş yapmışsa, rolüne göre yönlendir
-  useEffect(() => {
-    if (currentUser) {
-      if (isAdmin()) {
-        navigate('/admin/dashboard', { replace: true });
-      } else if (isCommissionMember()) {
-        navigate('/commission/dashboard', { replace: true });
-      } else if (isStudent()) {
-        navigate('/student/dashboard', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+  // Departman güncelleme işlemi
+  const updateDepartment = async (userId: string) => {
+    const pendingDepartment = localStorage.getItem('pendingDepartment');
+    if (!pendingDepartment) return;
+
+    try {
+      setDepartmentUpdateStatus('pending');
+      
+      // Departman bilgisini güncelle
+      await axios.put(`/api/v1/users/${userId}/update`, {
+        departmentId: pendingDepartment
+      });
+      
+      // Başarılı güncelleme
+      console.log('Departman bilgisi güncellendi:', pendingDepartment);
+      setDepartmentUpdateStatus('success');
+      
+      // localStorage'dan temizle
+      localStorage.removeItem('pendingDepartment');
+    } catch (error) {
+      console.error('Departman güncelleme hatası:', error);
+      setDepartmentUpdateStatus('error');
     }
-  }, [currentUser, isAdmin, isStudent, isCommissionMember, navigate]);
+  };
+
+  useEffect(() => {
+  if (currentUser) {
+    // Departman kontrolü
+     //if (!currentUser.departmentId) {
+      // Departman bilgisi yoksa departman seçim sayfasına yönlendir
+       //navigate('/department-select', { replace: true });
+       //return;
+     //}
+
+    // Departman bilgisi varsa rolüne göre dashboard'a yönlendir
+    if (isAdmin()) {
+      navigate('/admin/dashboard', { replace: true });
+    } else if (isCommissionMember()) {
+      navigate('/commission/dashboard', { replace: true });
+    } else if (isStudent()) {
+      navigate('/student/dashboard', { replace: true });
+    } else {
+      navigate('/', { replace: true });
+    }
+  }
+}, [currentUser, isAdmin, isStudent, isCommissionMember, navigate]);
+
+  useEffect(() => {
+    // Kayıt sonrası otomatik email doldurma
+    if (registeredEmail && formik) {
+      formik.setFieldValue('email', registeredEmail);
+    }
+  }, [registeredEmail]);
 
   useEffect(() => {
     document.documentElement.style.height = '100%';
@@ -119,11 +170,13 @@ const Login = () => {
           localStorage.removeItem('email');
         }
 
-        // Login başarılı olduktan sonra kullanıcı rolüne göre yönlendirme yapacak
-        // useEffect hook'u ile kontrol edilecek, burada bir şey yapmaya gerek yok
+        // Login başarılı - useEffect içinde currentUser ile yönlendirme yapılacak
+        // useEffect, kullanıcıyı rolüne göre yönlendirecek ve varsa departman güncellemesi yapacak
+        console.log('Login successful!');
 
-      } catch {
-        setStatus(t('loginError'));
+      } catch (error) {
+        console.error('Login error:', error);
+        setStatus(t('loginError') || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
         setSubmitting(false);
         setLoading(false);
       }
@@ -148,6 +201,26 @@ const Login = () => {
             onSubmit={formik.handleSubmit}
             noValidate
           >
+            {/* Başarı mesajı - signup sonrası */}
+            {registrationSuccess && (
+              <Alert variant="success" className="mb-2">
+                {registrationSuccess}
+              </Alert>
+            )}
+
+            {/* Departman update durumu */}
+            {departmentUpdateStatus === 'success' && (
+              <Alert variant="success" className="mb-2">
+                Departman bilginiz başarıyla güncellendi!
+              </Alert>
+            )}
+            
+            {departmentUpdateStatus === 'error' && (
+              <Alert variant="warning" className="mb-2">
+                Departman bilginiz güncellenemedi. Profil sayfasından tekrar deneyebilirsiniz.
+              </Alert>
+            )}
+
             {formik.status && <Alert variant="danger">{formik.status}</Alert>}
 
             <div className="flex flex-col gap-1">

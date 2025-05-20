@@ -1,4 +1,4 @@
-// /pages/admin/applications/components/ApplicationFilters.tsx
+// src/layouts/demo6/pages/admin/applications/components/ApplicationFilters.tsx
 import React from 'react';
 
 interface ApplicationFiltersProps {

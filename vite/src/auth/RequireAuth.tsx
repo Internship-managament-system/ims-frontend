@@ -19,21 +19,22 @@ export const RequireAuth: FC<RequireAuthProps> = ({
   const { auth, currentUser, loading } = useAuthContext();
   const location = useLocation();
 
+  // Loading state - daha hassas kontrol
   if (loading) {
     return <ScreenLoader />;
   }
 
-  // Kullanıcı giriş yapmamışsa login sayfasına yönlendir
-  if (!auth || !currentUser) {
+  // AUTH KONTROLÜ - ÖNCELİKLE bu kontrol yapılmalı
+  if (!auth?.access_token || !currentUser) {
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
-  // Belirtilen roller varsa, kullanıcının rolünü kontrol et
+  // ROL KONTROLÜ - Auth kontrolünden sonra
   if (allowedRoles.length > 0 && !allowedRoles.includes(currentUser.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // Belirtilen izinler varsa, kullanıcının izinlerini kontrol et
+  // İZİN KONTROLÜ - Rol kontrolünden sonra
   if (allowedPermissions.length > 0) {
     const hasRequiredPermission = allowedPermissions.some(permission => 
       currentUser.permissions?.includes(permission)
@@ -43,8 +44,7 @@ export const RequireAuth: FC<RequireAuthProps> = ({
       return <Navigate to="/unauthorized" replace />;
     }
   }
-
-  // children prop varsa onu render et, yoksa Outlet'i render et
+  // Tüm kontroller başarılı - render et
   return children ? <>{children}</> : <Outlet />;
 };
 
@@ -57,7 +57,7 @@ export const SimpleRequireAuth = () => {
     return <ScreenLoader />;
   }
 
-  return auth ? <Outlet /> : <Navigate to="/auth/login" state={{ from: location }} replace />;
+  return auth?.access_token ? <Outlet /> : <Navigate to="/auth/login" state={{ from: location }} replace />;
 };
 
 export default RequireAuth;

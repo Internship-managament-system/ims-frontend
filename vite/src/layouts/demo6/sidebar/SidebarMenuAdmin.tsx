@@ -10,6 +10,7 @@ import {
   MenuSub,
   MenuTitle
 } from '@/components/menu';
+import path from 'path';
 
 const SidebarMenuAdmin = () => {
   const buildMenuArrow = () => {
@@ -66,6 +67,11 @@ const SidebarMenuAdmin = () => {
         },
       ]
     },
+    {
+      title: 'Şifre Yönetimi',
+      icon: 'lock',
+      path: '/admin/settings',
+    }
   ];
 
   // Build menu items from configuration

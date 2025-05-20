@@ -12,15 +12,14 @@ import CommissionManagement from '../layouts/demo6/pages/admin/commission';
 import ApplicationManagement from '../layouts/demo6/pages/admin/applications';
 import DocumentManagement from '../layouts/demo6/pages/admin/documents';
 import StudentQuery from '../layouts/demo6/pages/admin/students';
-import Reports from '../layouts/demo6/pages/admin/reports';
 import Settings from '../layouts/demo6/pages/admin/settings';
 
 // New Internship Settings Pages
-import { 
+import {
   ApplicationPeriod,
   NotebookDates,
   RejectionReasons,
-  InternshipDetails 
+  InternshipDetails
 } from '../layouts/demo6/pages/admin/internship-settings';
 
 // Student & Commission Pages
@@ -28,6 +27,7 @@ import StudentDashboard from '../layouts/demo6/pages/student/Dashboard';
 import CommissionDashboard from '../layouts/demo6/pages/commission/Dashboard';
 import Unauthorized from '../layouts/demo6/Unauthorized';
 import RoleBasedDashboard from './RoleBasedDashboard';
+import DepartmentSelect from '@/auth/pages/jwt/DepartmanSelect';
 
 const AppRoutingSetup = (): ReactElement => {
   return (
@@ -51,15 +51,26 @@ const AppRoutingSetup = (): ReactElement => {
         <Route path="applications" element={<ApplicationManagement />} />
         <Route path="documents" element={<DocumentManagement />} />
         <Route path="students" element={<StudentQuery />} />
-        <Route path="reports" element={<Reports />} />
-        <Route path="settings" element={<Settings />} />
         
+        <Route path="settings" element={<Settings />} />
+
         {/* New Internship Settings Routes */}
         <Route path="internship-settings/application-period" element={<ApplicationPeriod />} />
         <Route path="internship-settings/notebook-dates" element={<NotebookDates />} />
         <Route path="internship-settings/rejection-reasons" element={<RejectionReasons />} />
         <Route path="internship-settings/internship-details" element={<InternshipDetails />} />
       </Route>
+
+      {/* Department Select Route */}
+      <Route
+        path="department-select"
+        element={
+          <RequireAuth>
+            <DepartmentSelect />
+          </RequireAuth>
+        }
+      />
+
 
       {/* Student Routes */}
       <Route path="student/*" element={

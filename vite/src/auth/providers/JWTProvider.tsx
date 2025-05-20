@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse, AxiosError } from 'axios';
 import {
   createContext,
   type Dispatch,
@@ -11,21 +11,12 @@ import {
 
 import * as authHelper from '../_helpers';
 import { type AuthModel, type UserModel } from '@/auth';
-/*
-const API_URL = import.meta.env.VITE_APP_API_URL;
-export const LOGIN_URL = `${API_URL}/users/login`;
-export const REGISTER_URL = `${API_URL}/users/register`;
-export const FORGOT_PASSWORD_URL = `${API_URL}/forgot-password`;
-export const RESET_PASSWORD_URL = `${API_URL}/reset-password`;
-export const GET_USER_URL = `${API_URL}/users/info`; // '/info' endpoint'ini ekleyin*/
 
 export const LOGIN_URL = `/api/v1/users/login`;
 export const REGISTER_URL = `/api/v1/users/register`;
 export const FORGOT_PASSWORD_URL = `/api/v1/forgot-password`;
 export const RESET_PASSWORD_URL = `/api/v1/reset-password`;
 export const GET_USER_URL = `/api/v1/users/info`;
-
-
 
 interface AuthContextProps {
   loading: boolean;
@@ -38,7 +29,7 @@ interface AuthContextProps {
   loginWithGoogle?: () => Promise<void>;
   loginWithFacebook?: () => Promise<void>;
   loginWithGithub?: () => Promise<void>;
-  register: (email: string, password: string, password_confirmation: string) => Promise<void>;
+  register: (email: string, name: string, surname: string, departmentId?: string) => Promise<void>;
   requestPasswordResetLink: (email: string) => Promise<void>;
   changePassword: (
     email: string,
@@ -46,7 +37,8 @@ interface AuthContextProps {
     password: string,
     password_confirmation: string
   ) => Promise<void>;
-  getUser: () => Promise<AxiosResponse<any>>;
+  getUser: () => Promise<AxiosResponse<{ result: UserModel }>>;
+  updateUser: (userId: string, updateData: any) => Promise<void>;
   logout: () => void;
   verify: () => Promise<void>;
   // Rol kontrolü için yardımcı fonksiyonlar
@@ -61,30 +53,70 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 const AuthProvider = ({ children }: PropsWithChildren) => {
   const [loading, setLoading] = useState(true);
-  const [auth, setAuth] = useState<AuthModel | undefined>(authHelper.getAuth());
+  const [auth, setAuth] = useState<AuthModel | undefined>();
   const [currentUser, setCurrentUser] = useState<UserModel | undefined>();
 
-  // Sayfa yüklendiğinde kullanıcı bilgilerini kontrol et
+  // Sayfa yüklendiğinde auth durumunu kontrol et
   useEffect(() => {
-    if (auth) {
-      verify();
-    } else {
-      setLoading(false);
-    }
-  }, []);
+    const initializeAuth = async () => {
+      try {
+        const storedAuth = authHelper.getAuth();
+
+        if (storedAuth?.access_token) {
+          // Token'ın geçerli olup olmadığını kontrol et
+          if (authHelper.isTokenExpired && authHelper.isTokenExpired(storedAuth.access_token)) {
+            authHelper.removeAuth();
+            setLoading(false);
+            return;
+          }
+
+          // Token'ı header'a ayarla
+          axios.defaults.headers.common['Authorization'] = `Bearer ${storedAuth.access_token}`;
+
+          // Kullanıcı bilgilerini getir
+          const { data } = await getUser();
+          setCurrentUser(data.result);
+          setAuth(storedAuth);
+        }
+      } catch (error) {
+        console.error('Auth initialization failed:', error);
+        // Geçersiz token, temizle
+        authHelper.removeAuth();
+        delete axios.defaults.headers.common['Authorization'];
+        setAuth(undefined);
+        setCurrentUser(undefined);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []); // Boş dependency array ile sadece mount'ta çalış
 
   const verify = async () => {
-    if (auth) {
+    const currentAuth = authHelper.getAuth();
+
+    if (currentAuth && currentAuth.access_token) {
       try {
+        console.log('Verifying user with token:', currentAuth.access_token.substring(0, 10) + '...');
+
+        // Token expiry kontrolü
+        if (authHelper.isTokenExpired && authHelper.isTokenExpired(currentAuth.access_token)) {
+          throw new Error('Token expired');
+        }
+
         const { data } = await getUser();
-        // Backend'den Response<UserInfo> döndüğünü varsayalım
         setCurrentUser(data.result);
         setLoading(false);
-      } catch {
+      } catch (error) {
+        console.error('Verification failed:', error);
+        // Token geçersizse, auth'u temizle
         saveAuth(undefined);
         setCurrentUser(undefined);
         setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
   };
 
@@ -92,73 +124,117 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     setAuth(auth);
     if (auth) {
       authHelper.setAuth(auth);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${auth.access_token}`;
     } else {
       authHelper.removeAuth();
+      delete axios.defaults.headers.common['Authorization'];
     }
   };
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('Starting login request...'); // Debug için
+
       const { data } = await axios.post(LOGIN_URL, {
         email,
         password
       });
-      
-      // Backend'den gelen token'ı frontend'in beklediği formata dönüştür
+
+      console.log("Login response:", data); // Debug için
+
+      // Token kontrolü yapalım
+      if (!data.token) {
+        console.error("Login API did not return a token:", data);
+        throw new Error('Token alınamadı');
+      }
+
       const authData = {
-        access_token: data.token, // 'token' alanını 'access_token' olarak dönüştür
-        // AuthModel tipinde gerekli diğer alanları burada ekleyebilirsiniz
+        access_token: data.token,
       } as AuthModel;
-      
+
+      console.log('Saving auth data...'); // Debug için
+
+      // Auth kaydet
       saveAuth(authData);
-      
+
+      // Token kaydedildikten sonra kullanıcı bilgilerini al
       try {
+        console.log('Fetching user data...'); // Debug için
+
         const { data: userData } = await getUser();
-        // Backend Response<UserInfo> döndüğü için result alanından bilgileri al
         setCurrentUser(userData.result);
+
+        console.log('User data received:', userData.result); // Debug için
       } catch (getUserError) {
         console.error("User data fetch error:", getUserError);
+        // Token sorunuysa auth'u temizle
+        saveAuth(undefined);
+        throw new Error('Kullanıcı bilgileri alınamadı. Lütfen tekrar giriş yapın.');
       }
     } catch (error) {
+      console.error('Login error:', error);
       saveAuth(undefined);
-      throw new Error(`Error ${error}`);
+      throw error;
     }
   };
 
-  const register = async (email: string, name: string, surname: string) => {
+  // JWTProvider.tsx'te register fonksiyonunu güncelle:
+  const register = async (email: string, name: string, surname: string, departmentId?: string) => {
     try {
-      // API'ye göndermek için veri yapısını değiştir - şifre yerine ad ve soyad kullan
-      const { data } = await axios.post(REGISTER_URL, {
+      const registerData = {
         email,
-        name,     // Backend API'nin beklediği alan adı: name
-        surname   // Backend API'nin beklediği alan adı: surname
-      });
-      
-      // Backend'den gelen token'ı frontend'in beklediği formata dönüştür
-      const authData = {
-        access_token: data.token, // 'token' alanını 'access_token' olarak dönüştür
-        // AuthModel tipinde gerekli diğer alanları burada ekleyebilirsiniz
-      } as AuthModel;
-      
-      saveAuth(authData);
-      
-      try {
-        const { data: userData } = await getUser();
-        // Backend Response<UserInfo> döndüğü için result alanından bilgileri al
-        setCurrentUser(userData.result);
-      } catch (getUserError) {
-        console.error("User data fetch error:", getUserError);
+        name,
+        surname,
+        departmentId  // Departman bilgisini gönderiyoruz
+      };
+
+      console.log('Register request body:', registerData);
+
+      const response = await axios.post(REGISTER_URL, registerData);
+      console.log('Full register response:', response);
+
+      if (response.status === 200 || response.status === 201 || response.status === 204) {
+        console.log('Registration successful (status: ' + response.status + ')');
+        return;
       }
+
+      throw new Error('Registration failed with status: ' + response.status);
     } catch (error) {
-      saveAuth(undefined);
-      throw new Error(`Error ${error}`);
+      console.error('Register error:', error);
+
+      if (axios.isAxiosError(error) && error.response?.status === 204) {
+        console.log('Registration successful (204 No Content)');
+        return;
+      }
+
+      throw error;
+    }
+  };
+
+  const updateUser = async (userId: string, updateData: any) => {
+    try {
+      console.log('Updating user:', userId, 'with data:', updateData);
+
+      await axios.put(`/api/v1/users/${userId}/update`, updateData);
+
+      // Güncelleme sonrası kullanıcı bilgilerini yenile
+      const { data } = await getUser();
+      setCurrentUser(data.result);
+    } catch (error) {
+      console.error('User update error:', error);
+      throw error;
     }
   };
 
   const requestPasswordResetLink = async (email: string) => {
-    await axios.post(FORGOT_PASSWORD_URL, {
-      email
-    });
+    try {
+      await axios.post(FORGOT_PASSWORD_URL, {
+        email
+      });
+    } catch (error) {
+      console.error('Password reset request error:', error);
+      throw error;
+    }
   };
 
   const changePassword = async (
@@ -167,21 +243,41 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     password: string,
     password_confirmation: string
   ) => {
-    await axios.post(RESET_PASSWORD_URL, {
-      email,
-      token,
-      password,
-      password_confirmation
-    });
+    try {
+      await axios.post(RESET_PASSWORD_URL, {
+        email,
+        token,
+        password,
+        password_confirmation
+      });
+    } catch (error) {
+      console.error('Change password error:', error);
+      throw error;
+    }
   };
 
   const getUser = async () => {
-    return await axios.get<{result: UserModel}>(GET_USER_URL);
+    console.log('Fetching user info...');
+
+    // Bu noktada token otomatik olarak header'a eklenecek
+    const response = await axios.get<{ result: UserModel }>(GET_USER_URL);
+    console.log('User info response:', response.data);
+    return response;
   };
 
   const logout = () => {
-    saveAuth(undefined);
+    // State'leri temizle
     setCurrentUser(undefined);
+    saveAuth(undefined);
+
+    // localStorage'den auth ile ilgili tüm verileri temizle
+    localStorage.removeItem('email');
+
+    // Axios header'ını temizle
+    delete axios.defaults.headers.common['Authorization'];
+
+    // Login sayfasına yönlendir (replace ile)
+    window.location.replace('/auth/login');
   };
 
   // Rol kontrolü için yardımcı fonksiyonlar
@@ -219,6 +315,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         requestPasswordResetLink,
         changePassword,
         getUser,
+        updateUser,
         logout,
         verify,
         hasRole,

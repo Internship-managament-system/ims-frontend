@@ -1,4 +1,4 @@
-// /pages/admin/applications/index.tsx
+// src/layouts/demo6/pages/admin/applications/index.tsx
 import React, { useState } from 'react';
 import { Container } from '@/components';
 import AssignmentStatus from './components/AssignmentStatus';
@@ -21,7 +21,11 @@ const ApplicationManagement: React.FC = () => {
         />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-          <AssignmentStatus />
+          <AssignmentStatus 
+            pendingApplications={5}
+            internshipNotebooks={3}
+            graduateNotebooks={2}
+          />
           <EvaluationTracker />
         </div>
 

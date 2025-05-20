@@ -11,7 +11,6 @@ import {
 } from './pages/jwt';
 
 import { CheckEmail } from '@/auth/pages/jwt';
-
 const AuthPage = () => (
   <Routes>
     <Route >
@@ -25,6 +24,7 @@ const AuthPage = () => (
       <Route path="/reset-password/check-email" element={<ResetPasswordCheckEmail />} />
       <Route path="/reset-password/change" element={<ResetPasswordChange />} />
       <Route path="/reset-password/changed" element={<ResetPasswordChanged />} />
+      
       <Route path="*" element={<Navigate to="/error/404" />} />
     </Route>
 

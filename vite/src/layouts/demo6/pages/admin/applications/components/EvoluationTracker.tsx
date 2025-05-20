@@ -1,10 +1,20 @@
-// /src/layouts/demo6/pages/admin/Dashboard/components/EvaluationTracker.tsx
+// src/layouts/demo6/pages/admin/applications/components/EvaluationTracker.tsx
 import React, { useState } from 'react';
+
+interface Evaluation {
+  id: string;
+  student: string;
+  company: string;
+  points: number;
+  result: 'Onaylandı' | 'Kısmen Kabul' | 'Reddedildi';
+  evaluator: string;
+  reason?: string;
+}
 
 const EvaluationTracker: React.FC = () => {
   const [selectedEvaluation, setSelectedEvaluation] = useState<string | null>(null);
   
-  const evaluations = [
+  const evaluations: Evaluation[] = [
     { 
       id: '1', 
       student: 'Ahmet Yılmaz', 
@@ -33,6 +43,15 @@ const EvaluationTracker: React.FC = () => {
     }
   ];
   
+  const getStatusClass = (result: string) => {
+    switch(result) {
+      case 'Onaylandı': return 'bg-green-100 text-green-800';
+      case 'Kısmen Kabul': return 'bg-yellow-100 text-yellow-800';
+      case 'Reddedildi': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
       <h2 className="text-lg font-medium text-gray-900 mb-4">Değerlendirme Takibi</h2>
@@ -56,11 +75,7 @@ const EvaluationTracker: React.FC = () => {
                 <td className="px-4 py-3 text-sm text-gray-700">{evaluation.company}</td>
                 <td className="px-4 py-3 text-sm text-gray-700">{evaluation.points}</td>
                 <td className="px-4 py-3 text-sm">
-                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                    evaluation.result === 'Onaylandı' ? 'bg-green-100 text-green-800' :
-                    evaluation.result === 'Kısmen Kabul' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
+                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusClass(evaluation.result)}`}>
                     {evaluation.result}
                   </span>
                 </td>

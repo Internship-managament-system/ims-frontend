@@ -14,6 +14,7 @@ export interface UserModel {
   surname: string;
   role: string; // "ADMIN", "STUDENT", "COMMISSION_MEMBER" vb.
   permissions: string[]; // "CAN_CREATE_ADMIN_USER" vb. izinler
+  departmentId?: string; // Backend'den gelen departmentId alanı - UUID formatında
   
   // Mevcut model alanları (ihtiyaca göre kullanılabilir)
   username?: string;
@@ -29,4 +30,7 @@ export interface UserModel {
   pic?: string;
   language?: TLanguageCode;
   auth?: AuthModel;
+  
+  // Helper için eklenen alan - departmentId'yi department adına çevirmek için
+  department?: string; // Frontend'de kullanılacak, departmentId'den türetilecek
 }

@@ -1,11 +1,19 @@
 // /src/routing/RoleBasedDashboard.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthContext } from '@/auth';
 
 // Redirects users to the appropriate dashboard based on their role
 const RoleBasedDashboard: React.FC = () => {
   const { currentUser, loading, hasRole } = useAuthContext();
+  
+  useEffect(() => {
+    // Kullanıcı bilgisinde değişiklik olduğunda tarayıcı konsoluna yazdır
+    if (currentUser) {
+      console.log('Current user info:', currentUser);
+      console.log('Has department ID:', !!currentUser.departmentId);
+    }
+  }, [currentUser]);
   
   if (loading) {
     return (
@@ -15,10 +23,17 @@ const RoleBasedDashboard: React.FC = () => {
     );
   }
   
+  // Kullanıcı giriş yapmamışsa login sayfasına yönlendir
   if (!currentUser) {
     return <Navigate to="/auth/login" replace />;
   }
   
+  // Departman kontrolü
+  if (!currentUser.departmentId) {
+    return <Navigate to="/department-select" replace />;
+  }
+  
+  // Belirtilen roller için yönlendirme
   if (hasRole('ADMIN')) {
     return <Navigate to="/admin/dashboard" replace />;
   }
@@ -31,6 +46,7 @@ const RoleBasedDashboard: React.FC = () => {
     return <Navigate to="/student/dashboard" replace />;
   }
   
+  // Tanımlanmamış rol için yetkisiz sayfasına yönlendir
   return <Navigate to="/unauthorized" replace />;
 };
 

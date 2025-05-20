@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Container } from '@/components';
 import SettingsTabs from './components/SettingsTabs';
 import GeneralSettings from './components/GeneralSettings';
-import NotificationSettings from './components/NotificationSettings';
-import SecuritySettings from './components/SecuritySettings';
+import ChatbotManagement from './components/ChatbotManagement';
+import { ResetPassword, ResetPasswordChange } from '@/auth/pages/jwt';
+import PasswordChange from './components/PasswordChange';
 
 const Settings: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('general');
@@ -19,10 +20,11 @@ const Settings: React.FC = () => {
           />
 
           <div className="p-6">
-            {activeSection === 'general' && <GeneralSettings />}
-            {activeSection === 'notifications' && <NotificationSettings />}
-            {activeSection === 'security' && <SecuritySettings />}
+            {activeSection === 'general' && <PasswordChange />}
+            
           </div>
+          
+          
         </div>
       </div>
     </Container>
