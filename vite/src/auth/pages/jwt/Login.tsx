@@ -57,41 +57,33 @@ const Login = () => {
     location.state?.registeredEmail || null
   );
 
-  // Departman güncelleme işlemi
-  const updateDepartment = async (userId: string) => {
-    const pendingDepartment = localStorage.getItem('pendingDepartment');
-    if (!pendingDepartment) return;
+  // // Departman güncelleme işlemi
+  // const updateDepartment = async (userId: string) => {
+  //   const pendingDepartment = localStorage.getItem('pendingDepartment');
+  //   if (!pendingDepartment) return;
 
-    try {
-      setDepartmentUpdateStatus('pending');
+  //   try {
+  //     setDepartmentUpdateStatus('pending');
       
-      // Departman bilgisini güncelle
-      await axios.put(`/api/v1/users/${userId}/update`, {
-        departmentId: pendingDepartment
-      });
+  //     // Departman bilgisini güncelle
+  //     await axios.put(`/api/v1/users/${userId}/update`, {
+  //       departmentId: pendingDepartment
+  //     });
       
-      // Başarılı güncelleme
-      console.log('Departman bilgisi güncellendi:', pendingDepartment);
-      setDepartmentUpdateStatus('success');
+  //     // Başarılı güncelleme
+  //     console.log('Departman bilgisi güncellendi:', pendingDepartment);
+  //     setDepartmentUpdateStatus('success');
       
-      // localStorage'dan temizle
-      localStorage.removeItem('pendingDepartment');
-    } catch (error) {
-      console.error('Departman güncelleme hatası:', error);
-      setDepartmentUpdateStatus('error');
-    }
-  };
+  //     // localStorage'dan temizle
+  //     localStorage.removeItem('pendingDepartment');
+  //   } catch (error) {
+  //     console.error('Departman güncelleme hatası:', error);
+  //     setDepartmentUpdateStatus('error');
+  //   }
+  // };
 
   useEffect(() => {
   if (currentUser) {
-    // Departman kontrolü
-     //if (!currentUser.departmentId) {
-      // Departman bilgisi yoksa departman seçim sayfasına yönlendir
-       //navigate('/department-select', { replace: true });
-       //return;
-     //}
-
-    // Departman bilgisi varsa rolüne göre dashboard'a yönlendir
     if (isAdmin()) {
       navigate('/admin/dashboard', { replace: true });
     } else if (isCommissionMember()) {
@@ -103,6 +95,7 @@ const Login = () => {
     }
   }
 }, [currentUser, isAdmin, isStudent, isCommissionMember, navigate]);
+
 
   useEffect(() => {
     // Kayıt sonrası otomatik email doldurma

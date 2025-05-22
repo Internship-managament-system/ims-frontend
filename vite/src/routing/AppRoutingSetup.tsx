@@ -5,7 +5,7 @@ import { ErrorsRouting } from '@/errors';
 import { Demo6Layout } from '@/layouts/demo6';
 import { RequireAuth } from '@/auth/RequireAuth';
 import { AuthPage } from '@/auth';
-
+import UsersInfo from '../auth/pages/UsersInfo';
 // Admin Pages
 import Dashboard from '../layouts/demo6/pages/admin/Dashboard';
 import CommissionManagement from '../layouts/demo6/pages/admin/commission';
@@ -27,13 +27,18 @@ import StudentDashboard from '../layouts/demo6/pages/student/Dashboard';
 import CommissionDashboard from '../layouts/demo6/pages/commission/Dashboard';
 import Unauthorized from '../layouts/demo6/Unauthorized';
 import RoleBasedDashboard from './RoleBasedDashboard';
-import DepartmentSelect from '@/auth/pages/jwt/DepartmanSelect';
 
 const AppRoutingSetup = (): ReactElement => {
   return (
     <Routes>
       {/* Auth Routes */}
       <Route path="auth/*" element={<AuthPage />} />
+
+      <Route path="users/info" element={
+        <RequireAuth>
+          <UsersInfo />
+        </RequireAuth>
+      } />
 
       {/* Error Routes */}
       <Route path="error/*" element={<ErrorsRouting />} />
@@ -51,7 +56,7 @@ const AppRoutingSetup = (): ReactElement => {
         <Route path="applications" element={<ApplicationManagement />} />
         <Route path="documents" element={<DocumentManagement />} />
         <Route path="students" element={<StudentQuery />} />
-        
+
         <Route path="settings" element={<Settings />} />
 
         {/* New Internship Settings Routes */}
@@ -60,16 +65,6 @@ const AppRoutingSetup = (): ReactElement => {
         <Route path="internship-settings/rejection-reasons" element={<RejectionReasons />} />
         <Route path="internship-settings/internship-details" element={<InternshipDetails />} />
       </Route>
-
-      {/* Department Select Route */}
-      <Route
-        path="department-select"
-        element={
-          <RequireAuth>
-            <DepartmentSelect />
-          </RequireAuth>
-        }
-      />
 
 
       {/* Student Routes */}

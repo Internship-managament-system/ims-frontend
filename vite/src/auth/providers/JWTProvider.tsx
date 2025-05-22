@@ -164,6 +164,14 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         const { data: userData } = await getUser();
         setCurrentUser(userData.result);
 
+        // Profil tamamlanmamışsa setup sayfasına yönlendir
+        if (!userData.result.facultyId || !userData.result.departmentId) {
+          // Bu kontrol profil bilgilerinin eksik olduğunu varsayar
+          // Backend'den gelen user modelinde bu alanlar varsa
+          window.location.href = '/users/info';
+          return;
+        }
+
         console.log('User data received:', userData.result); // Debug için
       } catch (getUserError) {
         console.error("User data fetch error:", getUserError);

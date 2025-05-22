@@ -14,7 +14,12 @@ export interface UserModel {
   surname: string;
   role: string; // "ADMIN", "STUDENT", "COMMISSION_MEMBER" vb.
   permissions: string[]; // "CAN_CREATE_ADMIN_USER" vb. izinler
-  departmentId?: string; // Backend'den gelen departmentId alanı - UUID formatında
+  
+   // YENİ EKLENEN ALANLAR
+   facultyId?: string;
+   departmentId?: string;
+   facultyName?: string;
+   departmentName?: string;
   
   // Mevcut model alanları (ihtiyaca göre kullanılabilir)
   username?: string;
