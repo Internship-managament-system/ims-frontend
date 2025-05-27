@@ -18,7 +18,7 @@ interface Department {
 }
 
 const ProfileSetup: React.FC = () => {
-  const { currentUser } = useAuthContext();
+  const { currentUser, updateUser } = useAuthContext();
   const navigate = useNavigate();
   
   const [selectedFaculty, setSelectedFaculty] = useState<string>('');
@@ -28,6 +28,24 @@ const ProfileSetup: React.FC = () => {
   const [availableDepartments, setAvailableDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Kullanıcının zaten departman bilgisi varsa dashboard'a yönlendir
+  useEffect(() => {
+    if (currentUser && currentUser.departmentId && currentUser.departmentId !== '') {
+      console.log('User already has department info, redirecting to dashboard');
+      
+      // Rol kontrolüyle birlikte yönlendirme
+      if (currentUser.role === 'ADMIN') {
+        navigate('/admin/dashboard', { replace: true });
+      } else if (currentUser.role === 'COMMISSION_MEMBER') {
+        navigate('/commission/dashboard', { replace: true });
+      } else if (currentUser.role === 'STUDENT') {
+        navigate('/student/dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    }
+  }, [currentUser, navigate]);
 
   // Fakülte ve bölüm verilerini yükle
   useEffect(() => {
@@ -91,38 +109,24 @@ const ProfileSetup: React.FC = () => {
         userName: currentUser.name
       });
 
-      // Authorization header'ını kontrol et
-      const auth = localStorage.getItem('metronic-tailwind-react-auth-v1=9.1.1');
-      console.log('🔑 Auth token exists:', !!auth);
-      console.log('🔑 Auth token preview:', auth ? auth.substring(0, 50) + '...' : 'No token');
-
-      // Backend'e profil güncelleme isteği gönder
-      console.log('📤 Sending PUT request to:', `/api/v1/users/${currentUser.id}/update`);
-      
-      const response = await axios.put(`/api/v1/users/${currentUser.id}/update`, {
+      // Auth context'teki updateUser fonksiyonunu kullan
+      // Bu fonksiyon hem backend'i güncelleyecek hem de currentUser state'ini güncelleyecek
+      await updateUser(currentUser.id, {
         facultyId: selectedFaculty,
         departmentId: selectedDepartment
       });
 
-      console.log('✅ Profile update response:', response.data);
-      console.log('✅ Response status:', response.status);
-
-      // Backend response kontrolü - 200/201 status code'u başarı sayalım
-      if (response.status === 200 || response.status === 201) {
-        console.log('Profile updated successfully, redirecting...');
-        
-        // Başarılı olursa kullanıcıyı dashboard'a yönlendir
-        if (currentUser?.role === 'ADMIN') {
-          navigate('/admin/dashboard');
-        } else if (currentUser?.role === 'COMMISSION_MEMBER') {
-          navigate('/commission/dashboard');
-        } else if (currentUser?.role === 'STUDENT') {
-          navigate('/student/dashboard');
-        } else {
-          navigate('/');
-        }
+      console.log('Profile updated successfully via auth context');
+      
+      // Başarılı olursa kullanıcıyı dashboard'a yönlendir
+      if (currentUser?.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+      } else if (currentUser?.role === 'COMMISSION_MEMBER') {
+        navigate('/commission/dashboard');
+      } else if (currentUser?.role === 'STUDENT') {
+        navigate('/student/dashboard');
       } else {
-        throw new Error(response.data.message || 'Profil güncellenemedi');
+        navigate('/');
       }
     } catch (error: any) {
       console.error('Profil güncelleme hatası:', error);

@@ -99,8 +99,7 @@ const Header: React.FC = () => {
 
                     <div className="flex items-center ml-28">
                         <div className="ml-4">
-                            <h1 className="text-xl header-title">{t('computerEngineering')}</h1>
-                            <h2 className="text-2xl font-black header-title">{t('internshipSystem')}</h2>
+                            <h2 className="text-3xl font-black header-title">{t('internshipSystem')}</h2>
                         </div>
                     </div>
 

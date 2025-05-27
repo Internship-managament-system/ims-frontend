@@ -2,6 +2,7 @@
 import { useMenus } from '@/providers';
 import { useAuthContext } from '@/auth';
 import { SidebarMenuAdmin } from './SidebarMenuAdmin';
+import { SidebarMenuStudent } from './SidebarMenuStudent';
 import clsx from 'clsx';
 import { KeenIcon } from '@/components/keenicons';
 import {
@@ -136,16 +137,17 @@ const SidebarMenuPrimary = () => {
   // Render the appropriate menu based on user role
   if (currentUser?.role === 'ADMIN') {
     return <SidebarMenuAdmin />;
+  } else if (currentUser?.role === 'STUDENT') {
+    return <SidebarMenuStudent />;
   } else if (currentUser?.role === 'COMMISSION_MEMBER') {
-    // If we had a commission member menu, we'd use it here
-    // return <SidebarMenuCommission />;
+    // Komisyon menüsü varsa onu ekle
     return (
       <Menu highlight={true} multipleExpand={false} className="sidebar-menu-primary flex flex-col w-full gap-1.5 px-3.5">
         {menuConfig && buildMenu(menuConfig)}
       </Menu>
     );
   } else {
-    // Default to standard menu for students and other roles
+    // Diğer roller için default menü
     return (
       <Menu highlight={true} multipleExpand={false} className="sidebar-menu-primary flex flex-col w-full gap-1.5 px-3.5">
         {menuConfig && buildMenu(menuConfig)}

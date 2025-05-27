@@ -8,10 +8,14 @@ const RoleBasedDashboard: React.FC = () => {
   const { currentUser, loading, hasRole } = useAuthContext();
 
   useEffect(() => {
-    // Kullanıcı bilgisinde değişiklik olduğunda tarayıcı konsoluna yazdır
+    // Kullanıcı bilgisinde değişiklik olduğunda tarayıcı konsoluna yazdır (sadece debug için)
     if (currentUser) {
-      console.log('Current user info:', currentUser);
-      console.log('Has department ID:', !!currentUser.departmentId);
+      console.log('RoleBasedDashboard - Current user info:', {
+        id: currentUser.id,
+        role: currentUser.role,
+        hasDepartmentId: !!currentUser.departmentId,
+        hasFacultyId: !!currentUser.facultyId
+      });
     }
   }, [currentUser]);
 
@@ -28,13 +32,10 @@ const RoleBasedDashboard: React.FC = () => {
     return <Navigate to="/auth/login" replace />;
   }
 
-  // // Yeni eklenen profil kontrolü:
-  // if (!currentUser.facultyId || !currentUser.departmentId) {
-  //   return <Navigate to="/users/info" replace />;
-  // }
-
-  // Departman kontrolü
-  if (!currentUser.departmentId) {
+  // Departman kontrolü - sadece gerçekten eksikse yönlendir
+  // null, undefined veya boş string kontrolü yap
+  if (!currentUser.departmentId || currentUser.departmentId === '') {
+    console.log('RoleBasedDashboard - Redirecting to profile setup, departmentId:', currentUser.departmentId);
     return <Navigate to="/users/info" replace />;
   }
 

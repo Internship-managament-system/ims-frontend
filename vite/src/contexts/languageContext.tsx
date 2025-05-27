@@ -32,7 +32,7 @@ const translations: Record<Language, Record<string, string>> = {
     'computerEngineering': 'BİLGİSAYAR MÜHENDİSLİĞİ',
     'internshipSystem': 'STAJ BİLGİ SİSTEMİ',
     // Footer
-    'footer.address': 'Erciyes Üniversitesi Mühendislik Fakültesi Bilgisayar Mühendisliği Bölüm Başkanlığı 38039 Talas / KAYSERİ',
+    'footer.address': 'Yenidoğan Mahallesi Turhan Baytop Sokak No:1 38280 TALAS / KAYSERİ',
     'footer.eru': 'Erciyes Üniversitesi',
     'footer.announcements': 'Duyurular',
     'footer.engineering': 'Mühendislik Fakültesi',

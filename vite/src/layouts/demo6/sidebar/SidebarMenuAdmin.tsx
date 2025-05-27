@@ -10,7 +10,6 @@ import {
   MenuSub,
   MenuTitle
 } from '@/components/menu';
-import path from 'path';
 
 const SidebarMenuAdmin = () => {
   const buildMenuArrow = () => {
@@ -37,14 +36,30 @@ const SidebarMenuAdmin = () => {
     {
       title: 'Başvuru Yönetimi',
       icon: 'document',
-      path: '/admin/applications',
+      children: [
+        {
+          title: 'Genel Durum',
+          path: '/admin/applications/overview',
+        },
+        {
+          title: 'Başvurular',
+          path: '/admin/applications/list',
+        },
+        {
+          title: 'Değerlendirmeler',
+          path: '/admin/applications/evaluations',
+        },
+        {
+          title: 'Atamalar',
+          path: '/admin/applications/assignments',
+        },
+      ]
     },
     {
       title: 'Belge Yönetimi',
       icon: 'folder',
       path: '/admin/documents',
     },
-    // New item: Internship Settings
     {
       title: 'Staj Ayarları',
       icon: 'setting-2',

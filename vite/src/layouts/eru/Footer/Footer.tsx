@@ -50,18 +50,18 @@ const Footer: React.FC<FooterProps> = ({
               <div className="mb-3">
                 <a href="tel:+903522076666 x 32500" className="text-white hover-top d-inline-block">
                   <FontAwesomeIcon icon={faSquarePhoneFlip} className="mr-2" />
-                  {' '}+903522076666 x 32500
+                  {' '}+90 352 207 6666
                 </a>
               </div>
 
               <div className="mb-3">
                 <FontAwesomeIcon icon={faPrint} className="mr-2 text-white" />
-                {' '}+903524375784
+                {' '}+90 352 437 4931
               </div>
 
               <div className="mb-3">
                 <FontAwesomeIcon icon={faEnvelope} className="mr-2 text-white" />
-                {' '}bmbb@erciyes.edu.tr
+                {' '}basinyayin@erciyes.edu.tr
               </div>
             </div>
 
@@ -80,12 +80,6 @@ const Footer: React.FC<FooterProps> = ({
                       <a target="_blank" rel="noopener noreferrer" href="/tr/duyuru/tum-duyurular">
                         <FontAwesomeIcon icon={faChevronRight} />
                         &nbsp;&nbsp;{t('footer.announcements')}
-                      </a>
-                    </li>
-                    <li className="col-md-4 col-6 p-0 m-0">
-                      <a target="_blank" rel="noopener noreferrer" href="https://mf.erciyes.edu.tr/">
-                        <FontAwesomeIcon icon={faChevronRight} />
-                        &nbsp;&nbsp;{t('footer.engineering')}
                       </a>
                     </li>
                     <li className="col-md-4 col-6 p-0 m-0">
@@ -143,7 +137,6 @@ const Footer: React.FC<FooterProps> = ({
             {/* Telif Hakkı Bilgisi */}
             <div className="col-lg-7 text-center text-lg-right p-2 text-grey">
               {t('footer.rights')}<br />
-              <span className="small">{t('footer.contactResponsible')}</span>
             </div>
           </div>
         </div>
