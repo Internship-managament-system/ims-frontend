@@ -62,7 +62,7 @@ const EvaluationTracker: React.FC = () => {
             <tr className="border-b border-gray-200">
               <th className="px-4 py-2 text-sm font-medium text-gray-500">Öğrenci Adı</th>
               <th className="px-4 py-2 text-sm font-medium text-gray-500">Şirket</th>
-              <th className="px-4 py-2 text-sm font-medium text-gray-500">Eksiklik Puanı</th>
+              
               <th className="px-4 py-2 text-sm font-medium text-gray-500">Sonuç</th>
               <th className="px-4 py-2 text-sm font-medium text-gray-500">Değerlendiren</th>
               <th className="px-4 py-2 text-sm font-medium text-gray-500">İşlem</th>
@@ -73,7 +73,7 @@ const EvaluationTracker: React.FC = () => {
               <tr key={evaluation.id} className="border-b border-gray-200">
                 <td className="px-4 py-3 text-sm text-gray-700">{evaluation.student}</td>
                 <td className="px-4 py-3 text-sm text-gray-700">{evaluation.company}</td>
-                <td className="px-4 py-3 text-sm text-gray-700">{evaluation.points}</td>
+                
                 <td className="px-4 py-3 text-sm">
                   <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusClass(evaluation.result)}`}>
                     {evaluation.result}
