@@ -2,13 +2,11 @@
 import React, { useState } from 'react';
 import { Container } from '@/components';
 import SettingsTabs from './components/SettingsTabs';
-import GeneralSettings from './components/GeneralSettings';
-import ChatbotManagement from './components/ChatbotManagement';
-import { ResetPassword, ResetPasswordChange } from '@/auth/pages/jwt';
-import PasswordChange from './components/PasswordChange';
+import ProfileSettings from './components/ProfileSettings';
+import AccountManagement from './components/AccountManagement';
 
 const Settings: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<string>('general');
+  const [activeSection, setActiveSection] = useState<string>('profile');
 
   return (
     <Container>
@@ -20,11 +18,9 @@ const Settings: React.FC = () => {
           />
 
           <div className="p-6">
-            {activeSection === 'general' && <PasswordChange />}
-            
+            {activeSection === 'profile' && <ProfileSettings />}
+            {activeSection === 'account' && <AccountManagement />}
           </div>
-          
-          
         </div>
       </div>
     </Container>

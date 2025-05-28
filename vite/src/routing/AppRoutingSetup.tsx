@@ -13,9 +13,9 @@ import CommissionManagement from '../layouts/demo6/pages/admin/commission';
 import DocumentManagement from '../layouts/demo6/pages/admin/documents';
 import StudentQuery from '../layouts/demo6/pages/admin/students';
 import Settings from '../layouts/demo6/pages/admin/settings';
+import FAQManagement from '../layouts/demo6/pages/admin/faq';
 
 // Application Management Components
-import ApplicationOverview from '../layouts/demo6/pages/admin/applications/ApplicationOverview';
 import ApplicationList from '../layouts/demo6/pages/admin/applications/ApplicationList';
 import ApplicationEvaluations from '../layouts/demo6/pages/admin/applications/ApplicationEvaluations';
 import ApplicationAssignments from '../layouts/demo6/pages/admin/applications/ApplicationAssignments';
@@ -25,7 +25,8 @@ import {
   ApplicationPeriod,
   NotebookDates,
   RejectionReasons,
-  InternshipDetails
+  InternshipDetails,
+  InternshipDuration
 } from '../layouts/demo6/pages/admin/internship-settings';
 
 // Student & Commission Pages
@@ -41,6 +42,7 @@ import Profile from '../layouts/demo6/pages/student/profile/Profile';
 import ChangePassword from '../layouts/demo6/pages/student/profile/ChangePassword';
 import Applications from '../layouts/demo6/pages/student/applications/Applications';
 import Documents from '../layouts/demo6/pages/student/documents/Documents';
+import NotebookUpload from '../layouts/demo6/pages/student/notebook-upload/NotebookUpload';
 
 const AppRoutingSetup = (): ReactElement => {
   return (
@@ -69,7 +71,6 @@ const AppRoutingSetup = (): ReactElement => {
         <Route path="commission" element={<CommissionManagement />} />
         
         {/* Application Management Routes */}
-        <Route path="applications/overview" element={<ApplicationOverview />} />
         <Route path="applications/list" element={<ApplicationList />} />
         <Route path="applications/evaluations" element={<ApplicationEvaluations />} />
         <Route path="applications/assignments" element={<ApplicationAssignments />} />
@@ -77,12 +78,16 @@ const AppRoutingSetup = (): ReactElement => {
         <Route path="documents" element={<DocumentManagement />} />
         <Route path="students" element={<StudentQuery />} />
         <Route path="settings" element={<Settings />} />
-
+        
         {/* Internship Settings Routes */}
         <Route path="internship-settings/application-period" element={<ApplicationPeriod />} />
         <Route path="internship-settings/notebook-dates" element={<NotebookDates />} />
         <Route path="internship-settings/rejection-reasons" element={<RejectionReasons />} />
         <Route path="internship-settings/internship-details" element={<InternshipDetails />} />
+        <Route path="internship-settings/internship-duration" element={<InternshipDuration />} />
+
+        {/* FAQ Management Routes */}
+        <Route path="faq" element={<FAQManagement />} />
       </Route>
 
       {/* Student Routes */}
@@ -94,6 +99,7 @@ const AppRoutingSetup = (): ReactElement => {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="applications" element={<Applications />} />
+        <Route path="notebook-upload" element={<NotebookUpload />} />
         <Route path="processes" element={<Processes />} />
         <Route path="notebook" element={<Notebook />} />
         <Route path="documents" element={<Documents />} />

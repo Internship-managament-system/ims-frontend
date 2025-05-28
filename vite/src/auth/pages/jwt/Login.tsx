@@ -28,10 +28,17 @@ const loginSchema = Yup.object().shape({
   remember: Yup.boolean()
 });
 
-const initialValues = {
-  email: '',
-  password: '',
-  remember: false
+// localStorage'dan kaydedilmiş bilgileri oku
+const getInitialValues = () => {
+  const savedEmail = localStorage.getItem('rememberedEmail');
+  const savedPassword = localStorage.getItem('rememberedPassword');
+  const wasRemembered = localStorage.getItem('rememberMe') === 'true';
+
+  return {
+    email: wasRemembered && savedEmail ? savedEmail : '',
+    password: wasRemembered && savedPassword ? savedPassword : '',
+    remember: wasRemembered
+  };
 };
 
 const Login = () => {
@@ -104,6 +111,8 @@ const Login = () => {
     }
   }, [registeredEmail]);
 
+
+
   useEffect(() => {
     document.documentElement.style.height = '100%';
     document.documentElement.style.overflowX = 'hidden';
@@ -145,7 +154,7 @@ const Login = () => {
   }, []);
 
   const formik = useFormik({
-    initialValues,
+    initialValues: getInitialValues(),
     validationSchema: loginSchema,
     onSubmit: async (values, { setStatus, setSubmitting }) => {
       setLoading(true);
@@ -158,9 +167,16 @@ const Login = () => {
         await login(values.email, values.password);
 
         if (values.remember) {
-          localStorage.setItem('email', values.email);
+          // Beni hatırla seçiliyse email ve şifreyi kaydet
+          localStorage.setItem('rememberedEmail', values.email);
+          localStorage.setItem('rememberedPassword', values.password);
+          localStorage.setItem('rememberMe', 'true');
         } else {
-          localStorage.removeItem('email');
+          // Beni hatırla seçili değilse kaydedilmiş bilgileri temizle
+          localStorage.removeItem('rememberedEmail');
+          localStorage.removeItem('rememberedPassword');
+          localStorage.removeItem('rememberMe');
+          localStorage.removeItem('email'); // Eski email kaydını da temizle
         }
 
         // Login başarılı - useEffect içinde currentUser ile yönlendirme yapılacak
@@ -245,20 +261,24 @@ const Login = () => {
               <label className="input">
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder={t('password')}
+                  placeholder={t('enterPassword')}
                   autoComplete="off"
+                  data-lpignore="true"
+                  data-form-type="other"
                   {...formik.getFieldProps('password')}
                   className={clsx('form-control', {
                     'is-invalid': formik.touched.password && formik.errors.password
                   })}
                 />
-                <button className="btn btn-icon" onClick={togglePassword}>
-                  <KeenIcon icon="eye" className={clsx('text-gray-500', { hidden: showPassword })} />
-                  <KeenIcon
-                    icon="eye-slash"
-                    className={clsx('text-gray-500', { hidden: !showPassword })}
-                  />
-                </button>
+                {formik.values.password && (
+                  <button className="btn btn-icon" onClick={togglePassword}>
+                    <KeenIcon icon="eye" className={clsx('text-gray-500', { hidden: showPassword })} />
+                    <KeenIcon
+                      icon="eye-slash"
+                      className={clsx('text-gray-500', { hidden: !showPassword })}
+                    />
+                  </button>
+                )}
               </label>
               {formik.touched.password && formik.errors.password && (
                 <span role="alert" className="text-danger text-xs mt-1">

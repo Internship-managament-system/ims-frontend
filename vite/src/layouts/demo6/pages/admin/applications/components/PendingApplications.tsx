@@ -26,9 +26,11 @@ interface PendingApplicationsProps {
 
 const PendingApplications: React.FC<PendingApplicationsProps> = ({ limit }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = limit || 10;
+  const [itemsPerPage, setItemsPerPage] = useState(limit || 10);
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState<number | null>(null);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('all');
+  const [jumpToPage, setJumpToPage] = useState<string>('');
 
   // Commission members data
   const commissionMembers: CommissionMember[] = [
@@ -115,6 +117,22 @@ const PendingApplications: React.FC<PendingApplicationsProps> = ({ limit }) => {
     }
   ]);
 
+  // Status tabs
+  const statusTabs = [
+    { key: 'all', label: 'Tümü', count: applications.length },
+    { key: 'Beklemede', label: 'Beklemede', count: applications.filter(app => app.status === 'Beklemede').length },
+    { key: 'Eksik', label: 'Eksik', count: applications.filter(app => app.status === 'Eksik').length },
+    { key: 'Onaylandı', label: 'Onaylandı', count: applications.filter(app => app.status === 'Onaylandı').length },
+  ];
+
+  // Filter applications by active tab
+  const getFilteredApplications = () => {
+    if (activeTab === 'all') {
+      return applications;
+    }
+    return applications.filter(app => app.status === activeTab);
+  };
+
   // Change assignee for an application
   const changeAssignee = (applicationId: number, newAssignee: string) => {
     setApplications(applications.map(app => 
@@ -125,36 +143,78 @@ const PendingApplications: React.FC<PendingApplicationsProps> = ({ limit }) => {
 
   // Get current page items
   const getCurrentItems = () => {
+    const filteredApps = getFilteredApplications();
     if (limit) {
-      return applications.slice(0, limit);
+      return filteredApps.slice(0, limit);
     }
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    return applications.slice(indexOfFirstItem, indexOfLastItem);
+    return filteredApps.slice(indexOfFirstItem, indexOfLastItem);
   };
 
   // Total pages
-  const totalPages = Math.ceil(applications.length / itemsPerPage);
+  const totalPages = Math.ceil(getFilteredApplications().length / itemsPerPage);
 
-  // Generate pagination buttons
-  const paginationButtons = () => {
-    const buttons = [];
-    for (let i = 1; i <= totalPages; i++) {
-      buttons.push(
-        <button
-          key={i}
-          className={`px-3 py-1 mx-1 rounded ${i === currentPage ? 'bg-[#13126e] text-white' : 'bg-gray-200'}`}
-          onClick={() => setCurrentPage(i)}
-        >
-          {i}
-        </button>
-      );
+  // Generate pagination buttons with smart range
+  const getPaginationRange = () => {
+    const delta = 2; // Number of pages to show on each side of current page
+    const range = [];
+    const rangeWithDots = [];
+
+    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+      range.push(i);
     }
-    return buttons;
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else {
+      if (totalPages > 1) {
+        rangeWithDots.push(totalPages);
+      }
+    }
+
+    return rangeWithDots;
   };
 
   const handleViewDetails = (application: Application) => {
     setSelectedApplication(application);
+  };
+
+  // Reset page when tab changes
+  const handleTabChange = (tabKey: string) => {
+    setActiveTab(tabKey);
+    setCurrentPage(1);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+
+  // Handle jump to page
+  const handleJumpToPage = () => {
+    const pageNumber = parseInt(jumpToPage);
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+      setJumpToPage('');
+    }
+  };
+
+  // Calculate current range
+  const getCurrentRange = () => {
+    const filteredApps = getFilteredApplications();
+    const start = (currentPage - 1) * itemsPerPage + 1;
+    const end = Math.min(currentPage * itemsPerPage, filteredApps.length);
+    return { start, end, total: filteredApps.length };
   };
 
   return (
@@ -163,11 +223,27 @@ const PendingApplications: React.FC<PendingApplicationsProps> = ({ limit }) => {
         <h2 className="text-lg font-medium text-gray-900">
           {limit ? 'Son Başvurular' : 'Tüm Başvurular'}
         </h2>
-        {limit && (
-          <button className="btn bg-[#13126e] text-white text-sm py-1 px-3 rounded">
-            Tümünü Görüntüle
-          </button>
-        )}
+      </div>
+
+      {/* Status Tabs */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            {statusTabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === tab.key
+                    ? 'border-[#13126e] text-[#13126e]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </nav>
+        </div>
       </div>
       
       <div className="overflow-x-auto">
@@ -235,26 +311,94 @@ const PendingApplications: React.FC<PendingApplicationsProps> = ({ limit }) => {
           </tbody>
         </table>
 
-        {/* Pagination for full view */}
-        {!limit && totalPages > 1 && (
-          <div className="flex justify-center mt-4">
-            <button
-              className="px-3 py-1 mx-1 rounded bg-gray-200 disabled:opacity-50"
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <KeenIcon icon="arrow-left" />
-            </button>
-            
-            {paginationButtons()}
-            
-            <button
-              className="px-3 py-1 mx-1 rounded bg-gray-200 disabled:opacity-50"
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              <KeenIcon icon="arrow-right" />
-            </button>
+        {/* Simple Pagination like in photo */}
+        {!limit && (
+          <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+            {/* Left side - Record info */}
+            <div className="text-sm text-gray-600">
+              {(() => {
+                const range = getCurrentRange();
+                return `Toplam ${range.total} kayıttan ${range.start}-${range.end} arası gösteriliyor`;
+              })()}
+            </div>
+
+            {/* Right side - Controls */}
+            <div className="flex items-center gap-4">
+              {/* Items per page */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Sayfa başına:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+
+              {/* Pagination buttons */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  {/* Previous button */}
+                  <button
+                    className="p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <KeenIcon icon="arrow-left" className="w-4 h-4" />
+                  </button>
+
+                  {/* Page numbers */}
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-8 h-8 text-sm rounded ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  {/* Next button */}
+                  <button
+                    className="p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <KeenIcon icon="arrow-right" className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* No results message */}
+        {getCurrentItems().length === 0 && (
+          <div className="text-center py-8">
+            <div className="text-gray-500">
+              {activeTab === 'all' ? 'Henüz başvuru bulunmuyor.' : `${statusTabs.find(t => t.key === activeTab)?.label} durumunda başvuru bulunmuyor.`}
+            </div>
           </div>
         )}
       </div>
@@ -331,22 +475,12 @@ const PendingApplications: React.FC<PendingApplicationsProps> = ({ limit }) => {
               </div>
             </div>
             
-            <div className="mt-6 flex justify-end space-x-2">
+            <div className="mt-6 flex justify-end">
               <button 
                 className="btn bg-gray-200 text-gray-800 py-2 px-4 rounded"
                 onClick={() => setSelectedApplication(null)}
               >
                 Kapat
-              </button>
-              <button 
-                className="btn bg-green-600 text-white py-2 px-4 rounded"
-              >
-                Onayla
-              </button>
-              <button 
-                className="btn bg-red-600 text-white py-2 px-4 rounded"
-              >
-                Reddet
               </button>
             </div>
           </div>

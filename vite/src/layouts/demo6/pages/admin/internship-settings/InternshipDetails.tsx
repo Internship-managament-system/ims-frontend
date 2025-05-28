@@ -527,20 +527,32 @@ const InternshipDetails: React.FC = () => {
           <h2 className="text-xl font-semibold mb-6">Staj Detayları</h2>
           
           <div className="mb-6">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <KeenIcon icon="search" className="text-gray-400" />
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <KeenIcon icon="magnifier" className="text-gray-400" />
+                </div>
+                <input 
+                  type="text" 
+                  className="border border-gray-300 rounded-md p-2 pl-10 w-full focus:outline-none focus:ring-1 focus:ring-[#13126e] focus:border-[#13126e]"
+                  placeholder="Öğrenci adı, öğrenci numarası veya şirkete göre ara..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPagination({ ...pagination, currentPage: 1 }); // Aramada ilk sayfaya dön
+                  }}
+                />
               </div>
-              <input 
-                type="text" 
-                className="border border-gray-300 rounded-md p-2 pl-10 w-full"
-                placeholder="Öğrenci adı, öğrenci numarası veya şirkete göre ara..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPagination({ ...pagination, currentPage: 1 }); // Aramada ilk sayfaya dön
+              <button 
+                className="btn bg-[#13126e] text-white px-4 py-2 rounded-md hover:bg-[#1f1e7e] transition-colors flex items-center gap-2"
+                onClick={() => {
+                  // Arama butonu tıklandığında filtreleme yap (zaten otomatik yapılıyor ama buton görsel amaçlı)
+                  setPagination({ ...pagination, currentPage: 1 });
                 }}
-              />
+              >
+                <KeenIcon icon="magnifier" />
+                Ara
+              </button>
             </div>
           </div>
           

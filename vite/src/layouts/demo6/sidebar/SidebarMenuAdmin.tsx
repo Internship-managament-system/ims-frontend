@@ -38,16 +38,8 @@ const SidebarMenuAdmin = () => {
       icon: 'document',
       children: [
         {
-          title: 'Genel Durum',
-          path: '/admin/applications/overview',
-        },
-        {
           title: 'Başvurular',
           path: '/admin/applications/list',
-        },
-        {
-          title: 'Değerlendirmeler',
-          path: '/admin/applications/evaluations',
         },
         {
           title: 'Atamalar',
@@ -59,6 +51,11 @@ const SidebarMenuAdmin = () => {
       title: 'Belge Yönetimi',
       icon: 'folder',
       path: '/admin/documents',
+    },
+    {
+      title: 'SSS Yönetimi',
+      icon: 'questionnaire-tablet',
+      path: '/admin/faq',
     },
     {
       title: 'Staj Ayarları',
@@ -80,11 +77,15 @@ const SidebarMenuAdmin = () => {
           title: 'Staj Detayları',
           path: '/admin/internship-settings/internship-details',
         },
+        {
+          title: 'Staj Süresi',
+          path: '/admin/internship-settings/internship-duration',
+        },
       ]
     },
     {
-      title: 'Şifre Yönetimi',
-      icon: 'lock',
+      title: 'Hesap Ayarları',
+      icon: 'setting-2',
       path: '/admin/settings',
     }
   ];
@@ -143,7 +144,6 @@ const SidebarMenuAdmin = () => {
   return (
     <Menu highlight={true} multipleExpand={false} className="sidebar-menu-primary flex flex-col w-full gap-1.5 px-3.5">
       {buildMenuItems()}
-      <div className="border-b border-gray-300 mt-4 mb-1 mx-3.5"></div>
     </Menu>
   );
 };

@@ -21,20 +21,21 @@ const SidebarMenuStudent = () => {
   // Student specific menu items (submenu yapısı)
   const studentMenuItems = [
     {
-      title: 'Staj Yönetimi',
-      icon: 'element-11',
-      children: [
-        { title: 'Panel', path: '/student/dashboard' },
-        { title: 'Başvurularım', path: '/student/applications' },
-        { title: 'Staj Süreçlerim', path: '/student/processes' },
-        { title: 'Staj Defteri', path: '/student/notebook' },
-      ],
+      title: 'Anasayfa',
+      icon: 'home-2',
+      path: '/student/dashboard',
     },
     {
-      title: 'Belgeler',
-      icon: 'folder',
+      title: 'Staj Defteri Yükleme',
+      icon: 'book-open',
+      path: '/student/notebook-upload',
+    },
+    {
+      title: 'Hesap Ayarları',
+      icon: 'setting-2',
       children: [
-        { title: 'Belge Yükleme', path: '/student/documents' },
+        { title: 'Profilim', path: '/student/profile' },
+        { title: 'Şifre Değiştir', path: '/student/change-password' },
       ],
     },
     {
@@ -43,14 +44,6 @@ const SidebarMenuStudent = () => {
       children: [
         { title: 'Canlı Destek', path: '/student/support' },
         { title: 'SSS', path: '/student/faq' },
-      ],
-    },
-    {
-      title: 'Hesap Ayarları',
-      icon: 'setting-2',
-      children: [
-        { title: 'Profilim', path: '/student/profile' },
-        { title: 'Şifre Değiştir', path: '/student/change-password' },
       ],
     },
   ];
@@ -87,14 +80,28 @@ const SidebarMenuStudent = () => {
           </MenuItem>
         );
       }
-      return null;
+      
+      return (
+        <MenuItem key={index}>
+          <MenuLink
+            path={item.path}
+            className="gap-2.5 py-2 px-2.5 rounded-md border border-transparent menu-item-active:border-[#13126e] menu-item-active:bg-[#e8e8f5] menu-link-hover:bg-[#e8e8f5] menu-link-hover:border-[#13126e]"
+          >
+            <MenuIcon className="items-start text-lg text-gray-600 menu-item-active:text-[#13126e] menu-item-here:text-[#13126e] menu-item-show:text-[#13126e] menu-link-hover:text-[#13126e]">
+              <KeenIcon icon={item.icon} />
+            </MenuIcon>
+            <MenuTitle className="text-sm text-gray-800 font-medium menu-item-here:text-[#13126e] menu-item-show:text-[#13126e] menu-link-hover:text-[#13126e]">
+              {item.title}
+            </MenuTitle>
+          </MenuLink>
+        </MenuItem>
+      );
     });
   };
 
   return (
     <Menu highlight={true} multipleExpand={false} className="sidebar-menu-primary flex flex-col w-full gap-1.5 px-3.5">
       {buildMenuItems()}
-      <div className="border-b border-gray-300 mt-4 mb-1 mx-3.5"></div>
     </Menu>
   );
 };

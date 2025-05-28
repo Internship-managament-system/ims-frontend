@@ -16,7 +16,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Login ve şifre sıfırlama sayfaları
     'email': 'E-posta',
     'password': 'Şifre',
-    'forgotPassword': 'Şifrenizi mi unuttun?',
+    'forgotPassword': 'Şifrenizi mi unuttunuz?',
     'login': 'Giriş Yap',
     'register': 'Kayıt Ol',
     'enterPassword': 'Şifrenizi girin',

@@ -280,6 +280,13 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 
     // localStorage'den auth ile ilgili tüm verileri temizle
     localStorage.removeItem('email');
+    
+    // "Beni hatırla" bilgilerini temizleme (kullanıcı logout yapıyorsa güvenlik için)
+    // Not: Eğer kullanıcı logout yaparken "beni hatırla" bilgilerinin kalmasını istiyorsanız
+    // bu satırları kaldırabilirsiniz
+    localStorage.removeItem('rememberedEmail');
+    localStorage.removeItem('rememberedPassword');
+    localStorage.removeItem('rememberMe');
 
     // Axios header'ını temizle
     delete axios.defaults.headers.common['Authorization'];

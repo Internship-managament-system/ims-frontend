@@ -21,7 +21,8 @@ interface EvaluationResultsProps {
 const EvaluationResults: React.FC<EvaluationResultsProps> = ({ limit }) => {
   const [selectedEvaluation, setSelectedEvaluation] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = limit || 10;
+  const [itemsPerPage, setItemsPerPage] = useState(limit || 10);
+  const [activeTab, setActiveTab] = useState<string>('all');
 
   const evaluations: Evaluation[] = [
     {
@@ -79,6 +80,56 @@ const EvaluationResults: React.FC<EvaluationResultsProps> = ({ limit }) => {
     }
   ];
 
+  // Status tabs
+  const statusTabs = [
+    { key: 'all', label: 'Tümü', count: evaluations.length },
+    { key: 'approved', label: 'Onaylandı', count: evaluations.filter(evaluation => evaluation.result === 'approved').length },
+    { key: 'partially', label: 'Kısmen Kabul', count: evaluations.filter(evaluation => evaluation.result === 'partially').length },
+    { key: 'rejected', label: 'Reddedildi', count: evaluations.filter(evaluation => evaluation.result === 'rejected').length },
+  ];
+
+  // Filter evaluations by active tab
+  const getFilteredEvaluations = () => {
+    if (activeTab === 'all') {
+      return evaluations;
+    }
+    return evaluations.filter(evaluation => evaluation.result === activeTab);
+  };
+
+  // Get current page items
+  const getCurrentItems = () => {
+    const filteredEvals = getFilteredEvaluations();
+    if (limit) {
+      return filteredEvals.slice(0, limit);
+    }
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return filteredEvals.slice(indexOfFirstItem, indexOfLastItem);
+  };
+
+  // Total pages
+  const totalPages = Math.ceil(getFilteredEvaluations().length / itemsPerPage);
+
+  // Reset page when tab changes
+  const handleTabChange = (tabKey: string) => {
+    setActiveTab(tabKey);
+    setCurrentPage(1);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+
+  // Calculate current range
+  const getCurrentRange = () => {
+    const filteredEvals = getFilteredEvaluations();
+    const start = (currentPage - 1) * itemsPerPage + 1;
+    const end = Math.min(currentPage * itemsPerPage, filteredEvals.length);
+    return { start, end, total: filteredEvals.length };
+  };
+
   const getStatusBadge = (result: Evaluation['result']) => {
     switch (result) {
       case 'approved':
@@ -104,18 +155,31 @@ const EvaluationResults: React.FC<EvaluationResultsProps> = ({ limit }) => {
     }
   };
 
-  const displayedEvaluations = limit ? evaluations.slice(0, limit) : evaluations;
-  const totalPages = Math.ceil(evaluations.length / itemsPerPage);
-
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-medium text-gray-900">Değerlendirme Sonuçları</h2>
-        {limit && (
-          <button className="btn bg-[#13126e] text-white text-sm py-1 px-3 rounded">
-            Tümünü Görüntüle
-          </button>
-        )}
+      </div>
+
+      {/* Status Tabs */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            {statusTabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === tab.key
+                    ? 'border-[#13126e] text-[#13126e]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </nav>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -131,7 +195,7 @@ const EvaluationResults: React.FC<EvaluationResultsProps> = ({ limit }) => {
             </tr>
           </thead>
           <tbody>
-            {displayedEvaluations.map((evaluation) => (
+            {getCurrentItems().map((evaluation) => (
               <tr key={evaluation.id} className="border-b border-gray-200 hover:bg-gray-50">
                 <td className="px-4 py-3 text-sm">
                   <div>
@@ -169,40 +233,98 @@ const EvaluationResults: React.FC<EvaluationResultsProps> = ({ limit }) => {
             ))}
           </tbody>
         </table>
-      </div>
 
-      {/* Pagination for full view */}
-      {!limit && totalPages > 1 && (
-        <div className="flex justify-center mt-4 space-x-1">
-          <button
-            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            <KeenIcon icon="arrow-left" />
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i + 1}
-              className={`px-3 py-1 rounded ${
-                currentPage === i + 1
-                  ? 'bg-[#13126e] text-white'
-                  : 'bg-gray-200 hover:bg-gray-300'
-              }`}
-              onClick={() => setCurrentPage(i + 1)}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            <KeenIcon icon="arrow-right" />
-          </button>
-        </div>
-      )}
+        {/* Simple Pagination like in photo */}
+        {!limit && (
+          <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+            {/* Left side - Record info */}
+            <div className="text-sm text-gray-600">
+              {(() => {
+                const range = getCurrentRange();
+                return `Toplam ${range.total} kayıttan ${range.start}-${range.end} arası gösteriliyor`;
+              })()}
+            </div>
+
+            {/* Right side - Controls */}
+            <div className="flex items-center gap-4">
+              {/* Items per page */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Sayfa başına:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+
+              {/* Pagination buttons */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  {/* Previous button */}
+                  <button
+                    className="p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <KeenIcon icon="arrow-left" className="w-4 h-4" />
+                  </button>
+
+                  {/* Page numbers */}
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-8 h-8 text-sm rounded ${
+                          currentPage === pageNum
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  {/* Next button */}
+                  <button
+                    className="p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <KeenIcon icon="arrow-right" className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* No results message */}
+        {getCurrentItems().length === 0 && (
+          <div className="text-center py-8">
+            <div className="text-gray-500">
+              {activeTab === 'all' ? 'Henüz değerlendirme bulunmuyor.' : `${statusTabs.find(t => t.key === activeTab)?.label} durumunda değerlendirme bulunmuyor.`}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Reason Display */}
       {selectedEvaluation && (

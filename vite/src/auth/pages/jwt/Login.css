@@ -101,6 +101,17 @@ html, body {
     outline: none;
     box-shadow: 0 0 0 2px rgba(19, 18, 110, 0.2);
   }
+
+  /* Browser'ın otomatik şifre gösterme ikonlarını gizle */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+  
+  input[type="password"]::-webkit-credentials-auto-fill-button,
+  input[type="password"]::-webkit-strong-password-auto-fill-button {
+    display: none !important;
+  }
   
   /* Responsive tasarım */
   @media (max-width: 768px) {
