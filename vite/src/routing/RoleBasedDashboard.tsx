@@ -40,7 +40,7 @@ const RoleBasedDashboard: React.FC = () => {
   }
 
   // Belirtilen roller için yönlendirme
-  if (hasRole('ADMIN')) {
+  if (hasRole('COMMISSION_CHAIRMAN')) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 

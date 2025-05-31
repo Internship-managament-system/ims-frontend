@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container } from '@/components';
 import AddMemberModal from './components/AddMemberModal';
 import ConfirmModal from './components/ConfirmModal';
@@ -9,10 +9,16 @@ import {
   makeChairman,
   removeChairman,
   CommissionMember,
-  NewCommissionMember
+  NewCommissionMember,
+  getDepartmentById
 } from '@/services/commissionService';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
+import { useAuthContext } from '@/auth/useAuthContext';
+import axios from 'axios';
+
+// User info endpoint
+const GET_USER_URL = `/api/v1/users/info`;
 
 const CommissionManagement: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -20,14 +26,74 @@ const CommissionManagement: React.FC = () => {
   const [confirmModalType, setConfirmModalType] = useState<'chairman' | 'remove' | 'removeChairman'>('chairman');
   const [selectedMember, setSelectedMember] = useState<CommissionMember | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [departmentInfo, setDepartmentInfo] = useState({
+    id: '',
+    name: ''
+  });
   
   const queryClient = useQueryClient();
+  const { currentUser, logout } = useAuthContext();
+  
+  // Kullanıcı ve departman bilgilerini yükle
+  useEffect(() => {
+    const fetchUserAndDepartmentInfo = async () => {
+      if (!currentUser) return;
+      
+      try {
+        // Güncel kullanıcı bilgilerini al
+        const userResponse = await axios.get(GET_USER_URL);
+        const userData = userResponse.data.result;
+        
+        // Departman ID'si varsa, departman bilgisini al
+        if (userData?.departmentId) {
+          try {
+            const departmentData = await getDepartmentById(userData.departmentId as number);
+            setDepartmentInfo({
+              id: departmentData.id.toString(),
+              name: departmentData.name
+            });
+          } catch (deptError) {
+            console.error('Departman bilgisi alınamadı:', deptError);
+          }
+        }
+      } catch (error) {
+        console.error('Kullanıcı bilgisi alınamadı:', error);
+      }
+    };
+    
+    fetchUserAndDepartmentInfo();
+  }, [currentUser]);
 
   // API'den komisyon üyelerini çekme
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['commission-members'],
     queryFn: getAllCommissionMembers
   });
+  
+  // API yanıtını kontrol et
+  useEffect(() => {
+    if (users && users.length > 0) {
+      // Gelen veri kontrolü
+      console.log('*** API YANITI DETAYLI KONTROL ***');
+      
+      users.forEach((user, index) => {
+        console.log(`Kullanıcı #${index + 1}:`, user);
+        console.log(`- ID: ${user.id}`);
+        console.log(`- Ad Soyad: ${user.name} ${user.surname}`);
+        console.log(`- Role: ${user.role}`);
+        console.log(`- Role Tipi: ${typeof user.role}`);
+        console.log(`- getCommissionRole sonucu: ${getCommissionRole(user)}`);
+        console.log('----------------------------');
+      });
+      
+      // Komisyon başkanı kullanıcıyı kontrol et
+      const chairmanUser = users.find(user => user.role === 'COMMISSION_CHAIRMAN');
+      console.log('Komisyon başkanı kullanıcı bulundu mu?', chairmanUser ? 'Evet' : 'Hayır');
+      if (chairmanUser) {
+        console.log('Komisyon başkanı kullanıcı detayları:', chairmanUser);
+      }
+    }
+  }, [users]);
 
   // Komisyon üyesi ekleme mutation
   const addMemberMutation = useMutation({
@@ -65,7 +131,12 @@ const CommissionManagement: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['commission-members'] });
       setShowConfirmModal(false);
       setSelectedMember(null);
-      toast.success('Komisyon başkanı başarıyla atandı');
+      toast.success('Komisyon başkanı başarıyla atandı, lütfen tekrar giriş yapın');
+      
+      // Sistemden çıkış yap ve login sayfasına yönlendir
+      setTimeout(() => {
+        logout();
+      }, 2000); // 2 saniye bekleyip çıkış yap
     },
     onError: (err) => {
       toast.error('Komisyon başkanı atanırken bir hata oluştu');
@@ -90,25 +161,48 @@ const CommissionManagement: React.FC = () => {
 
   // Üye ekleme
   const handleAddMember = (newUserData: NewCommissionMember) => {
-    // Kullanıcı seçilmiş mi kontrol et
-    if (!newUserData.userId) {
-      toast.error('Lütfen bir kullanıcı seçin');
+    // Email, ad ve soyad kontrolü
+    if (!newUserData.email || !newUserData.name || !newUserData.surname) {
+      toast.error('Lütfen tüm alanları doldurun');
       return;
     }
 
-    addMemberMutation.mutate(newUserData);
+    // Kullanıcının departmanId'sini ekle
+    const updatedUserData = {
+      ...newUserData,
+      departmentId: departmentInfo.id || currentUser?.departmentId
+    };
+
+    // Departman ID kontrolü
+    if (!updatedUserData.departmentId) {
+      toast.error('Departman bilgisi bulunamadı. Lütfen yönetici ile iletişime geçin.');
+      return;
+    }
+
+    console.log('Komisyon üyesi ekleniyor:', updatedUserData);
+    addMemberMutation.mutate(updatedUserData);
   };
 
   // Başkan atama işlemi
   const handleSetChairman = (user: CommissionMember) => {
     // Zaten başkan olan kullanıcı seçilirse işlem yapma
-    if (user.isCommissionChairman) {
+    if (!user.role) {
+      toast.error('Kullanıcı rol bilgisi bulunamadı.');
+      return;
+    }
+    
+    const roleUpper = user.role.toUpperCase();
+    if (roleUpper === 'ADMIN' || roleUpper === 'COMMISSION_CHAIRMAN' || roleUpper.includes('CHAIRMAN')) {
       toast.error('Bu kullanıcı zaten komisyon başkanı.');
       return;
     }
     
     // Mevcut başkanı kontrol et
-    const currentChairman = users.find(u => u.isCommissionChairman);
+    const currentChairman = users.find(u => {
+      if (!u.role) return false;
+      const uRoleUpper = u.role.toUpperCase();
+      return uRoleUpper === 'COMMISSION_CHAIRMAN' || (uRoleUpper !== 'ADMIN' && uRoleUpper.includes('CHAIRMAN'));
+    });
     
     setSelectedMember(user);
     setConfirmModalType('chairman');
@@ -117,13 +211,23 @@ const CommissionManagement: React.FC = () => {
 
   // Başkanlıktan çıkarma işlemi
   const handleRemoveChairman = (user: CommissionMember) => {
-    if (!user.isCommissionChairman) {
+    if (!user.role) {
+      toast.error('Kullanıcı rol bilgisi bulunamadı.');
+      return;
+    }
+    
+    const roleUpper = user.role.toUpperCase();
+    if (roleUpper !== 'COMMISSION_CHAIRMAN' && !roleUpper.includes('CHAIRMAN')) {
       toast.error('Bu kullanıcı zaten komisyon başkanı değil.');
       return;
     }
     
     // Sistemde kaç başkan var kontrol et
-    const chairmenCount = users.filter(u => u.isCommissionChairman).length;
+    const chairmenCount = users.filter(u => {
+      if (!u.role) return false;
+      const uRoleUpper = u.role.toUpperCase();
+      return uRoleUpper === 'COMMISSION_CHAIRMAN' || uRoleUpper.includes('CHAIRMAN');
+    }).length;
     
     // Eğer sadece bir başkan varsa ve başkanlıktan çıkarılmak isteniyorsa uyarı ver
     if (chairmenCount <= 1) {
@@ -138,16 +242,16 @@ const CommissionManagement: React.FC = () => {
 
   // Üye çıkarma işlemi
   const handleRemoveMember = (user: CommissionMember) => {
-    // Admin rolündeki kullanıcıları kaldırmayı engelle
-    const apiRole = (user as any).role;
-    if (apiRole === 'ADMIN') {
-      toast.error('Admin rolündeki kullanıcılar komisyondan çıkarılamaz.');
+    if (!user.role) {
+      toast.error('Kullanıcı rol bilgisi bulunamadı.');
       return;
     }
     
-    // Komisyon başkanını kaldırmayı engelle
-    if (user.isCommissionChairman) {
-      toast.error('Başkanı kaldırmadan önce yeni bir başkan atamanız gerekmektedir.');
+    const roleUpper = user.role.toUpperCase();
+    
+    // Komisyon başkanı rolündeki kullanıcıları kaldırmayı engelle
+    if (roleUpper === 'COMMISSION_CHAIRMAN' || roleUpper.includes('CHAIRMAN')) {
+      toast.error('Komisyon başkanı rolündeki kullanıcılar komisyondan çıkarılamaz.');
       return;
     }
     
@@ -176,23 +280,39 @@ const CommissionManagement: React.FC = () => {
     return user.fullName || `${user.name || ''} ${user.surname || ''}`;
   };
 
-  // Komisyon rolünü belirle - API'den gelen role admin ise veya isCommissionChairman true ise başkan olarak göster
+  // Komisyon rolünü belirle
   const getCommissionRole = (user: CommissionMember): string => {
-    // Tip güvenliği için as any kullanarak API'den gelen orijinal role değerini kontrol et
-    const apiRole = (user as any).role;
+    // Debug için role değerini yazdır
+    console.log(`getCommissionRole çağrıldı - Kullanıcı: ${user.name} ${user.surname}, Role: ${user.role}`);
     
-    if (apiRole === 'ADMIN' || user.isCommissionChairman) {
+    // Role değeri boş veya undefined kontrolü
+    if (!user.role) {
+      console.error('Role değeri bulunamadı:', user);
+      return 'Komisyon Üyesi';
+    }
+    
+    // API'den gelen role değerine göre kontrol et - büyük/küçük harf duyarsız
+    const roleUpper = typeof user.role === 'string' ? user.role.toUpperCase() : '';
+    
+    if (roleUpper === 'COMMISSION_CHAIRMAN' || 
+        roleUpper.includes('CHAIRMAN')) {
+      console.log(`${user.name} ${user.surname} için "Komisyon Başkanı" döndürüldü`);
       return 'Komisyon Başkanı';
     }
+    
+    console.log(`${user.name} ${user.surname} için "Komisyon Üyesi" döndürüldü`);
+    // Varsayılan olarak komisyon üyesi
     return 'Komisyon Üyesi';
   };
 
-  // İşlem butonlarını göster/gizle - API'den gelen role admin ise veya isCommissionChairman true ise "Başkan Yap" butonunu gizle
+  // İşlem butonlarını göster/gizle - başkan yapma butonunu gösterip göstermeme
   const shouldShowChairmanButton = (user: CommissionMember): boolean => {
-    // Tip güvenliği için as any kullanarak API'den gelen orijinal role değerini kontrol et
-    const apiRole = (user as any).role;
+    // Sadece COMMISSION_MEMBER rolündeki üyeler için başkan yapma butonunu göster
+    if (!user.role) return false;
     
-    return !(apiRole === 'ADMIN' || user.isCommissionChairman);
+    const roleUpper = user.role.toUpperCase();
+    return roleUpper === 'COMMISSION_MEMBER' || 
+           (roleUpper !== 'COMMISSION_CHAIRMAN' && !roleUpper.includes('CHAIRMAN'));
   };
 
   // Arama filtresi
@@ -204,10 +324,11 @@ const CommissionManagement: React.FC = () => {
     return displayName.includes(term) || email.includes(term);
   });
 
-  // Admin rolünü kontrol et - API'den gelen role admin ise true döndür
+  // Komisyon başkanı rolünü kontrol et
   const isAdminUser = (user: CommissionMember): boolean => {
-    const apiRole = (user as any).role;
-    return apiRole === 'ADMIN';
+    if (!user.role) return false;
+    const roleUpper = user.role.toUpperCase();
+    return roleUpper === 'COMMISSION_CHAIRMAN' || roleUpper.includes('CHAIRMAN');
   };
 
   if (error) {
@@ -275,7 +396,7 @@ const CommissionManagement: React.FC = () => {
                     <th className="px-4 py-2 text-sm font-medium text-gray-500">Ad Soyad</th>
                     <th className="px-4 py-2 text-sm font-medium text-gray-500">E-posta</th>
                     <th className="px-4 py-2 text-sm font-medium text-gray-500">Rol</th>
-                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Durum</th>
+                    
                     <th className="px-4 py-2 text-sm font-medium text-gray-500">İşlemler</th>
                   </tr>
                 </thead>
@@ -285,20 +406,15 @@ const CommissionManagement: React.FC = () => {
                       <td className="px-4 py-3 text-sm text-gray-700">{getDisplayName(user)}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{user.email}</td>
                       <td className="px-4 py-3 text-sm">
-                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${user.isCommissionChairman
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-purple-100 text-purple-800'
-                          }`}>
+                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                          getCommissionRole(user) === 'Komisyon Başkanı' 
+                          ? 'bg-yellow-100 text-yellow-800' 
+                          : 'bg-purple-100 text-purple-800'
+                        }`}>
                           {getCommissionRole(user)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                          user.enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {user.enabled ? 'Aktif' : 'Pasif'}
-                        </span>
-                      </td>
+                      
                       <td className="px-4 py-3 text-sm">
                         <div className="flex space-x-1">
                           {shouldShowChairmanButton(user) && (
@@ -314,7 +430,7 @@ const CommissionManagement: React.FC = () => {
                           )}
 
                           {/* Komisyon başkanları için başkanlıktan çıkarma butonu */}
-                          {user.isCommissionChairman && !isAdminUser(user) && (
+                          {isAdminUser(user) && user.id !== currentUser?.id && (
                             <button
                               className="btn bg-amber-500 text-white text-xs py-1 px-2 rounded"
                               onClick={() => handleRemoveChairman(user)}
@@ -326,7 +442,7 @@ const CommissionManagement: React.FC = () => {
                             </button>
                           )}
 
-                          {/* Admin rolündeki kullanıcılar için kaldır butonu gösterme */}
+                          {/* Komisyon üyeleri için kaldır butonu */}
                           {!isAdminUser(user) && (
                             <button
                               className="btn bg-red-500 text-white text-xs py-1 px-2 rounded"

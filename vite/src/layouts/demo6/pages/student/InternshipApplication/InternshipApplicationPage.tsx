@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { KeenIcon } from '@/components/keenicons';
 import { 
   createInternshipApplication, 
+  updateInternshipApplication,
+  getInternshipApplicationById,
   NewInternshipApplication, 
   InternshipType,
   calculateDurationInDays
@@ -14,8 +16,15 @@ import {
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { useAuthContext } from '@/auth/useAuthContext';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 
 const InternshipApplicationPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isUpdate = location.state?.isUpdate || id ? true : false;
+  const applicationData = location.state?.application || null;
+  
   const [formData, setFormData] = useState<Omit<NewInternshipApplication, 'studentId'> & { durationInDays: number }>({
     departmentId: '',
     program: '',
@@ -153,6 +162,59 @@ const InternshipApplicationPage: React.FC = () => {
     }
   }, [formData.startDate, formData.weeklyWorkingDays]);
 
+  // Başvuru detayını getir (eğer güncelleme modundaysa)
+  const { data: applicationDetail, isLoading: applicationLoading } = useQuery({
+    queryKey: ['internship-application', id],
+    queryFn: () => getInternshipApplicationById(id as string),
+    enabled: !!id && isUpdate && !applicationData
+  });
+
+  // Başvuru detayı geldiğinde form verilerini doldur
+  useEffect(() => {
+    if (applicationDetail) {
+      setFormData({
+        departmentId: applicationDetail.departmentId || '',
+        program: applicationDetail.program || '',
+        internshipPeriod: applicationDetail.internshipPeriod || '',
+        workplaceName: applicationDetail.workplaceName || '',
+        province: applicationDetail.province || '',
+        activityField: applicationDetail.activityField || '',
+        workplaceEmail: applicationDetail.workplaceEmail || '',
+        workplacePhone: applicationDetail.workplacePhone || '',
+        workplaceAddress: applicationDetail.workplaceAddress || '',
+        startDate: applicationDetail.startDate ? new Date(applicationDetail.startDate).toISOString().split('T')[0] : '',
+        endDate: applicationDetail.endDate ? new Date(applicationDetail.endDate).toISOString().split('T')[0] : '',
+        durationInDays: applicationDetail.durationInDays || 0,
+        weeklyWorkingDays: applicationDetail.weeklyWorkingDays || 'FIVE_DAYS',
+        hasGeneralHealthInsurance: applicationDetail.hasGeneralHealthInsurance || false,
+        internshipType: applicationDetail.internshipType || 'VOLUNTARY',
+      });
+    }
+  }, [applicationDetail]);
+
+  // Eğer başvuru verisi prop olarak geldiyse form verilerini doldur
+  useEffect(() => {
+    if (applicationData && isUpdate) {
+      setFormData({
+        departmentId: applicationData.departmentId || '',
+        program: applicationData.program || '',
+        internshipPeriod: applicationData.internshipPeriod || '',
+        workplaceName: applicationData.workplaceName || '',
+        province: applicationData.province || '',
+        activityField: applicationData.activityField || '',
+        workplaceEmail: applicationData.workplaceEmail || '',
+        workplacePhone: applicationData.workplacePhone || '',
+        workplaceAddress: applicationData.workplaceAddress || '',
+        startDate: applicationData.startDate ? new Date(applicationData.startDate).toISOString().split('T')[0] : '',
+        endDate: applicationData.endDate ? new Date(applicationData.endDate).toISOString().split('T')[0] : '',
+        durationInDays: applicationData.durationInDays || 0,
+        weeklyWorkingDays: applicationData.weeklyWorkingDays || 'FIVE_DAYS',
+        hasGeneralHealthInsurance: applicationData.hasGeneralHealthInsurance || false,
+        internshipType: applicationData.internshipType || 'VOLUNTARY',
+      });
+    }
+  }, [applicationData, isUpdate]);
+
   // Staj başvurusu oluşturma mutation'ı
   const createApplicationMutation = useMutation({
     mutationFn: (applicationData: NewInternshipApplication) => 
@@ -167,6 +229,23 @@ const InternshipApplicationPage: React.FC = () => {
         console.error('Hata detayları:', error.response);
       }
       toast.error(`Başvuru gönderilirken hata: ${error.message || 'Bilinmeyen hata'}`);
+    }
+  });
+
+  // Staj başvurusu güncelleme mutation'ı
+  const updateApplicationMutation = useMutation({
+    mutationFn: (data: NewInternshipApplication) => 
+      updateInternshipApplication(id as string, data),
+    onSuccess: () => {
+      toast.success('Staj başvurunuz başarıyla güncellendi!');
+      navigate('/student/my-applications');
+    },
+    onError: (error: any) => {
+      console.error('Güncelleme hatası:', error);
+      if (error.response) {
+        console.error('Hata detayları:', error.response);
+      }
+      toast.error(`Başvuru güncellenirken hata: ${error.message || 'Bilinmeyen hata'}`);
     }
   });
 
@@ -216,7 +295,7 @@ const InternshipApplicationPage: React.FC = () => {
     };
     
     // API'ye gönderilecek veriyi hazırla - Swagger belgesine göre
-    const applicationData: NewInternshipApplication = {
+    const submissionData: NewInternshipApplication = {
       studentId: userId,
       departmentId: formData.departmentId,
       program: formData.program,
@@ -234,10 +313,14 @@ const InternshipApplicationPage: React.FC = () => {
       internshipType: formData.internshipType
     };
     
-    console.log('Staj başvurusu gönderiliyor:', applicationData);
+    console.log(`Staj başvurusu ${isUpdate ? 'güncelleniyor' : 'gönderiliyor'}:`, submissionData);
     
-    // Formu gönder
-    createApplicationMutation.mutate(applicationData);
+    // Formu gönder - güncelleme veya oluşturma
+    if (isUpdate && id) {
+      updateApplicationMutation.mutate(submissionData);
+    } else {
+      createApplicationMutation.mutate(submissionData);
+    }
   };
 
   // Formu sıfırla
@@ -265,18 +348,22 @@ const InternshipApplicationPage: React.FC = () => {
     <div className="min-h-screen bg-white pb-16">
       <div className="container mx-auto pt-6 pb-20 px-6">
         <div className="mb-8">
-          <h1 className="text-xl font-semibold mb-2">Staj Başvurusu</h1>
+          <h1 className="text-xl font-semibold mb-2">
+            {isUpdate ? 'Staj Başvurusu Güncelleme' : 'Staj Başvurusu'}
+          </h1>
           <p className="text-gray-600">
-            Staja başvurmak için aşağıdaki formu doldurun ve gerekli bilgileri girin.
+            {isUpdate 
+              ? 'Staj başvurunuzu güncellemek için formu düzenleyin ve güncelleyin.' 
+              : 'Staja başvurmak için aşağıdaki formu doldurun ve gerekli bilgileri girin.'}
           </p>
         </div>
 
-        {optionsLoading ? (
+        {(optionsLoading || applicationLoading) ? (
           <div className="flex items-center justify-center p-8 bg-white rounded-lg shadow">
             <div className="animate-spin mr-3">
               <KeenIcon icon="spinner" className="h-6 w-6 text-primary" />
             </div>
-            <span>Form seçenekleri yükleniyor...</span>
+            <span>Veriler yükleniyor...</span>
           </div>
         ) : optionsError ? (
           <div className="bg-white p-8 rounded-lg shadow text-center">
@@ -528,34 +615,43 @@ const InternshipApplicationPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-4 px-6 flex justify-end gap-4 shadow-md">
-              <button 
-                type="button"
-                onClick={resetForm}
-                className="btn bg-gray-200 text-gray-800 py-2 px-6 rounded"
-              >
-                Formu Temizle
-              </button>
-              
-              <button 
-                type="submit" 
-                className="btn bg-[#13126e] text-white py-2 px-6 rounded flex items-center gap-2"
-                disabled={createApplicationMutation.isPending}
-              >
-                {createApplicationMutation.isPending ? (
-                  <>
-                    <span className="animate-spin">
-                      <KeenIcon icon="spinner" className="text-white" />
-                    </span>
-                    <span>Gönderiliyor...</span>
-                  </>
-                ) : (
-                  <>
-                    <KeenIcon icon="check" className="text-white" />
-                    <span>Başvuruyu Tamamla</span>
-                  </>
-                )}
-              </button>
+            {/* Form buttons */}
+            <div className="flex justify-end space-x-3 mt-8">
+              {isUpdate ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/student/my-applications')}
+                    className="bg-gray-200 text-gray-800 py-2 px-6 rounded font-medium"
+                  >
+                    İptal
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-green-500 text-white py-2 px-6 rounded font-medium"
+                    disabled={updateApplicationMutation.isPending}
+                  >
+                    {updateApplicationMutation.isPending ? 'Güncelleniyor...' : 'Güncelle'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="reset"
+                    onClick={resetForm}
+                    className="bg-gray-200 text-gray-800 py-2 px-6 rounded font-medium"
+                  >
+                    Sıfırla
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white py-2 px-6 rounded font-medium"
+                    disabled={createApplicationMutation.isPending}
+                  >
+                    {createApplicationMutation.isPending ? 'Gönderiliyor...' : 'Başvuru Yap'}
+                  </button>
+                </>
+              )}
             </div>
           </form>
         )}

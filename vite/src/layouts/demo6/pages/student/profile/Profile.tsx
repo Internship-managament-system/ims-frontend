@@ -64,14 +64,14 @@ const Profile: React.FC = () => {
     }
   };
 
-  const getRoleText = (role: string) => {
+  const getRoleDisplayName = (role: string) => {
     switch (role) {
-      case 'STUDENT':
-        return 'Öğrenci';
-      case 'ADMIN':
-        return 'Yönetici';
+      case 'COMMISSION_CHAIRMAN':
+        return 'Sistem Yöneticisi';
       case 'COMMISSION_MEMBER':
         return 'Komisyon Üyesi';
+      case 'STUDENT':
+        return 'Öğrenci';
       default:
         return role;
     }
@@ -153,7 +153,7 @@ const Profile: React.FC = () => {
                 <h2 className="text-xl font-semibold text-gray-900">
                   {userInfo.name} {userInfo.surname}
                 </h2>
-                <p className="text-gray-600">{getRoleText(userInfo.role)}</p>
+                <p className="text-gray-600">{getRoleDisplayName(userInfo.role)}</p>
                 {department && (
                   <p className="text-sm text-gray-500">{department.name}</p>
                 )}
@@ -197,7 +197,7 @@ const Profile: React.FC = () => {
                     Rol
                   </label>
                   <div className="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900">
-                    {getRoleText(userInfo.role)}
+                    {getRoleDisplayName(userInfo.role)}
                   </div>
                 </div>
               </div>

@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { NewCommissionMember } from '@/services/commissionService';
-import { getAllSystemUsers, User } from '@/services/userService';
-import { useQuery } from '@tanstack/react-query';
+import { useAuthContext } from '@/auth/useAuthContext';
+import axios from 'axios';
+import { getDepartmentById } from '@/services/commissionService';
+
+// JWTProvider'dan GET_USER_URL'yi import et
+const GET_USER_URL = `/api/v1/users/info`;
 
 interface AddMemberModalProps {
   onClose: () => void;
@@ -10,45 +14,140 @@ interface AddMemberModalProps {
 }
 
 const AddMemberModal: React.FC<AddMemberModalProps> = ({ onClose, onAdd, isLoading }) => {
-  const [newMember, setNewMember] = useState<NewCommissionMember>({
-    userId: ''
+  // Kullanıcı bilgileri için state
+  const [formData, setFormData] = useState({
+    email: '',
+    name: '',
+    surname: ''
   });
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Kullanıcıları çekmek için query - yeni endpoint kullanılıyor
-  const { data: users = [], isLoading: isUsersLoading } = useQuery({
-    queryKey: ['system-users'],
-    queryFn: getAllSystemUsers
+  
+  // Hata mesajları için state
+  const [errors, setErrors] = useState({
+    email: '',
+    name: '',
+    surname: ''
   });
+  
+  // Departman bilgisi için state
+  const [departmentInfo, setDepartmentInfo] = useState({
+    id: '',
+    name: ''
+  });
+  
+  // Loading state
+  const [isLoadingDepartment, setIsLoadingDepartment] = useState(false);
+  
+  // Auth context ile kullanıcı bilgilerini al
+  const { currentUser } = useAuthContext();
 
-  // Sadece STUDENT rolündeki kullanıcıları filtrele
-  const studentUsers = users.filter(user => user.role === 'STUDENT');
-
-  // Kullanıcı arama fonksiyonu
-  const filteredUsers = studentUsers.filter(user => {
-    const searchLower = searchTerm.toLowerCase();
-    const fullName = user.fullName || `${user.name || ''} ${user.surname || ''}`;
+  // Kullanıcı bilgilerini ve departman bilgisini al
+  useEffect(() => {
+    const fetchUserAndDepartmentInfo = async () => {
+      if (!currentUser) return;
+      
+      setIsLoadingDepartment(true);
+      
+      try {
+        // Güncel kullanıcı bilgilerini al
+        const userResponse = await axios.get(GET_USER_URL);
+        const userData = userResponse.data.result;
+        
+        // Departman ID'si varsa, departman bilgisini al
+        if (userData?.departmentId) {
+          try {
+            const departmentData = await getDepartmentById(userData.departmentId as number);
+            setDepartmentInfo({
+              id: departmentData.id.toString(),
+              name: departmentData.name
+            });
+          } catch (deptError) {
+            console.error('Departman bilgisi alınamadı:', deptError);
+          }
+        }
+      } catch (error) {
+        console.error('Kullanıcı bilgisi alınamadı:', error);
+      } finally {
+        setIsLoadingDepartment(false);
+      }
+    };
     
-    return (
-      fullName.toLowerCase().includes(searchLower) ||
-      user.email.toLowerCase().includes(searchLower) ||
-      (user.departmentName && user.departmentName.toLowerCase().includes(searchLower))
-    );
-  });
+    fetchUserAndDepartmentInfo();
+  }, [currentUser]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onAdd(newMember);
+  // Form input değişiklikleri
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+    
+    // Input değiştiğinde ilgili hata mesajını temizle
+    if (errors[name as keyof typeof errors]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
   };
 
-  // Kullanıcı adı görüntüleme
-  const getDisplayName = (user: User): string => {
-    return user.fullName || `${user.name || ''} ${user.surname || ''}`;
+  // Form doğrulama
+  const validateForm = (): boolean => {
+    const newErrors = {
+      email: '',
+      name: '',
+      surname: ''
+    };
+    
+    let isValid = true;
+    
+    // Email doğrulama
+    if (!formData.email) {
+      newErrors.email = 'Email adresi gereklidir';
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Geçerli bir email adresi giriniz';
+      isValid = false;
+    }
+    
+    // Ad doğrulama
+    if (!formData.name) {
+      newErrors.name = 'Ad gereklidir';
+      isValid = false;
+    }
+    
+    // Soyad doğrulama
+    if (!formData.surname) {
+      newErrors.surname = 'Soyad gereklidir';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  // Form gönderme
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    // Departman ID'si ile birlikte yeni üye verisini oluştur
+    const newMemberData: any = {
+      email: formData.email,
+      name: formData.name,
+      surname: formData.surname,
+      departmentId: departmentInfo.id || currentUser?.departmentId
+    };
+    
+    onAdd(newMemberData);
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-900">
             Komisyon Üyesi Ekle
@@ -67,74 +166,68 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ onClose, onAdd, isLoadi
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">Kullanıcı Seçin</label>
-            <div className="mb-3">
-              <input 
-                type="text" 
-                placeholder="Kullanıcı ara..." 
-                className="border border-gray-300 rounded-lg p-2 w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                disabled={isLoading || isUsersLoading}
-              />
-            </div>
-            
-            {isUsersLoading ? (
-              <div className="flex justify-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-              </div>
-            ) : (
-              <div className="border border-gray-200 rounded-lg max-h-64 overflow-y-auto">
-                {filteredUsers.length === 0 ? (
-                  <div className="p-4 text-center text-gray-500">
-                    Kullanıcı bulunamadı
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-200">
-                    {filteredUsers.map(user => (
-                      <div 
-                        key={user.id}
-                        onClick={() => setNewMember({ userId: user.id })}
-                        className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors flex items-center ${
-                          newMember.userId === user.id ? 'bg-blue-50' : ''
-                        }`}
-                      >
-                        <div className="w-6 h-6 mr-3">
-                          <input 
-                            type="radio" 
-                            checked={newMember.userId === user.id}
-                            onChange={() => setNewMember({ userId: user.id })}
-                            className="w-4 h-4"
-                          />
-                        </div>
-                        <div className="flex-grow">
-                          <div className="text-sm font-medium">{getDisplayName(user)}</div>
-                          <div className="text-xs text-gray-500">{user.email}</div>
-                          {user.departmentName && (
-                            <div className="text-xs text-gray-500">{user.departmentName}</div>
-                          )}
-                        </div>
-                        <div className="ml-2">
-                          <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                            user.role === 'STUDENT' 
-                              ? 'bg-green-100 text-green-800' 
-                              : user.role === 'TEACHER' 
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {user.role === 'STUDENT' ? 'Öğrenci' : 
-                             user.role === 'TEACHER' ? 'Öğretmen' : 
-                             user.role === 'ADMIN' ? 'Yönetici' : 
-                             user.role}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+            <input 
+              type="email" 
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="ornek@erciyes.edu.tr" 
+              className={`border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg p-2 w-full`}
+              disabled={isLoading}
+            />
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Ad</label>
+            <input 
+              type="text" 
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="Ad" 
+              className={`border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg p-2 w-full`}
+              disabled={isLoading}
+            />
+            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Soyad</label>
+            <input 
+              type="text" 
+              name="surname"
+              value={formData.surname}
+              onChange={handleInputChange}
+              placeholder="Soyad" 
+              className={`border ${errors.surname ? 'border-red-500' : 'border-gray-300'} rounded-lg p-2 w-full`}
+              disabled={isLoading}
+            />
+            {errors.surname && <p className="mt-1 text-xs text-red-500">{errors.surname}</p>}
+          </div>
+          
+          {isLoadingDepartment ? (
+            <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded flex items-center">
+              <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-blue-500 rounded-full"></div>
+              Departman bilgisi yükleniyor...
+            </div>
+          ) : departmentInfo.id ? (
+            <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+              <p>Departman: {departmentInfo.name}</p>
+              <p className="text-xs italic">Kullanıcı kendi departmanınıza eklenecektir.</p>
+            </div>
+          ) : currentUser?.departmentId ? (
+            <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+              <p>Departman: {currentUser.departmentName || 'Bilinmeyen Departman'}</p>
+              <p className="text-xs italic">Kullanıcı kendi departmanınıza eklenecektir.</p>
+            </div>
+          ) : (
+            <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+              <p>Uyarı: Departman bilginiz eksik!</p>
+              <p className="text-xs italic">Lütfen yönetici ile iletişime geçin.</p>
+            </div>
+          )}
           
           <div className="flex justify-end space-x-2 pt-4">
             <button 
@@ -148,7 +241,7 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ onClose, onAdd, isLoadi
             <button 
               type="submit" 
               className={`btn ${isLoading ? 'bg-indigo-400' : 'bg-[#13126e]'} text-white py-2 px-4 rounded flex items-center justify-center`}
-              disabled={isLoading || !newMember.userId}
+              disabled={isLoading || (!departmentInfo.id && !currentUser?.departmentId)}
             >
               {isLoading ? (
                 <>

@@ -2,7 +2,7 @@ import axiosClient from '@/api/axiosClient';
 import { USERS, USER_DETAIL, COMMISSION_MEMBERS_USERS } from '@/api/endpoints';
 
 // Kullanıcı rolleri
-export type UserRole = 'ADMIN' | 'COMMISSION_MEMBER' | 'STUDENT' | 'TEACHER';
+export type UserRole = 'COMMISSION_CHAIRMAN' | 'COMMISSION_MEMBER' | 'STUDENT' | 'TEACHER';
 
 // Kullanıcı arayüzü
 export interface User {

@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useMemo } from 'react';
 import { toAbsoluteUrl } from '@/utils';
 import { useAuthContext } from '@/auth';
 import { KeenIcon } from '@/components';
@@ -16,7 +16,7 @@ const SidebarFooter = forwardRef<HTMLDivElement>((props, ref) => {
     switch (role) {
       case 'ADMIN':
         return 'Yönetici';
-      case 'COMMISSION_HEAD':
+      case 'COMMISSION_CHAIRMAN':
         return 'Komisyon Başkanı';
       case 'COMMISSION_MEMBER':
         return 'Komisyon Üyesi';
@@ -31,7 +31,7 @@ const SidebarFooter = forwardRef<HTMLDivElement>((props, ref) => {
     switch (role) {
       case 'ADMIN':
         return '/media/eru/admin-profile.jpg';
-      case 'COMMISSION_HEAD':
+      case 'COMMISSION_CHAIRMAN':
       case 'COMMISSION_MEMBER':
         return '/media/eru/commission-profile.jpg';
       case 'STUDENT':
@@ -45,7 +45,7 @@ const SidebarFooter = forwardRef<HTMLDivElement>((props, ref) => {
     switch (role) {
       case 'ADMIN':
         return 'bg-purple-100 text-purple-800';
-      case 'COMMISSION_HEAD':
+      case 'COMMISSION_CHAIRMAN':
         return 'bg-yellow-100 text-yellow-800';
       case 'COMMISSION_MEMBER':
         return 'bg-blue-100 text-blue-800';
@@ -55,6 +55,77 @@ const SidebarFooter = forwardRef<HTMLDivElement>((props, ref) => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Kullanıcı menüsü
+  const userMenuItems = useMemo(() => {
+    const menuItems = [];
+
+    // Admin için özel menü
+    if (currentUser?.role === 'ADMIN' || currentUser?.role === 'COMMISSION_CHAIRMAN') {
+      menuItems.push(
+        {
+          label: 'Yönetim Paneli',
+          url: '/admin/dashboard',
+          icon: 'mdi-view-dashboard-outline'
+        }
+      );
+    }
+
+    return menuItems;
+  }, [currentUser?.role]);
+
+  // Roller için tanımlama yap
+  const getRoleDisplay = (role: string): string => {
+    switch (role) {
+      case 'COMMISSION_CHAIRMAN':
+        return 'Komisyon Başkanı';
+      case 'COMMISSION_MEMBER':
+        return 'Komisyon Üyesi';
+      case 'STUDENT':
+        return 'Öğrenci';
+      default:
+        return role;
+    }
+  };
+
+  // Avatar resmini belirle
+  const getAvatarUrl = (role: string): string => {
+    switch (role) {
+      case 'COMMISSION_CHAIRMAN':
+        return '/media/eru/admin-profile.jpg';
+      case 'COMMISSION_MEMBER':
+        return '/media/eru/commission-profile.jpg';
+      case 'STUDENT':
+        return '/media/eru/student-profile.jpg';
+      default:
+        return '/media/avatars/300-1.jpg';
+    }
+  };
+
+  // Rol rengini belirle
+  const getRoleColor = (role: string): string => {
+    switch (role) {
+      case 'COMMISSION_CHAIRMAN':
+        return 'bg-primary';
+      case 'COMMISSION_MEMBER':
+        return 'bg-info';
+      case 'STUDENT':
+        return 'bg-success';
+      default:
+        return 'bg-gray-600';
+    }
+  };
+
+  // Admin için özel menü
+  if (currentUser?.role === 'COMMISSION_CHAIRMAN') {
+    userMenuItems.push(
+      {
+        icon: 'home',
+        title: 'Başkan Paneli',
+        url: '/admin/dashboard',
+      },
+    );
+  }
 
   return (
     <div ref={ref} className="flex justify-between items-center shrink-0 p-4 mb-3.5 border-t border-gray-200 mt-auto">

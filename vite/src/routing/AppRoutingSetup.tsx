@@ -64,7 +64,7 @@ const AppRoutingSetup = (): ReactElement => {
 
       {/* Admin Routes */}
       <Route path="admin/*" element={
-        <RequireAuth allowedRoles={['ADMIN']}>
+        <RequireAuth allowedRoles={['COMMISSION_CHAIRMAN']}>
           <Demo6Layout />
         </RequireAuth>
       }>
@@ -114,6 +114,7 @@ const AppRoutingSetup = (): ReactElement => {
         
         {/* Internship Application Routes */}
         <Route path="internship-application" element={<InternshipApplicationPage />} />
+        <Route path="application-form/:id" element={<InternshipApplicationPage />} />
         <Route path="my-applications" element={<MyApplicationsPage />} />
       </Route>
 

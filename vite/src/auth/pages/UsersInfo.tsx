@@ -35,7 +35,7 @@ const ProfileSetup: React.FC = () => {
       console.log('User already has department info, redirecting to dashboard');
       
       // Rol kontrolüyle birlikte yönlendirme
-      if (currentUser.role === 'ADMIN') {
+      if (currentUser.role === 'COMMISSION_CHAIRMAN') {
         navigate('/admin/dashboard', { replace: true });
       } else if (currentUser.role === 'COMMISSION_MEMBER') {
         navigate('/commission/dashboard', { replace: true });
@@ -119,7 +119,7 @@ const ProfileSetup: React.FC = () => {
       console.log('Profile updated successfully via auth context');
       
       // Başarılı olursa kullanıcıyı dashboard'a yönlendir
-      if (currentUser?.role === 'ADMIN') {
+      if (currentUser?.role === 'COMMISSION_CHAIRMAN') {
         navigate('/admin/dashboard');
       } else if (currentUser?.role === 'COMMISSION_MEMBER') {
         navigate('/commission/dashboard');

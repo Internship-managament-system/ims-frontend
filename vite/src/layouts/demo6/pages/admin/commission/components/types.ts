@@ -3,7 +3,7 @@ export interface User {
     name: string;
     title: string;
     email: string;
-    role: 'COMMISSION_HEAD' | 'COMMISSION_MEMBER';
+    role: 'COMMISSION_CHAIRMAN' | 'COMMISSION_MEMBER';
     status: 'active' | 'passive';
   }
   
@@ -13,3 +13,11 @@ export interface User {
     title: string;
     email: string;
   }
+
+export interface CommissionMemberDTO {
+  userId: string;
+  name: string;
+  surname: string;
+  email: string;
+  role: 'COMMISSION_CHAIRMAN' | 'COMMISSION_MEMBER';
+}

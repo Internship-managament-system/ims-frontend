@@ -25,7 +25,7 @@ const ToolbarAdmin: React.FC<IToolbarAdminProps> = ({ activeTab, onTabChange }) 
     <div className="pb-5">
       <Container className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center flex-wrap gap-1 lg:gap-5">
-          <h1 className="font-medium text-lg text-gray-900">Admin Dashboard</h1>
+          <h1 className="font-medium text-lg text-gray-900">Komisyon Başkanı Dashboard</h1>
           
           <div className="flex items-center gap-1 text-sm font-normal">
             <span className="text-gray-700">Yönetim</span>

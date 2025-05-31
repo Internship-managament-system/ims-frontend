@@ -263,4 +263,37 @@ export const getAssignedInternshipApplications = async (): Promise<InternshipApp
     console.error('Atanmış staj başvurularını getirme hatası:', error);
     throw error;
   }
+};
+
+// Staj başvurusunu güncelle
+export const updateInternshipApplication = async (id: string, data: NewInternshipApplication): Promise<InternshipApplication> => {
+  try {
+    // Swagger'da görünen örnek yapıya göre alanları düzenle
+    const requestData = {
+      studentId: data.studentId,
+      departmentId: data.departmentId,
+      program: data.program,
+      internshipPeriod: data.internshipPeriod,
+      workplaceName: data.workplaceName,
+      province: data.province.toUpperCase(), // Backend'in beklediği ENUM formatına dönüştür
+      activityField: data.activityField,
+      workplaceEmail: data.workplaceEmail,
+      workplacePhone: data.workplacePhone,
+      workplaceAddress: data.workplaceAddress,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      weeklyWorkingDays: data.weeklyWorkingDays,
+      hasGeneralHealthInsurance: data.hasGeneralHealthInsurance,
+      internshipType: data.internshipType
+    };
+    
+    console.log(`Staj başvurusu güncelleniyor: ${id}`, requestData);
+    // Güncelleme için başvuru detay endpoint'ini kullanıyoruz (PUT isteği)
+    const response = await axiosClient.put<InternshipApplication>(INTERNSHIP_APPLICATION_DETAIL(id), requestData);
+    console.log('Staj başvurusu güncellendi:', response);
+    return response;
+  } catch (error) {
+    console.error('Staj başvurusu güncelleme hatası:', error);
+    throw error;
+  }
 }; 

@@ -4,7 +4,7 @@ import { KeenIcon } from '@/components/keenicons';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { getMyInternshipApplications, InternshipApplication, InternshipStatus } from '@/services/internshipService';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 // Başvuru durumu için renk ve etiket bilgileri
 const statusConfig: Record<InternshipStatus, { label: string; color: string }> = {
@@ -18,6 +18,7 @@ const MyApplicationsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedApplication, setSelectedApplication] = useState<InternshipApplication | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const navigate = useNavigate();
 
   // Öğrencinin kendi başvurularını getir
   const { data: applications = [], isLoading, isError } = useQuery({
@@ -42,6 +43,11 @@ const MyApplicationsPage: React.FC = () => {
   const closeModal = () => {
     setSelectedApplication(null);
     setShowDetailsModal(false);
+  };
+
+  // Başvuru güncelleme sayfasına yönlendir
+  const handleUpdateApplication = (application: InternshipApplication) => {
+    navigate(`/student/application-form/${application.id}`, { state: { isUpdate: true, application } });
   };
 
   // Arama filtreleme
@@ -139,13 +145,21 @@ const MyApplicationsPage: React.FC = () => {
                             {application.statusText || statusConfig[application.status].label}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className="px-4 py-3 text-sm flex gap-2">
                           <button
                             className="btn bg-blue-500 text-white text-xs py-1 px-2 rounded"
                             onClick={() => openDetailsModal(application)}
                           >
                             Detay
                           </button>
+                          {application.status === 'PENDING' && (
+                            <button
+                              className="btn bg-green-500 text-white text-xs py-1 px-2 rounded"
+                              onClick={() => handleUpdateApplication(application)}
+                            >
+                              Güncelle
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -245,6 +259,17 @@ const MyApplicationsPage: React.FC = () => {
                 </div>
 
                 <div className="flex justify-end gap-3">
+                  {selectedApplication.status === 'PENDING' && (
+                    <button
+                      className="btn bg-green-500 text-white py-2 px-4 rounded"
+                      onClick={() => {
+                        closeModal();
+                        handleUpdateApplication(selectedApplication);
+                      }}
+                    >
+                      Güncelle
+                    </button>
+                  )}
                   <button
                     className="btn bg-gray-200 text-gray-800 py-2 px-4 rounded"
                     onClick={closeModal}

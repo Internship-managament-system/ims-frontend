@@ -20,7 +20,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({ type, user, onConfirm, onCa
       case 'chairman':
         return {
           title: 'Başkan Atama Onayı',
-          message: `${getDisplayName(user)} komisyon başkanı olarak atanacak. Sistemde sadece bir komisyon başkanı olabilir, mevcut başkan varsa otomatik olarak görevden alınacaktır. Bu işlemi onaylıyor musunuz?`
+          message: `${getDisplayName(user)} komisyon başkanı olarak atanacak. Sistemde sadece bir komisyon başkanı olabilir, mevcut başkan varsa otomatik olarak görevden alınacaktır. İşlem tamamlandıktan sonra sistem sizi otomatik olarak çıkış yapacak ve tekrar giriş yapmanız gerekecektir. Bu işlemi onaylıyor musunuz?`
         };
       case 'removeChairman':
         return {

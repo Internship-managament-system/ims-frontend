@@ -106,7 +106,7 @@ const ProfileSettings: React.FC = () => {
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
-      case 'ADMIN':
+      case 'COMMISSION_CHAIRMAN':
         return 'Sistem Yöneticisi';
       case 'COMMISSION_MEMBER':
         return 'Komisyon Üyesi';

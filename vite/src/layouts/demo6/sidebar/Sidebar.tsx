@@ -17,7 +17,8 @@ import {
 const Sidebar = () => {
   const headerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
-  const desktopMode = useResponsive('up', 'lg');
+  const responsiveResult = useResponsive('up', 'lg');
+  const desktopMode: boolean = responsiveResult === undefined ? false : responsiveResult;
   const { pathname, prevPathname } = usePathname();
   const [viewportHeight] = useViewport();
   const { mobileSidebarOpen, setMobileSidebarOpen } = useDemo6Layout();

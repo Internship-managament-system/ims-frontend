@@ -288,7 +288,7 @@ const Dashboard: React.FC = () => {
                           <td className="px-4 py-3">
                             <Button 
                               variant="outline" 
-                              onClick={() => {/* Detay sayfasına yönlendirme yapılabilir */}}
+                              onClick={() => navigate(`/student/my-applications`)}
                               className="text-xs py-1 px-2"
                             >
                               Detaylar
@@ -305,7 +305,7 @@ const Dashboard: React.FC = () => {
               <div className="text-center mt-4">
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate('/basvurularim')}
+                  onClick={() => navigate('/student/my-applications')}
                   className="text-sm"
                 >
                   Tümünü Görüntüle

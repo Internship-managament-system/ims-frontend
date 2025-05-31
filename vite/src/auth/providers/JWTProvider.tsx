@@ -305,7 +305,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
   };
 
   const isAdmin = (): boolean => {
-    return hasRole('ADMIN');
+    return hasRole('COMMISSION_CHAIRMAN');
   };
 
   const isStudent = (): boolean => {
@@ -313,7 +313,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
   };
 
   const isCommissionMember = (): boolean => {
-    return hasRole('COMMISSION_MEMBER');
+    return hasRole('COMMISSION_MEMBER') || hasRole('COMMISSION_CHAIRMAN');
   };
 
   return (

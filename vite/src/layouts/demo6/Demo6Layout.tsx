@@ -9,7 +9,7 @@ import { useMenus } from '@/providers';
 
 const Demo6Layout = () => {
   const { currentUser } = useAuthContext();
-  const { setMenuConfig } = useMenus();
+  const { setMenuConfig, menuConfig } = useMenus();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCommissionMember, setIsCommissionMember] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
@@ -31,22 +31,29 @@ const Demo6Layout = () => {
 
   // Determine user role
   useEffect(() => {
-    if (currentUser) {
-      setIsAdmin(currentUser.role === 'ADMIN');
-      setIsCommissionMember(currentUser.role === 'COMMISSION_MEMBER');
-      setIsStudent(currentUser.role === 'STUDENT');
+    if (!currentUser) return;
+
+    // Kullanıcı rolünü kontrol et
+    const isChairman = currentUser.role === 'COMMISSION_CHAIRMAN';
+    setIsAdmin(isChairman);
+    setIsCommissionMember(currentUser.role === 'COMMISSION_MEMBER');
+    setIsStudent(currentUser.role === 'STUDENT');
+    
+    // Eğer menu config mevcut değilse veya önceki rol ayarlarından farklıysa güncelle
+    if (!menuConfig || 
+        menuConfig.isAdmin !== isChairman || 
+        menuConfig.isCommissionMember !== (currentUser.role === 'COMMISSION_MEMBER') || 
+        menuConfig.isStudent !== (currentUser.role === 'STUDENT')) {
+      setMenuConfig({
+        isAdmin: isChairman,
+        isCommissionMember: currentUser.role === 'COMMISSION_MEMBER',
+        isStudent: currentUser.role === 'STUDENT'
+      });
     }
-  }, [currentUser]);
-
-  // Set appropriate menu config based on role
-  useEffect(() => {
-    // By default, use the standard sidebar menu
-    setMenuConfig('primary', MENU_SIDEBAR);
-
-    // If the user is an admin, we'll override with admin-specific menu in the SidebarMenuPrimary component
-    // Similarly for other roles
-
-  }, [isAdmin, isCommissionMember, isStudent, setMenuConfig]);
+    
+    // If the user is a chairman, we'll override with admin-specific menu in the SidebarMenuPrimary component
+    
+  }, [currentUser, setMenuConfig]);
 
   return (
     // Providing layout context and rendering the main content

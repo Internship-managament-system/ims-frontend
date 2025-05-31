@@ -135,7 +135,7 @@ const SidebarMenuPrimary = () => {
   };
 
   // Render the appropriate menu based on user role
-  if (currentUser?.role === 'ADMIN') {
+  if (currentUser?.role === 'COMMISSION_CHAIRMAN') {
     return <SidebarMenuAdmin />;
   } else if (currentUser?.role === 'STUDENT') {
     return <SidebarMenuStudent />;
