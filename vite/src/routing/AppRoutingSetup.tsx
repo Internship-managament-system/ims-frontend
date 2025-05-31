@@ -14,9 +14,9 @@ import DocumentManagement from '../layouts/demo6/pages/admin/documents';
 import StudentQuery from '../layouts/demo6/pages/admin/students';
 import Settings from '../layouts/demo6/pages/admin/settings';
 import FAQManagement from '../layouts/demo6/pages/admin/faq';
+import InternshipApplicationsPage from '../layouts/demo6/pages/admin/internship-applications';
 
 // Application Management Components
-import ApplicationList from '../layouts/demo6/pages/admin/applications/ApplicationList';
 import ApplicationEvaluations from '../layouts/demo6/pages/admin/applications/ApplicationEvaluations';
 import ApplicationAssignments from '../layouts/demo6/pages/admin/applications/ApplicationAssignments';
 
@@ -43,6 +43,8 @@ import ChangePassword from '../layouts/demo6/pages/student/profile/ChangePasswor
 import Applications from '../layouts/demo6/pages/student/applications/Applications';
 import Documents from '../layouts/demo6/pages/student/documents/Documents';
 import NotebookUpload from '../layouts/demo6/pages/student/notebook-upload/NotebookUpload';
+import InternshipApplicationPage from '../layouts/demo6/pages/student/InternshipApplication';
+import MyApplicationsPage from '../layouts/demo6/pages/student/MyApplications';
 
 const AppRoutingSetup = (): ReactElement => {
   return (
@@ -71,9 +73,11 @@ const AppRoutingSetup = (): ReactElement => {
         <Route path="commission" element={<CommissionManagement />} />
         
         {/* Application Management Routes */}
-        <Route path="applications/list" element={<ApplicationList />} />
         <Route path="applications/evaluations" element={<ApplicationEvaluations />} />
         <Route path="applications/assignments" element={<ApplicationAssignments />} />
+        
+        {/* Internship Applications Route */}
+        <Route path="internship-applications" element={<InternshipApplicationsPage />} />
         
         <Route path="documents" element={<DocumentManagement />} />
         <Route path="students" element={<StudentQuery />} />
@@ -107,6 +111,10 @@ const AppRoutingSetup = (): ReactElement => {
         <Route path="support" element={<Support />} />
         <Route path="profile" element={<Profile />} />
         <Route path="change-password" element={<ChangePassword />} />
+        
+        {/* Internship Application Routes */}
+        <Route path="internship-application" element={<InternshipApplicationPage />} />
+        <Route path="my-applications" element={<MyApplicationsPage />} />
       </Route>
 
       {/* Commission Member Routes */}

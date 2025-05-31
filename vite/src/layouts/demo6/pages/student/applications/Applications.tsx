@@ -79,10 +79,10 @@ export default function Applications() {
   };
 
   return (
-    <Container>
-      <div className="flex flex-col gap-5 lg:gap-7.5">
+    <Container className="min-h-screen bg-white">
+      <div className="flex flex-col gap-5 lg:gap-7.5 pt-8 px-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex flex-col gap-2">
             <h1 className="text-xl font-semibold text-gray-900">Yapılan Başvurular</h1>
             <p className="text-sm text-gray-600">

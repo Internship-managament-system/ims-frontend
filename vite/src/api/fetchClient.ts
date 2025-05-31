@@ -13,6 +13,7 @@ class FetchClient {
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
+    console.log('FetchClient initialized with baseUrl:', baseUrl);
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -28,18 +29,47 @@ class FetchClient {
       headers['Authorization'] = `Bearer ${auth.access_token}`;
     }
 
+    // Endpoint'in tam URL olup olmadığını kontrol et
+    const url = endpoint.startsWith('http') 
+      ? endpoint 
+      : `${this.baseUrl}${endpoint}`;
+
+    console.log(`API Request: ${options.method || 'GET'} ${url}`);
+    console.log('Request Headers:', headers);
+    if (options.body) console.log('Request Body:', options.body);
+
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(url, {
         ...options,
         headers,
       });
 
+      console.log(`Response Status: ${response.status} ${response.statusText}`);
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || errorData?.error || `HTTP Error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Response Error Text:', errorText);
+        
+        let errorData = null;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          console.error('Failed to parse error response as JSON');
+        }
+        
+        throw new Error(errorData?.message || errorData?.error || `HTTP Error: ${response.status} - ${response.statusText}`);
       }
 
-      const data: ApiResponse<T> = await response.json();
+      const responseText = await response.text();
+      console.log('Response Text:', responseText);
+      
+      let data: ApiResponse<T>;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse response as JSON:', e);
+        throw new Error('Invalid JSON response from server');
+      }
       
       if (!data.success) {
         throw new Error(data.error || data.message || 'API Error');
@@ -75,4 +105,7 @@ class FetchClient {
   }
 }
 
-export const apiClient = new FetchClient('');
+// Proxy kullanarak istekleri gönder - vite.config.ts'deki ayarlarla eşleşir
+const API_BASE = '/api/v1';
+
+export const apiClient = new FetchClient(API_BASE);

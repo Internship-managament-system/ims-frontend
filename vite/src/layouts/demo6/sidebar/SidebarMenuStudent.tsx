@@ -26,9 +26,13 @@ const SidebarMenuStudent = () => {
       path: '/student/dashboard',
     },
     {
-      title: 'Staj Defteri Yükleme',
-      icon: 'book-open',
-      path: '/student/notebook-upload',
+      title: 'Staj İşlemleri',
+      icon: 'briefcase',
+      children: [
+        { title: 'Staj Başvurusu', path: '/student/internship-application' },
+        { title: 'Başvurularım', path: '/student/my-applications' },
+        { title: 'Staj Defteri Yükleme', path: '/student/notebook-upload' },
+      ],
     },
     {
       title: 'Hesap Ayarları',

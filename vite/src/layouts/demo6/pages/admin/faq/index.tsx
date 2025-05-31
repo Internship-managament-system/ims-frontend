@@ -121,8 +121,8 @@ const FAQManagement: React.FC = () => {
   ).sort((a, b) => a.order - b.order);
 
   return (
-    <Container>
-      <div className="p-5">
+    <Container className="min-h-screen bg-white">
+      <div className="pt-8 px-6">
         {/* Header */}
         <div className="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
           <div className="flex flex-col justify-center gap-2">

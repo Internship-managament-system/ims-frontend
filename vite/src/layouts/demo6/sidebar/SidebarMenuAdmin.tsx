@@ -39,7 +39,7 @@ const SidebarMenuAdmin = () => {
       children: [
         {
           title: 'Başvurular',
-          path: '/admin/applications/list',
+          path: '/admin/internship-applications',
         },
         {
           title: 'Atamalar',

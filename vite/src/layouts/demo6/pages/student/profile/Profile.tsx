@@ -131,10 +131,10 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <Container>
-      <div className="flex flex-col gap-5 lg:gap-7.5">
+    <Container className="min-h-screen bg-white">
+      <div className="flex flex-col gap-5 lg:gap-7.5 pt-8 px-6">
         {/* Header */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 mb-4">
           <h1 className="text-xl font-semibold text-gray-900">Profilim</h1>
           <p className="text-sm text-gray-600">
             Kişisel bilgilerinizi görüntüleyin.

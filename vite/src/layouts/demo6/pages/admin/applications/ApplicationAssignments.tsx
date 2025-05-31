@@ -5,8 +5,8 @@ import AssignmentPanel from './components/AssignmentPanel';
 
 const ApplicationAssignments: React.FC = () => {
   return (
-    <Container>
-      <div className="p-5">
+    <Container className="min-h-screen bg-white">
+      <div className="pt-8 px-6">
         {/* Page Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Başvuru Yönetimi - Atamalar</h1>
