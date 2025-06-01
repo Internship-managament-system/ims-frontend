@@ -30,32 +30,24 @@ interface InternshipType {
   id: string;
   name: string;
   description: string;
-  durationOfDays: number;
-  departmentId: string;
-  rules: Rule[];
-}
-
-interface InternShipInfo {
-  id: string;
-  name: string;
-  description: string;
+  durationOfDays?: number;
+  departmentId?: string;
+  rules?: Rule[];
 }
 
 const TypeManagement: React.FC = () => {
-  const [types, setTypes] = useState<InternShipInfo[]>([]);
+  const [types, setTypes] = useState<InternshipType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [topics, setTopics] = useState<any[]>([]);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editingType, setEditingType] = useState<InternshipType | null>(null);
   const [newType, setNewType] = useState<Partial<InternshipType>>({
     id: '',
     name: '',
-    description: ''
-  });
-
-  const [newTopic, setNewTopic] = useState<{ name: string; description: string }>({
-    name: '',
-    description: ''
+    description: '',
+    durationOfDays: 25,
+    rules: []
   });
 
   // API Base URL
@@ -71,8 +63,22 @@ const TypeManagement: React.FC = () => {
       setDocuments([]);
     }
   };
+
+  // Konuları çek (endpoint daha sonra verilecek)
+  const fetchTopics = async () => {
+    try {
+      // TODO: Endpoint daha sonra verilecek
+      // const response = await axios.get(`${API_BASE_URL}/topics`);
+      // setTopics(response.data.result || response.data || []);
+      setTopics([]); // Şimdilik boş array
+    } catch (error) {
+      console.error('Konular yüklenirken hata:', error);
+      setTopics([]);
+    }
+  };
+
   const fetchInternShipDetail = async (internshipId: string) => {
-    const response = await axios.get(`${API_BASE_URL}/internship-detail/${internshipId}`);
+    const response = await axios.get(`${API_BASE_URL}/internships/${internshipId}`);
     return response.data.result || response.data || [];
   };
 
@@ -81,11 +87,26 @@ const TypeManagement: React.FC = () => {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/internships`);
       console.log("osman1" + response?.data?.result);
-      setTypes(response?.data?.result);
+      const typesList = response?.data?.result || [];
+      
+      // Her staj türü için detay bilgisini çek (rules'ları almak için)
+      const typesWithDetails = await Promise.all(
+        typesList.map(async (type: any) => {
+          try {
+            const detailResponse = await fetchInternShipDetail(type.id);
+            return { ...type, ...detailResponse };
+          } catch (error) {
+            console.error(`Staj türü detayı alınırken hata (ID: ${type.id}):`, error);
+            return type;
+          }
+        })
+      );
+      
+      setTypes(typesWithDetails);
       console.log('osman:' + types);
     } catch (error) {
       console.error('Staj türleri yüklenirken hata:', error);
-      // Fallback olarak varsayılan türleri kullan
+      setTypes([]);
     } finally {
       setLoading(false);
     }
@@ -95,6 +116,7 @@ const TypeManagement: React.FC = () => {
   useEffect(() => {
     fetchInternshipTypes();
     fetchDocuments();
+    fetchTopics();
   }, []);
 
   const handleAddType = async () => {
@@ -102,10 +124,13 @@ const TypeManagement: React.FC = () => {
       alert('Lütfen zorunlu alanları doldurun!');
       return;
     }
-
+    
     try {
       const typeData = {
-        name: newType.name
+        name: newType.name,
+        description: newType.description,
+        durationOfDays: newType.durationOfDays || 25,
+        rules: newType.rules || []
       };
 
       const response = await axios.post(`${API_BASE_URL}/internships`, typeData, {
@@ -136,10 +161,13 @@ const TypeManagement: React.FC = () => {
       alert('Lütfen zorunlu alanları doldurun!');
       return;
     }
-
+    
     try {
       const updateData = {
-        name: newType.name
+        name: newType.name,
+        description: newType.description,
+        durationOfDays: newType.durationOfDays || 25,
+        rules: newType.rules || []
       };
 
       const response = await axios.put(
@@ -179,15 +207,25 @@ const TypeManagement: React.FC = () => {
     }
   };
 
+  const handleRemoveRule = (index: number) => {
+    const updatedRules = [...(newType.rules || [])];
+    updatedRules.splice(index, 1);
+    setNewType({
+      ...newType,
+      rules: updatedRules
+    });
+  };
+
   const resetForm = () => {
     setShowAddModal(false);
     setEditingType(null);
     setNewType({
       id: '',
       name: '',
-      description: ''
+      description: '',
+      durationOfDays: 25,
+      rules: []
     });
-    setNewTopic({ name: '', description: '' });
   };
 
   return (
@@ -225,16 +263,40 @@ const TypeManagement: React.FC = () => {
                       <div className="flex-grow">
                         <div className="flex items-center gap-3 mb-3">
                           <h3 className="text-lg font-medium text-gray-900">{type.name}</h3>
-                          <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"></span>
+                          <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            {type.rules ? type.rules.length : 0} kural
+                          </span>
                         </div>
 
                         <p className="text-gray-600 mb-4">{type.description}</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                          {type.durationOfDays && (
+                            <div>
+                              <span className="text-sm font-medium text-gray-700">Süre (İş Günü):</span>
+                              <p className="text-sm text-gray-600">{type.durationOfDays} gün</p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {type.rules && type.rules.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Kurallar:</h4>
+                            <div className="flex flex-wrap gap-1">
+                              {type.rules.map((rule, index) => (
+                                <span key={index} className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                                  {rule.name} ({rule.ruleType})
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex gap-2 ml-4">
                         <button
                           className="btn bg-blue-100 text-blue-700 p-2 rounded hover:bg-blue-200"
-                          // onClick={() => handleEditType(type)}
+                          onClick={() => handleEditType(type)}
                           title="Düzenle"
                         >
                           <KeenIcon icon="pencil" />
@@ -422,9 +484,9 @@ const TypeManagement: React.FC = () => {
                                     </div>
                                     <button
                                       className="btn bg-red-100 text-red-700 p-1 rounded"
-                                      // onClick={() =>
-                                      //   handleRemoveRule(newType.rules?.indexOf(rule) || 0)
-                                      // }
+                                      onClick={() =>
+                                        handleRemoveRule(newType.rules?.indexOf(rule) || 0)
+                                      }
                                       type="button"
                                     >
                                       <KeenIcon icon="trash" className="text-sm" />
@@ -440,54 +502,82 @@ const TypeManagement: React.FC = () => {
                     <div className="bg-yellow-50 p-4 rounded-lg">
                       <h4 className="text-md font-medium text-gray-900 mb-4">İlgili Konular</h4>
                       <p className="text-sm text-gray-600 mb-4">
-                        Bu staj türüne dahil olacak konuları ekleyin:
+                        Bu staj türüne dahil olacak konuları seçin:
                       </p>
 
                       <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Konu Adı *
-                            </label>
-                            <input
-                              type="text"
-                              className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
-                              placeholder="Örn: Web Uygulaması Geliştirme"
-                              value={newTopic.name}
-                              onChange={(e) => setNewTopic({ ...newTopic, name: e.target.value })}
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Açıklama *
-                            </label>
-                            <input
-                              type="text"
-                              className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
-                              placeholder="Konu hakkında açıklama"
-                              value={newTopic.description}
-                              onChange={(e) =>
-                                setNewTopic({ ...newTopic, description: e.target.value })
-                              }
-                            />
+                        {/* Mevcut Konulardan Seçim */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Mevcut Konulardan Seç
+                          </label>
+                          <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3 bg-white">
+                            {topics.map((topic) => (
+                              <label
+                                key={topic.id}
+                                className="flex items-center p-2 hover:bg-gray-50 rounded"
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="rounded border-gray-300 mr-3"
+                                  checked={
+                                    newType.rules?.some(
+                                      (rule) =>
+                                        rule.ruleType === 'TOPIC' &&
+                                        rule.name === topic.name
+                                    ) || false
+                                  }
+                                  onChange={(e) => {
+                                    const currentRules = newType.rules || [];
+                                    if (e.target.checked) {
+                                      // Konuyu ekle
+                                      setNewType({
+                                        ...newType,
+                                        rules: [
+                                          ...currentRules,
+                                          {
+                                            name: topic.name,
+                                            description: topic.description,
+                                            ruleType: 'TOPIC'
+                                          }
+                                        ]
+                                      });
+                                    } else {
+                                      // Konuyu çıkar
+                                      setNewType({
+                                        ...newType,
+                                        rules: currentRules.filter(
+                                          (rule) =>
+                                            !(
+                                              rule.ruleType === 'TOPIC' &&
+                                              rule.name === topic.name
+                                            )
+                                        )
+                                      });
+                                    }
+                                  }}
+                                />
+                                <div className="flex-grow">
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {topic.name}
+                                  </span>
+                                  <span className="text-xs text-gray-500 block">
+                                    {topic.description}
+                                  </span>
+                                </div>
+                              </label>
+                            ))}
+                            {topics.length === 0 && (
+                              <p className="text-sm text-gray-500 p-2">Henüz konu eklenmemiş</p>
+                            )}
                           </div>
                         </div>
-
-                        <button
-                          className="btn bg-[#13126e] text-white px-4 py-2 rounded w-full"
-                          // onClick={handleAddTopic}
-                          type="button"
-                          disabled={!newTopic.name.trim() || !newTopic.description.trim()}
-                        >
-                          <KeenIcon icon="plus" className="mr-2" />
-                          Konu Ekle
-                        </button>
                       </div>
 
                       {newType.rules &&
                         newType.rules.filter((r) => r.ruleType === 'TOPIC').length > 0 && (
                           <div className="mt-4 space-y-2">
-                            <h5 className="text-sm font-medium text-gray-700">Eklenen Konular:</h5>
+                            <h5 className="text-sm font-medium text-gray-700">Seçilen Konular:</h5>
                             <div className="grid grid-cols-1 gap-2">
                               {newType.rules
                                 .filter((r) => r.ruleType === 'TOPIC')
@@ -496,14 +586,19 @@ const TypeManagement: React.FC = () => {
                                     key={index}
                                     className="flex items-center justify-between bg-white p-3 rounded border border-gray-200"
                                   >
-                                    <span className="text-sm font-medium text-gray-900">
-                                      {rule.name}
-                                    </span>
+                                    <div>
+                                      <span className="text-sm font-medium text-gray-900">
+                                        {rule.name}
+                                      </span>
+                                      <span className="text-xs text-gray-500 block">
+                                        {rule.description}
+                                      </span>
+                                    </div>
                                     <button
                                       className="btn bg-red-100 text-red-700 p-1 rounded"
-                                      // onClick={() =>
-                                      //   handleRemoveRule(newType.rules?.indexOf(rule) || 0)
-                                      // }
+                                      onClick={() =>
+                                        handleRemoveRule(newType.rules?.indexOf(rule) || 0)
+                                      }
                                       type="button"
                                     >
                                       <KeenIcon icon="trash" className="text-sm" />
@@ -527,6 +622,7 @@ const TypeManagement: React.FC = () => {
                   <button
                     className="btn bg-[#13126e] text-white px-6 py-2 rounded"
                     onClick={editingType ? handleUpdateType : handleAddType}
+                    disabled={!newType.name || !newType.description}
                   >
                     {editingType ? 'Güncelle' : 'Ekle'}
                   </button>
