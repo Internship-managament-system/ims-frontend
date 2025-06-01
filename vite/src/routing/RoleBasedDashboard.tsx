@@ -32,16 +32,20 @@ const RoleBasedDashboard: React.FC = () => {
     return <Navigate to="/auth/login" replace />;
   }
 
-  // Departman kontrolü - sadece gerçekten eksikse yönlendir
+  // Belirtilen roller için yönlendirme
+  if (hasRole('ADMIN')) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  // Departman kontrolü - Admin rolü değilse ve departman eksikse yönlendir
   // null, undefined veya boş string kontrolü yap
   if (!currentUser.departmentId || currentUser.departmentId === '') {
     console.log('RoleBasedDashboard - Redirecting to profile setup, departmentId:', currentUser.departmentId);
     return <Navigate to="/users/info" replace />;
   }
-
-  // Belirtilen roller için yönlendirme
+  
   if (hasRole('COMMISSION_CHAIRMAN')) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/commissionChairman/dashboard" replace />;
   }
 
   if (hasRole('COMMISSION_MEMBER')) {

@@ -3,13 +3,13 @@ import useBodyClasses from '@/hooks/useBodyClasses';
 import { Demo6LayoutProvider, Main } from './';
 import { useAuthContext } from '@/auth';
 import { useEffect, useState } from 'react';
-import { SidebarMenuAdmin } from './sidebar/SidebarMenuAdmin';
+import { SidebarMenuCommissionChairman } from './sidebar/SidebarMenuCommissionChairman';
 import { MENU_SIDEBAR } from '@/config';
 import { useMenus } from '@/providers';
 
 const Demo6Layout = () => {
   const { currentUser } = useAuthContext();
-  const { setMenuConfig, menuConfig } = useMenus();
+  const { setMenuConfig } = useMenus();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCommissionMember, setIsCommissionMember] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
@@ -39,17 +39,8 @@ const Demo6Layout = () => {
     setIsCommissionMember(currentUser.role === 'COMMISSION_MEMBER');
     setIsStudent(currentUser.role === 'STUDENT');
     
-    // Eğer menu config mevcut değilse veya önceki rol ayarlarından farklıysa güncelle
-    if (!menuConfig || 
-        menuConfig.isAdmin !== isChairman || 
-        menuConfig.isCommissionMember !== (currentUser.role === 'COMMISSION_MEMBER') || 
-        menuConfig.isStudent !== (currentUser.role === 'STUDENT')) {
-      setMenuConfig({
-        isAdmin: isChairman,
-        isCommissionMember: currentUser.role === 'COMMISSION_MEMBER',
-        isStudent: currentUser.role === 'STUDENT'
-      });
-    }
+    // Menü yapılandırmasını güncelle
+    setMenuConfig('primary', []);
     
     // If the user is a chairman, we'll override with admin-specific menu in the SidebarMenuPrimary component
     

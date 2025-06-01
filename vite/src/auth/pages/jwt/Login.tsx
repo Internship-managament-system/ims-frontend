@@ -44,10 +44,10 @@ const getInitialValues = () => {
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [departmentUpdateStatus, setDepartmentUpdateStatus] = useState<'pending' | 'success' | 'error' | null>(null);
-  const { login, currentUser, isAdmin, isStudent, isCommissionMember } = useAuthContext();
+  const { login, currentUser, isCommissionChairman, isStudent, isCommissionMember, isAdmin } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/dashboard';
   const [showPassword, setShowPassword] = useState(false);
   const { currentLayout } = useLayout();
   const { t } = useLanguage();
@@ -91,17 +91,19 @@ const Login = () => {
 
   useEffect(() => {
   if (currentUser) {
-    if (isAdmin()) {
-      navigate('/admin/dashboard', { replace: true });
+    if (isCommissionChairman()) {
+      navigate('/commissionChairman/dashboard', { replace: true });
     } else if (isCommissionMember()) {
       navigate('/commission/dashboard', { replace: true });
     } else if (isStudent()) {
       navigate('/student/dashboard', { replace: true });
+    } else if (isAdmin()) {
+      navigate('/admin/dashboard', { replace: true });
     } else {
       navigate('/', { replace: true });
     }
   }
-}, [currentUser, isAdmin, isStudent, isCommissionMember, navigate]);
+}, [currentUser, isCommissionChairman, isStudent, isCommissionMember, navigate]);
 
 
   useEffect(() => {
@@ -324,3 +326,7 @@ const Login = () => {
 };
 
 export { Login };
+
+function isAdmin() {
+  throw new Error('Function not implemented.');
+}

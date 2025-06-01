@@ -1,0 +1,120 @@
+/* LandingPageHeader.css */
+
+/* Header container için genel stiller */
+.header-wrapper {
+  position: static;
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+  z-index: 10;
+  visibility: visible;
+  margin: 0;
+  padding: 0;
+  background-color: #fff;
+  opacity: 1;
+}
+
+/* Header parent container */
+.header-parent-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Sayfa başında başlangıç noktası için yardımcı div */
+#header-anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 1px;
+  width: 100%;
+  z-index: 10;
+}
+
+/* Header içeriği için genel stiller */
+header {
+  display: block;
+  visibility: visible;
+  opacity: 1;
+  margin: 0;
+  padding: 0;
+}
+
+/* Üst çubuğu viewport'un tepesine sabitleyelim */
+.header-top-bar {
+  background-color: #13126e;
+  height: 40px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 16px;
+  color: white;
+  position: relative;
+  z-index: 999;
+  margin: 0;
+}
+
+.header-main-content {
+  padding: 8px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  background-color: #fff;
+  min-height: 110px;
+  margin: 0;
+}
+
+.header-logo {
+  position: absolute;
+  left: 24px;
+  top: 0;
+  height: 120px;
+  width: 120px;
+  z-index: 10;
+  background: url('/media/eru/erciyes-logo.png') no-repeat center center;
+  background-size: contain;
+  border-radius: 50%;
+  border: 4px solid white;
+  box-shadow: 0 0 0 1px #d1d5db;
+  display: block;
+}
+
+.header-title {
+  color: #13126e;
+  display: block;
+}
+
+/* HTML ve BODY için genel ayarlar */
+html, body {
+  scroll-padding-top: 0 !important;
+  scroll-behavior: auto !important;
+  overflow-x: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+/* Ek güvenlik için önemli stiller */
+#header-container {
+  display: block;
+  visibility: visible;
+  position: static;
+  opacity: 1;
+  margin: 0;
+  padding: 0;
+}
+
+/* Taşma sorunlarını önleme */
+@media screen and (max-width: 768px) {
+  .header-main-content {
+    padding: 8px;
+  }
+  
+  .header-logo {
+    width: 70px;
+    height: 70px;
+  }
+} 

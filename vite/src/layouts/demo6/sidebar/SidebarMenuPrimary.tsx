@@ -1,8 +1,9 @@
 // /src/layouts/demo6/sidebar/SidebarMenuPrimary.tsx
 import { useMenus } from '@/providers';
 import { useAuthContext } from '@/auth';
-import { SidebarMenuAdmin } from './SidebarMenuAdmin';
+import { SidebarMenuCommissionChairman } from './SidebarMenuCommissionChairman';
 import { SidebarMenuStudent } from './SidebarMenuStudent';
+import { SidebarMenuAdmin } from './SidebarMenuAdmin';
 import clsx from 'clsx';
 import { KeenIcon } from '@/components/keenicons';
 import {
@@ -135,8 +136,10 @@ const SidebarMenuPrimary = () => {
   };
 
   // Render the appropriate menu based on user role
-  if (currentUser?.role === 'COMMISSION_CHAIRMAN') {
+  if (currentUser?.role === 'ADMIN') {
     return <SidebarMenuAdmin />;
+  } else if (currentUser?.role === 'COMMISSION_CHAIRMAN') {
+    return <SidebarMenuCommissionChairman />;
   } else if (currentUser?.role === 'STUDENT') {
     return <SidebarMenuStudent />;
   } else if (currentUser?.role === 'COMMISSION_MEMBER') {

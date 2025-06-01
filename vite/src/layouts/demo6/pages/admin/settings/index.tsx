@@ -1,30 +1,30 @@
-// /pages/admin/settings/index.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { Container } from '@/components';
-import SettingsTabs from './components/SettingsTabs';
 import ProfileSettings from './components/ProfileSettings';
-import AccountManagement from './components/AccountManagement';
+import PasswordChange from './components/PasswordChange';
 
-const Settings: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<string>('profile');
-
+const AdminSettings: React.FC = () => {
   return (
     <Container>
       <div className="p-5">
-        <div className="bg-white rounded-lg shadow">
-          <SettingsTabs
-            activeSection={activeSection}
-            onSectionChange={setActiveSection}
-          />
+        {/* Başlık */}
+        <div className="flex flex-col gap-2 mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Sistem Ayarları
+          </h1>
+          <p className="text-gray-600">
+            Kullanıcı bilgilerinizi görüntüleyin ve şifrenizi değiştirin
+          </p>
+        </div>
 
-          <div className="p-6">
-            {activeSection === 'profile' && <ProfileSettings />}
-            {activeSection === 'account' && <AccountManagement />}
-          </div>
+        {/* Profil Bilgileri ve Şifre Değiştirme */}
+        <div className="grid grid-cols-1 gap-6">
+          <ProfileSettings />
+          <PasswordChange />
         </div>
       </div>
     </Container>
   );
 };
 
-export default Settings;
+export default AdminSettings; 

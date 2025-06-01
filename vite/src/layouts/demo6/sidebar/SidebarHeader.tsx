@@ -14,11 +14,16 @@ import {
 import { MENU_ROOT } from '@/config';
 import { KeenIcon } from '@/components';
 import { useLanguage } from '@/i18n';
+import { useAuthContext } from '@/auth';
+import axios from 'axios';
+import { getAuth } from '@/auth/_helpers';
 
 const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
   const { pathname } = useLocation();
   const [selectedMenuItem, setSelectedMenuItem] = useState(MENU_ROOT[1]);
   const { isRTL } = useLanguage();
+  const { currentUser } = useAuthContext();
+  const [departmentName, setDepartmentName] = useState<string>('');
   
   const handleInputChange = () => {};
 
@@ -29,6 +34,51 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
       }
     });
   }, [pathname]);
+
+  // Departman adını fetch et
+  useEffect(() => {
+    const fetchDepartmentName = async () => {
+      if (currentUser?.departmentId && !currentUser?.departmentName) {
+        try {
+          const response = await axios.get(`/api/v1/departments/${currentUser.departmentId}`, {
+            headers: {
+              'Authorization': `Bearer ${getAuth()?.access_token}`
+            }
+          });
+          
+          if (response.data && response.data.result) {
+            setDepartmentName(response.data.result.name);
+          }
+        } catch (error) {
+          console.error('Departman bilgisi alınamadı:', error);
+        }
+      } else if (currentUser?.departmentName) {
+        setDepartmentName(currentUser.departmentName);
+      }
+    };
+
+    fetchDepartmentName();
+  }, [currentUser?.departmentId, currentUser?.departmentName]);
+
+  // Departman adını gösteren roller
+  const shouldShowDepartment = currentUser?.role && [
+    'COMMISSION_CHAIRMAN', 
+    'COMMISSION_MEMBER', 
+    'STUDENT'
+  ].includes(currentUser.role);
+
+  // Departman adını al (önce API'den çekilen, sonra varsa currentUser'dan)
+  const departmentDisplayName = departmentName || currentUser?.departmentName || currentUser?.department;
+
+  // Debug için console log
+  console.log('SidebarHeader Debug:', {
+    userRole: currentUser?.role,
+    shouldShowDepartment,
+    departmentId: currentUser?.departmentId,
+    departmentName,
+    departmentDisplayName,
+    fullUser: currentUser
+  });
 
   return (
     <div ref={ref}>
@@ -44,7 +94,11 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
               src={toAbsoluteUrl('/media/app/mini-logo-circle-dark.svg')}
               className="hidden dark:inline-block h-[42px]"
             />
-            <span className="text-base md:text-lg font-bold tracking-wider text-[#13126e] uppercase whitespace-normal break-words md:whitespace-nowrap">STAJ BİLGİ SİSTEMİ</span>
+            <div className="flex flex-col items-center">
+              <span className="text-base md:text-lg font-bold tracking-wider text-[#13126e] uppercase whitespace-normal break-words md:whitespace-nowrap text-center">
+                STAJ BİLGİ SİSTEMİ
+              </span>
+            </div>
           </div>
         </Link>
       </div>

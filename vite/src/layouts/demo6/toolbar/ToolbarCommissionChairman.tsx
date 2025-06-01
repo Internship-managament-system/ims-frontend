@@ -1,22 +1,24 @@
-// /src/layouts/demo6/toolbar/ToolbarAdmin.tsx
+// /src/layouts/demo6/toolbar/ToolbarCommissionChairman.tsx
 import React from 'react';
 import { Container } from '@/components';
 import { KeenIcon } from '@/components/keenicons';
 import { useAuthContext } from '@/auth';
 
-export interface IToolbarAdminProps {
+export interface IToolbarCommissionChairmanProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
 
-const ToolbarAdmin: React.FC<IToolbarAdminProps> = ({ activeTab, onTabChange }) => {
+const ToolbarCommissionChairman: React.FC<IToolbarCommissionChairmanProps> = ({ activeTab, onTabChange }) => {
   const { currentUser } = useAuthContext();
 
-  // Admin toolbar tabs
+  // CommissionChairman toolbar tabs
   const tabs = [
     { id: 'overview', title: 'Genel Durum' },
-    { id: 'users', title: 'Kullanıcı Yönetimi' },
+    { id: 'users', title: 'Komisyon Üyeleri' },
     { id: 'applications', title: 'Başvuru Yönetimi' },
+    { id: 'documents', title: 'Belge Yönetimi' },
+    { id: 'faq', title: 'SSS Yönetimi' },
     { id: 'settings', title: 'Sistem Ayarları' },
     { id: 'reports', title: 'Raporlar' }
   ];
@@ -78,4 +80,4 @@ const ToolbarAdmin: React.FC<IToolbarAdminProps> = ({ activeTab, onTabChange }) 
   );
 };
 
-export { ToolbarAdmin };
+export { ToolbarCommissionChairman };

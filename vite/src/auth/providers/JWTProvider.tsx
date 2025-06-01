@@ -44,9 +44,10 @@ interface AuthContextProps {
   // Rol kontrolü için yardımcı fonksiyonlar
   hasRole: (role: string) => boolean;
   hasPermission: (permission: string) => boolean;
-  isAdmin: () => boolean;
+  isCommissionChairman: () => boolean;
   isStudent: () => boolean;
   isCommissionMember: () => boolean;
+  isAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -165,7 +166,16 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         setCurrentUser(userData.result);
 
         // Profil tamamlanmamışsa setup sayfasına yönlendir
-        if (!userData.result.facultyId || !userData.result.departmentId) {
+        // Admin ve komisyon başkanı rolü için bu kontrol gerekli değil
+        console.log('Login user data check:', {
+          role: userData.result.role,
+          facultyId: userData.result.facultyId,
+          departmentId: userData.result.departmentId
+        });
+        
+        if (userData.result.role !== 'ADMIN' && 
+            userData.result.role !== 'COMMISSION_CHAIRMAN' &&
+            (!userData.result.facultyId || !userData.result.departmentId)) {
           // Bu kontrol profil bilgilerinin eksik olduğunu varsayar
           // Backend'den gelen user modelinde bu alanlar varsa
           window.location.href = '/users/info';
@@ -304,8 +314,12 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     return currentUser?.permissions?.includes(permission) || false;
   };
 
-  const isAdmin = (): boolean => {
+  const isCommissionChairman = (): boolean => {
     return hasRole('COMMISSION_CHAIRMAN');
+  };
+
+  const isAdmin = (): boolean => {
+    return hasRole('ADMIN');
   };
 
   const isStudent = (): boolean => {
@@ -335,9 +349,10 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         verify,
         hasRole,
         hasPermission,
-        isAdmin,
+        isCommissionChairman,
         isStudent,
-        isCommissionMember
+        isCommissionMember,
+        isAdmin
       }}
     >
       {children}

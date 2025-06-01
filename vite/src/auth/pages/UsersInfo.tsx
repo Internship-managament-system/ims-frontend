@@ -31,13 +31,22 @@ const ProfileSetup: React.FC = () => {
 
   // Kullanıcının zaten departman bilgisi varsa dashboard'a yönlendir
   useEffect(() => {
+    // Admin ve komisyon başkanı rolü için departman kontrolü yapma, doğrudan dashboard'a yönlendir
+    if (currentUser && currentUser.role === 'ADMIN') {
+      navigate('/admin/dashboard', { replace: true });
+      return;
+    }
+    
+    if (currentUser && currentUser.role === 'COMMISSION_CHAIRMAN') {
+      navigate('/commissionChairman/dashboard', { replace: true });
+      return;
+    }
+    
     if (currentUser && currentUser.departmentId && currentUser.departmentId !== '') {
       console.log('User already has department info, redirecting to dashboard');
       
       // Rol kontrolüyle birlikte yönlendirme
-      if (currentUser.role === 'COMMISSION_CHAIRMAN') {
-        navigate('/admin/dashboard', { replace: true });
-      } else if (currentUser.role === 'COMMISSION_MEMBER') {
+      if (currentUser.role === 'COMMISSION_MEMBER') {
         navigate('/commission/dashboard', { replace: true });
       } else if (currentUser.role === 'STUDENT') {
         navigate('/student/dashboard', { replace: true });
@@ -120,7 +129,7 @@ const ProfileSetup: React.FC = () => {
       
       // Başarılı olursa kullanıcıyı dashboard'a yönlendir
       if (currentUser?.role === 'COMMISSION_CHAIRMAN') {
-        navigate('/admin/dashboard');
+        navigate('/commissionChairman/dashboard');
       } else if (currentUser?.role === 'COMMISSION_MEMBER') {
         navigate('/commission/dashboard');
       } else if (currentUser?.role === 'STUDENT') {

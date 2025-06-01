@@ -1,4 +1,4 @@
-import React from 'react';
+// /src/layouts/demo6/sidebar/SidebarMenuCommissionChairman.tsx
 import clsx from 'clsx';
 import { KeenIcon } from '@/components/keenicons';
 import {
@@ -11,19 +11,7 @@ import {
   MenuTitle
 } from '@/components/menu';
 
-interface MenuChildItem {
-  title: string;
-  path?: string;
-}
-
-interface MenuItemConfig {
-  title: string;
-  icon: string;
-  path?: string;
-  children?: MenuChildItem[];
-}
-
-const SidebarMenuAdmin: React.FC = () => {
+const SidebarMenuCommissionChairman = () => {
   const buildMenuArrow = () => {
     return (
       <MenuArrow className="text-gray-600 menu-item-here:text-[#13126e] menu-item-show:text-[#13126e] menu-link-hover:text-[#13126e]">
@@ -33,34 +21,88 @@ const SidebarMenuAdmin: React.FC = () => {
     );
   };
 
-  // Admin için menü öğeleri
-  const adminMenuItems: MenuItemConfig[] = [
+  // Komisyon Başkanı için menü öğeleri
+  const commissionChairmanMenuItems = [
     {
       title: 'Genel Durum',
       icon: 'element-11',
-      path: '/admin/dashboard',
+      path: '/commissionChairman/dashboard',
     },
     {
-      title: 'Fakülte Yönetimi',
-      icon: 'bank',
-      path: '/admin/faculty',
+      title: 'Komisyon Üyeleri',
+      icon: 'people',
+      path: '/commissionChairman/commission',
     },
     {
-      title: 'Departman Yönetimi',
-      icon: 'abstract-14',
-      path: '/admin/department',
+      title: 'Başvuru Yönetimi',
+      icon: 'document',
+      children: [
+        {
+          title: 'Başvurular',
+          path: '/commissionChairman/internship-applications',
+        },
+        {
+          title: 'Atamalar',
+          path: '/commissionChairman/applications/assignments',
+        },
+      ]
     },
     {
-      title: 'Sistem Ayarları',
+      title: 'Staj Kuralları',
+      icon: 'chart-line-up-2',
+      children: [
+        {
+          title: 'Staj Türü Yönetimi',
+          path: '/commissionChairman/internship-settings/type-management',
+        },
+        {
+          title: 'Konu Havuzu Yönetimi',
+          path: '/commissionChairman/internship-settings/topic-pool',
+        },
+        {
+          title: 'Belgeler',
+          path: '/commissionChairman/internship-settings/documents',
+        },
+      ]
+    },
+    {
+      title: 'Staj Ayarları',
       icon: 'setting-2',
-      path: '/admin/settings',
+      children: [
+        {
+          title: 'Başvuru Süresi',
+          path: '/commissionChairman/internship-settings/application-period',
+        },
+        {
+          title: 'Defter Toplama Tarihleri',
+          path: '/commissionChairman/internship-settings/notebook-dates',
+        },
+        {
+          title: 'Red Gerekçeleri',
+          path: '/commissionChairman/internship-settings/rejection-reasons',
+        },
+        {
+          title: 'Staj Detayları',
+          path: '/commissionChairman/internship-settings/internship-details',
+        },
+      ]
+    },
+    {
+      title: 'SSS Yönetimi',
+      icon: 'questionnaire-tablet',
+      path: '/commissionChairman/faq',
+    },
+    {
+      title: 'Hesap Ayarları',
+      icon: 'setting-2',
+      path: '/commissionChairman/settings',
     }
   ];
 
   // Build menu items from configuration
   const buildMenuItems = () => {
-    return adminMenuItems.map((item, index) => {
-      if (item.children && item.children.length > 0) {
+    return commissionChairmanMenuItems.map((item, index) => {
+      if (item.children) {
         return (
           <MenuItem key={index} toggle="accordion" trigger="click">
             <MenuLink className="gap-2.5 py-2 px-2.5 rounded-md border border-transparent hover:border-[#13126e] hover:bg-[#e8e8f5]">
@@ -115,4 +157,4 @@ const SidebarMenuAdmin: React.FC = () => {
   );
 };
 
-export { SidebarMenuAdmin }; 
+export { SidebarMenuCommissionChairman };

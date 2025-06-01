@@ -1,11 +1,13 @@
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Alert, KeenIcon } from '@/components';
-import { useState } from 'react';
+import { useAuthContext } from '@/auth';
+import { useState, useEffect } from 'react';
 import clsx from 'clsx';
+import { useLayout } from '@/providers';
 import { AxiosError } from 'axios';
 import axios from 'axios';
-import { getAuth } from '@/auth/_helpers';
+import * as authHelper from '@/auth/_helpers';
 
 const passwordChangeSchema = Yup.object().shape({
   oldPassword: Yup.string()
@@ -19,6 +21,9 @@ const passwordChangeSchema = Yup.object().shape({
 });
 
 const PasswordChange = () => {
+  const { currentLayout } = useLayout();
+  // Burada gerçek API çağrısını yapacak fonksiyon kullanılmalı
+  const { changePassword } = useAuthContext();
   const [loading, setLoading] = useState(false);
   const [hasErrors, setHasErrors] = useState<boolean | undefined>(undefined);
   const [success, setSuccess] = useState(false);
@@ -26,8 +31,11 @@ const PasswordChange = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Şifre değiştirme API çağrısı için fonksiyon
+  // Şifre değiştirme API çağrısı için özel fonksiyon
   const updatePassword = async (oldPassword: string, newPassword: string, confirmPassword: string) => {
+    // Göreceli URL kullanıyoruz - böylece tarayıcı kendi kaynağından istek yapar
+    // ve CORS hatasını önler
+    // Bu URL'i kendi projenize göre düzenlemelisiniz
     const UPDATE_PASSWORD_URL = `/api/v1/users/password/update`;
 
     // Önce frontend'de şifrelerin eşleştiğini kontrol edelim
@@ -46,7 +54,7 @@ const PasswordChange = () => {
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${getAuth()?.access_token}`
+            Authorization: `Bearer ${authHelper.getAuth()?.access_token}`
           }
         }
       );
@@ -224,4 +232,4 @@ const PasswordChange = () => {
   );
 };
 
-export default PasswordChange; 
+export default PasswordChange;

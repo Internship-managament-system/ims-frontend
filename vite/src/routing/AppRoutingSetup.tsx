@@ -6,19 +6,28 @@ import { Demo6Layout } from '@/layouts/demo6';
 import { RequireAuth } from '@/auth/RequireAuth';
 import { AuthPage } from '@/auth';
 import UsersInfo from '../auth/pages/UsersInfo';
+import LandingPage from '../pages/LandingPage';
+import GeneralAnnouncements from '../pages/GeneralAnnouncements';
+import InternshipAnnouncements from '../pages/InternshipAnnouncements';
+import AnnouncementDetail from '../pages/AnnouncementDetail';
 
 // Admin Pages
-import Dashboard from '../layouts/demo6/pages/admin/Dashboard';
-import CommissionManagement from '../layouts/demo6/pages/admin/commission';
-import DocumentManagement from '../layouts/demo6/pages/admin/documents';
-import StudentQuery from '../layouts/demo6/pages/admin/students';
-import Settings from '../layouts/demo6/pages/admin/settings';
-import FAQManagement from '../layouts/demo6/pages/admin/faq';
-import InternshipApplicationsPage from '../layouts/demo6/pages/admin/internship-applications';
+import AdminDashboard from '../layouts/demo6/pages/admin/Dashboard';
+import FacultyManagement from '../layouts/demo6/pages/admin/faculty';
+import DepartmentManagement from '../layouts/demo6/pages/admin/department';
+import AdminSettings from '../layouts/demo6/pages/admin/settings';
+
+// commissionChairman Pages
+import Dashboard from '../layouts/demo6/pages/commissionChairman/Dashboard';
+import CommissionManagement from '../layouts/demo6/pages/commissionChairman/commission';
+import StudentQuery from '../layouts/demo6/pages/commissionChairman/students';
+import Settings from '../layouts/demo6/pages/commissionChairman/settings';
+import FAQManagement from '../layouts/demo6/pages/commissionChairman/faq';
+import InternshipApplicationsPage from '../layouts/demo6/pages/commissionChairman/internship-applications';
 
 // Application Management Components
-import ApplicationEvaluations from '../layouts/demo6/pages/admin/applications/ApplicationEvaluations';
-import ApplicationAssignments from '../layouts/demo6/pages/admin/applications/ApplicationAssignments';
+import ApplicationEvaluations from '../layouts/demo6/pages/commissionChairman/applications/ApplicationEvaluations';
+import ApplicationAssignments from '../layouts/demo6/pages/commissionChairman/applications/ApplicationAssignments';
 
 // Internship Settings Pages
 import {
@@ -26,8 +35,11 @@ import {
   NotebookDates,
   RejectionReasons,
   InternshipDetails,
-  InternshipDuration
-} from '../layouts/demo6/pages/admin/internship-settings';
+  TypeManagement,
+  TopicPool
+} from '../layouts/demo6/pages/commissionChairman/internship-settings';
+
+import DocumentManagement from '../layouts/demo6/pages/commissionChairman/internship-settings/documents';
 
 // Student & Commission Pages
 import StudentDashboard from '../layouts/demo6/pages/student/Dashboard';
@@ -45,6 +57,8 @@ import Documents from '../layouts/demo6/pages/student/documents/Documents';
 import NotebookUpload from '../layouts/demo6/pages/student/notebook-upload/NotebookUpload';
 import InternshipApplicationPage from '../layouts/demo6/pages/student/InternshipApplication';
 import MyApplicationsPage from '../layouts/demo6/pages/student/MyApplications';
+
+
 
 const AppRoutingSetup = (): ReactElement => {
   return (
@@ -64,6 +78,19 @@ const AppRoutingSetup = (): ReactElement => {
 
       {/* Admin Routes */}
       <Route path="admin/*" element={
+        <RequireAuth allowedRoles={['ADMIN']}>
+          <Demo6Layout />
+        </RequireAuth>
+      }>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="faculty" element={<FacultyManagement />} />
+        <Route path="department" element={<DepartmentManagement />} />
+        <Route path="settings" element={<AdminSettings />} />
+      </Route>
+
+      {/* Commission Chairman Routes */}
+      <Route path="commissionChairman/*" element={
         <RequireAuth allowedRoles={['COMMISSION_CHAIRMAN']}>
           <Demo6Layout />
         </RequireAuth>
@@ -79,16 +106,19 @@ const AppRoutingSetup = (): ReactElement => {
         {/* Internship Applications Route */}
         <Route path="internship-applications" element={<InternshipApplicationsPage />} />
         
-        <Route path="documents" element={<DocumentManagement />} />
         <Route path="students" element={<StudentQuery />} />
         <Route path="settings" element={<Settings />} />
         
         {/* Internship Settings Routes */}
+        <Route path="internship-settings/type-management" element={<TypeManagement />} />
+        <Route path="internship-settings/topic-pool" element={<TopicPool />} />
+        <Route path="internship-settings/documents" element={<DocumentManagement />} />
         <Route path="internship-settings/application-period" element={<ApplicationPeriod />} />
         <Route path="internship-settings/notebook-dates" element={<NotebookDates />} />
         <Route path="internship-settings/rejection-reasons" element={<RejectionReasons />} />
         <Route path="internship-settings/internship-details" element={<InternshipDetails />} />
-        <Route path="internship-settings/internship-duration" element={<InternshipDuration />} />
+
+       
 
         {/* FAQ Management Routes */}
         <Route path="faq" element={<FAQManagement />} />
@@ -128,8 +158,16 @@ const AppRoutingSetup = (): ReactElement => {
         <Route path="dashboard" element={<CommissionDashboard />} />
       </Route>
 
-      {/* Home Route - Role-based redirection */}
-      <Route path="/" element={<RoleBasedDashboard />} />
+      {/* Home Route - Landing Page */}
+      <Route path="/" element={<LandingPage />} />
+
+      {/* Public Pages */}
+      <Route path="/general-announcements" element={<GeneralAnnouncements />} />
+      <Route path="/internship-announcements" element={<InternshipAnnouncements />} />
+      <Route path="/announcement/:id" element={<AnnouncementDetail />} />
+
+      {/* Dashboard Route - Role-based redirection for authenticated users */}
+      <Route path="/dashboard" element={<RoleBasedDashboard />} />
 
       {/* 404 Not Found */}
       <Route path="*" element={<Navigate to="/error/404" />} />

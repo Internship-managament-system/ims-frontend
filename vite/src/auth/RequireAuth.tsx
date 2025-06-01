@@ -31,7 +31,11 @@ export const RequireAuth: FC<RequireAuthProps> = ({
 
   // DEPARTMAN KONTROLÜ - /users/info sayfası haricinde kontrol yap
   // Bu sayede profil setup sırasında sonsuz döngü önlenir
-  if (location.pathname !== '/users/info' && (!currentUser.departmentId || currentUser.departmentId === '')) {
+  // Admin ve komisyon başkanı rolü için departman kontrolü atlanır
+  if (location.pathname !== '/users/info' && 
+      currentUser.role !== 'ADMIN' && 
+      currentUser.role !== 'COMMISSION_CHAIRMAN' &&
+      (!currentUser.departmentId || currentUser.departmentId === '')) {
     console.log('RequireAuth - Redirecting to profile setup, current path:', location.pathname, 'departmentId:', currentUser.departmentId);
     return <Navigate to="/users/info" replace />;
   }
