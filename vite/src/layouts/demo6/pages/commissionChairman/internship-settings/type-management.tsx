@@ -10,27 +10,52 @@ interface Rule {
   documentIds?: string[];
 }
 
+interface DocumentInfo {
+  id: string;
+  fileAddress: string;
+  fileName: string;
+  documentType: string;
+  description: string;
+  createdDate: string;
+}
+
+interface InternshipRuleDetail {
+  name: string;
+  description: string;
+  type: string;
+  documents: DocumentInfo[];
+}
+
 interface InternshipType {
+  id: string;
+  name: string;
+  description: string;
+  durationOfDays: number;
+  departmentId: string;
+  rules: Rule[];
+}
+
+interface InternShipInfo {
   id: string;
   name: string;
   description: string;
 }
 
 const TypeManagement: React.FC = () => {
-  const [types, setTypes] = useState<InternshipType[]>([]);
+  const [types, setTypes] = useState<InternShipInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [documents, setDocuments] = useState<any[]>([]);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editingType, setEditingType] = useState<InternshipType | null>(null);
   const [newType, setNewType] = useState<Partial<InternshipType>>({
-    id: "",
-    name: "",
-    description: ""
+    id: '',
+    name: '',
+    description: ''
   });
 
-  const [newTopic, setNewTopic] = useState<{name: string, description: string}>({
-    name: "",
-    description: ""
+  const [newTopic, setNewTopic] = useState<{ name: string; description: string }>({
+    name: '',
+    description: ''
   });
 
   // API Base URL
@@ -46,17 +71,21 @@ const TypeManagement: React.FC = () => {
       setDocuments([]);
     }
   };
+  const fetchInternShipDetail = async (internshipId: string) => {
+    const response = await axios.get(`${API_BASE_URL}/internship-detail/${internshipId}`);
+    return response.data.result || response.data || [];
+  };
 
-  // Staj türlerini çek
   const fetchInternshipTypes = async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/internships`);
-      setTypes(response.data.result || response.data || []);
+      console.log("osman1" + response?.data?.result);
+      setTypes(response?.data?.result);
+      console.log('osman:' + types);
     } catch (error) {
       console.error('Staj türleri yüklenirken hata:', error);
       // Fallback olarak varsayılan türleri kullan
-      
     } finally {
       setLoading(false);
     }
@@ -73,10 +102,10 @@ const TypeManagement: React.FC = () => {
       alert('Lütfen zorunlu alanları doldurun!');
       return;
     }
-    
+
     try {
       const typeData = {
-        name: newType.name,
+        name: newType.name
       };
 
       const response = await axios.post(`${API_BASE_URL}/internships`, typeData, {
@@ -98,7 +127,7 @@ const TypeManagement: React.FC = () => {
 
   const handleEditType = (type: InternshipType) => {
     setEditingType(type);
-    setNewType({...type});
+    setNewType({ ...type });
     setShowAddModal(true);
   };
 
@@ -107,17 +136,21 @@ const TypeManagement: React.FC = () => {
       alert('Lütfen zorunlu alanları doldurun!');
       return;
     }
-    
+
     try {
       const updateData = {
         name: newType.name
       };
 
-      const response = await axios.put(`${API_BASE_URL}/internships/${editingType.id}`, updateData, {
-        headers: {
-          'Content-Type': 'application/json'
+      const response = await axios.put(
+        `${API_BASE_URL}/internships/${editingType.id}`,
+        updateData,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
 
       if (response.status === 200) {
         await fetchInternshipTypes(); // Listeyi yenile
@@ -131,10 +164,10 @@ const TypeManagement: React.FC = () => {
   };
 
   const handleDeleteType = async (id: string) => {
-    if (window.confirm("Bu staj türünü silmek istediğinizden emin misiniz?")) {
+    if (window.confirm('Bu staj türünü silmek istediğinizden emin misiniz?')) {
       try {
         const response = await axios.delete(`${API_BASE_URL}/internships/${id}`);
-        
+
         if (response.status === 200) {
           await fetchInternshipTypes(); // Listeyi yenile
           alert('Staj türü başarıyla silindi!');
@@ -146,18 +179,15 @@ const TypeManagement: React.FC = () => {
     }
   };
 
-  
-
-
   const resetForm = () => {
     setShowAddModal(false);
     setEditingType(null);
     setNewType({
-      id: "",
-      name: "",
-      description: ""
+      id: '',
+      name: '',
+      description: ''
     });
-    setNewTopic({name: "", description: ""});
+    setNewTopic({ name: '', description: '' });
   };
 
   return (
@@ -167,9 +197,11 @@ const TypeManagement: React.FC = () => {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-xl font-semibold">Staj Türü Yönetimi</h2>
-              <p className="text-gray-600 mt-1">Staj türlerini ekleyin, düzenleyin ve ayarlarını yapın</p>
+              <p className="text-gray-600 mt-1">
+                Staj türlerini ekleyin, düzenleyin ve ayarlarını yapın
+              </p>
             </div>
-            <button 
+            <button
               className="btn bg-[#13126e] text-white px-4 py-2 rounded flex items-center gap-2"
               onClick={() => setShowAddModal(true)}
             >
@@ -188,45 +220,26 @@ const TypeManagement: React.FC = () => {
             ) : (
               <>
                 {types.map((type) => (
-                  <div 
-                    key={type.id} 
-                    className="p-5 rounded-lg border border-gray-200 bg-white"
-                  >
+                  <div key={type.id} className="p-5 rounded-lg border border-gray-200 bg-white">
                     <div className="flex justify-between items-start">
                       <div className="flex-grow">
                         <div className="flex items-center gap-3 mb-3">
                           <h3 className="text-lg font-medium text-gray-900">{type.name}</h3>
-                          <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                            
-                          </span>
+                          <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"></span>
                         </div>
-                        
+
                         <p className="text-gray-600 mb-4">{type.description}</p>
-                        
-                       
-                          {type.rules.length > 0 && (
-                            <div className="mb-4">
-                              <h4 className="text-sm font-medium text-gray-700 mb-2">Kurallar:</h4>
-                              <div className="flex flex-wrap gap-1">
-                                {type.rules.map((rule, index) => (
-                                  <span key={index} className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-                                    {rule.name} ({rule.ruleType})
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                        )}
                       </div>
-                      
+
                       <div className="flex gap-2 ml-4">
-                        <button 
+                        <button
                           className="btn bg-blue-100 text-blue-700 p-2 rounded hover:bg-blue-200"
-                          onClick={() => handleEditType(type)}
+                          // onClick={() => handleEditType(type)}
                           title="Düzenle"
                         >
                           <KeenIcon icon="pencil" />
                         </button>
-                        <button 
+                        <button
                           className="btn bg-red-100 text-red-700 p-2 rounded hover:bg-red-200"
                           onClick={() => handleDeleteType(type.id)}
                           title="Sil"
@@ -258,14 +271,11 @@ const TypeManagement: React.FC = () => {
                   <h3 className="text-lg font-medium text-gray-900">
                     {editingType ? 'Staj Türünü Düzenle' : 'Yeni Staj Türü Ekle'}
                   </h3>
-                  <button 
-                    className="text-gray-400 hover:text-gray-600"
-                    onClick={resetForm}
-                  >
+                  <button className="text-gray-400 hover:text-gray-600" onClick={resetForm}>
                     <KeenIcon icon="cross" className="text-xl" />
                   </button>
                 </div>
-                
+
                 <div className="max-h-[80vh] overflow-y-auto">
                   <div className="space-y-6">
                     {/* Temel Bilgiler */}
@@ -276,37 +286,41 @@ const TypeManagement: React.FC = () => {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Staj Türü Adı *
                           </label>
-                          <input 
-                            type="text" 
+                          <input
+                            type="text"
                             className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
                             placeholder="Örn: Yazılım Stajı (İlk Staj)"
-                            value={newType.name || ""}
-                            onChange={(e) => setNewType({...newType, name: e.target.value})}
+                            value={newType.name || ''}
+                            onChange={(e) => setNewType({ ...newType, name: e.target.value })}
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Süre (İş Günü)
                           </label>
-                          <input 
-                            type="number" 
+                          <input
+                            type="number"
                             className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
                             value={newType.durationOfDays || 25}
-                            onChange={(e) => setNewType({...newType, durationOfDays: parseInt(e.target.value)})}
+                            onChange={(e) =>
+                              setNewType({ ...newType, durationOfDays: parseInt(e.target.value) })
+                            }
                           />
                         </div>
-                        
+
                         <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Açıklama *
                           </label>
-                          <textarea 
+                          <textarea
                             className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
                             rows={3}
                             placeholder="Staj türü hakkında detaylı açıklama..."
-                            value={newType.description || ""}
-                            onChange={(e) => setNewType({...newType, description: e.target.value})}
+                            value={newType.description || ''}
+                            onChange={(e) =>
+                              setNewType({ ...newType, description: e.target.value })
+                            }
                           />
                         </div>
                       </div>
@@ -315,7 +329,7 @@ const TypeManagement: React.FC = () => {
                     {/* Gerekli Belgeler */}
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <h4 className="text-md font-medium text-gray-900 mb-4">Gerekli Belgeler</h4>
-                      
+
                       <div className="space-y-4 mb-4">
                         {/* Mevcut Belgelerden Seçim */}
                         <div>
@@ -324,36 +338,58 @@ const TypeManagement: React.FC = () => {
                           </label>
                           <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3 bg-white">
                             {documents.map((doc) => (
-                              <label key={doc.id} className="flex items-center p-2 hover:bg-gray-50 rounded">
+                              <label
+                                key={doc.id}
+                                className="flex items-center p-2 hover:bg-gray-50 rounded"
+                              >
                                 <input
                                   type="checkbox"
                                   className="rounded border-gray-300 mr-3"
-                                  checked={newType.rules?.some(rule => rule.ruleType === 'DOCUMENT' && rule.documentIds?.includes(doc.id)) || false}
+                                  checked={
+                                    newType.rules?.some(
+                                      (rule) =>
+                                        rule.ruleType === 'DOCUMENT' &&
+                                        rule.documentIds?.includes(doc.id)
+                                    ) || false
+                                  }
                                   onChange={(e) => {
                                     const currentRules = newType.rules || [];
                                     if (e.target.checked) {
                                       // Belgeyi ekle
                                       setNewType({
-                                        ...newType, 
-                                        rules: [...currentRules, {
-                                          name: doc.fileName,
-                                          description: doc.description || doc.fileName,
-                                          ruleType: "DOCUMENT",
-                                          documentIds: [doc.id]
-                                        }]
+                                        ...newType,
+                                        rules: [
+                                          ...currentRules,
+                                          {
+                                            name: doc.fileName,
+                                            description: doc.description || doc.fileName,
+                                            ruleType: 'DOCUMENT',
+                                            documentIds: [doc.id]
+                                          }
+                                        ]
                                       });
                                     } else {
                                       // Belgeyi çıkar
                                       setNewType({
                                         ...newType,
-                                        rules: currentRules.filter(rule => !(rule.ruleType === 'DOCUMENT' && rule.documentIds?.includes(doc.id)))
+                                        rules: currentRules.filter(
+                                          (rule) =>
+                                            !(
+                                              rule.ruleType === 'DOCUMENT' &&
+                                              rule.documentIds?.includes(doc.id)
+                                            )
+                                        )
                                       });
                                     }
                                   }}
                                 />
                                 <div className="flex-grow">
-                                  <span className="text-sm font-medium text-gray-700">{doc.fileName}</span>
-                                  <span className="text-xs text-gray-500 block">{doc.documentType}</span>
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {doc.fileName}
+                                  </span>
+                                  <span className="text-xs text-gray-500 block">
+                                    {doc.documentType}
+                                  </span>
                                 </div>
                               </label>
                             ))}
@@ -363,67 +399,83 @@ const TypeManagement: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      
-                      {newType.rules && newType.rules.filter(r => r.ruleType === 'DOCUMENT').length > 0 && (
-                        <div className="space-y-2">
-                          <h5 className="text-sm font-medium text-gray-700">Seçilen Belgeler:</h5>
-                          <div className="grid grid-cols-1 gap-2">
-                            {newType.rules.filter(r => r.ruleType === 'DOCUMENT').map((rule, index) => (
-                              <div key={index} className="flex items-center justify-between bg-white p-3 rounded border border-gray-200">
-                                <div>
-                                  <span className="text-sm font-medium text-gray-900">{rule.name}</span>
-                                  <span className="text-xs text-gray-500 block">{rule.description}</span>
-                                </div>
-                                <button 
-                                  className="btn bg-red-100 text-red-700 p-1 rounded"
-                                  onClick={() => handleRemoveRule(newType.rules?.indexOf(rule) || 0)}
-                                  type="button"
-                                >
-                                  <KeenIcon icon="trash" className="text-sm" />
-                                </button>
-                              </div>
-                            ))}
+
+                      {newType.rules &&
+                        newType.rules.filter((r) => r.ruleType === 'DOCUMENT').length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-medium text-gray-700">Seçilen Belgeler:</h5>
+                            <div className="grid grid-cols-1 gap-2">
+                              {newType.rules
+                                .filter((r) => r.ruleType === 'DOCUMENT')
+                                .map((rule, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center justify-between bg-white p-3 rounded border border-gray-200"
+                                  >
+                                    <div>
+                                      <span className="text-sm font-medium text-gray-900">
+                                        {rule.name}
+                                      </span>
+                                      <span className="text-xs text-gray-500 block">
+                                        {rule.description}
+                                      </span>
+                                    </div>
+                                    <button
+                                      className="btn bg-red-100 text-red-700 p-1 rounded"
+                                      // onClick={() =>
+                                      //   handleRemoveRule(newType.rules?.indexOf(rule) || 0)
+                                      // }
+                                      type="button"
+                                    >
+                                      <KeenIcon icon="trash" className="text-sm" />
+                                    </button>
+                                  </div>
+                                ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
 
                     {/* İlgili Konular Seçimi */}
                     <div className="bg-yellow-50 p-4 rounded-lg">
                       <h4 className="text-md font-medium text-gray-900 mb-4">İlgili Konular</h4>
-                      <p className="text-sm text-gray-600 mb-4">Bu staj türüne dahil olacak konuları ekleyin:</p>
-                      
+                      <p className="text-sm text-gray-600 mb-4">
+                        Bu staj türüne dahil olacak konuları ekleyin:
+                      </p>
+
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Konu Adı *
                             </label>
-                            <input 
-                              type="text" 
+                            <input
+                              type="text"
                               className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
                               placeholder="Örn: Web Uygulaması Geliştirme"
                               value={newTopic.name}
-                              onChange={(e) => setNewTopic({...newTopic, name: e.target.value})}
+                              onChange={(e) => setNewTopic({ ...newTopic, name: e.target.value })}
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Açıklama *
                             </label>
-                            <input 
-                              type="text" 
+                            <input
+                              type="text"
                               className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
                               placeholder="Konu hakkında açıklama"
                               value={newTopic.description}
-                              onChange={(e) => setNewTopic({...newTopic, description: e.target.value})}
+                              onChange={(e) =>
+                                setNewTopic({ ...newTopic, description: e.target.value })
+                              }
                             />
                           </div>
                         </div>
-                        
-                        <button 
+
+                        <button
                           className="btn bg-[#13126e] text-white px-4 py-2 rounded w-full"
-                          onClick={handleAddTopic}
+                          // onClick={handleAddTopic}
                           type="button"
                           disabled={!newTopic.name.trim() || !newTopic.description.trim()}
                         >
@@ -431,38 +483,48 @@ const TypeManagement: React.FC = () => {
                           Konu Ekle
                         </button>
                       </div>
-                      
-                      {newType.rules && newType.rules.filter(r => r.ruleType === 'TOPIC').length > 0 && (
-                        <div className="mt-4 space-y-2">
-                          <h5 className="text-sm font-medium text-gray-700">Eklenen Konular:</h5>
-                          <div className="grid grid-cols-1 gap-2">
-                            {newType.rules.filter(r => r.ruleType === 'TOPIC').map((rule, index) => (
-                              <div key={index} className="flex items-center justify-between bg-white p-3 rounded border border-gray-200">
-                                <span className="text-sm font-medium text-gray-900">{rule.name}</span>
-                                <button 
-                                  className="btn bg-red-100 text-red-700 p-1 rounded"
-                                  onClick={() => handleRemoveRule(newType.rules?.indexOf(rule) || 0)}
-                                  type="button"
-                                >
-                                  <KeenIcon icon="trash" className="text-sm" />
-                                </button>
-                              </div>
-                            ))}
+
+                      {newType.rules &&
+                        newType.rules.filter((r) => r.ruleType === 'TOPIC').length > 0 && (
+                          <div className="mt-4 space-y-2">
+                            <h5 className="text-sm font-medium text-gray-700">Eklenen Konular:</h5>
+                            <div className="grid grid-cols-1 gap-2">
+                              {newType.rules
+                                .filter((r) => r.ruleType === 'TOPIC')
+                                .map((rule, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center justify-between bg-white p-3 rounded border border-gray-200"
+                                  >
+                                    <span className="text-sm font-medium text-gray-900">
+                                      {rule.name}
+                                    </span>
+                                    <button
+                                      className="btn bg-red-100 text-red-700 p-1 rounded"
+                                      // onClick={() =>
+                                      //   handleRemoveRule(newType.rules?.indexOf(rule) || 0)
+                                      // }
+                                      type="button"
+                                    >
+                                      <KeenIcon icon="trash" className="text-sm" />
+                                    </button>
+                                  </div>
+                                ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                  <button 
+                  <button
                     className="btn bg-gray-300 text-gray-700 px-6 py-2 rounded"
                     onClick={resetForm}
                   >
                     İptal
                   </button>
-                  <button 
+                  <button
                     className="btn bg-[#13126e] text-white px-6 py-2 rounded"
                     onClick={editingType ? handleUpdateType : handleAddType}
                   >
@@ -478,4 +540,4 @@ const TypeManagement: React.FC = () => {
   );
 };
 
-export default TypeManagement; 
+export default TypeManagement;
