@@ -50,6 +50,11 @@ const TypeManagement: React.FC = () => {
     rules: []
   });
 
+  const [newTopic, setNewTopic] = useState<{ name: string; description: string }>({
+    name: '',
+    description: ''
+  });
+
   // API Base URL
   const API_BASE_URL = '/api/v1';
 
@@ -216,6 +221,23 @@ const TypeManagement: React.FC = () => {
     });
   };
 
+  const handleAddTopic = () => {
+    if (newTopic.name.trim() === '' || newTopic.description.trim() === '') return;
+
+    setNewType({
+      ...newType,
+      rules: [
+        ...(newType.rules || []),
+        {
+          name: newTopic.name,
+          description: newTopic.description,
+          ruleType: 'TOPIC'
+        }
+      ]
+    });
+    setNewTopic({ name: '', description: '' });
+  };
+
   const resetForm = () => {
     setShowAddModal(false);
     setEditingType(null);
@@ -226,6 +248,7 @@ const TypeManagement: React.FC = () => {
       durationOfDays: 25,
       rules: []
     });
+    setNewTopic({ name: '', description: '' });
   };
 
   return (
@@ -505,7 +528,7 @@ const TypeManagement: React.FC = () => {
                         Bu staj türüne dahil olacak konuları seçin:
                       </p>
 
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         {/* Mevcut Konulardan Seçim */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -571,6 +594,49 @@ const TypeManagement: React.FC = () => {
                               <p className="text-sm text-gray-500 p-2">Henüz konu eklenmemiş</p>
                             )}
                           </div>
+                        </div>
+
+                        {/* Yeni Konu Ekleme */}
+                        <div className="border-t border-gray-200 pt-4">
+                          <h5 className="text-sm font-medium text-gray-700 mb-3">Yeni Konu Ekle</h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Konu Adı *
+                              </label>
+                              <input
+                                type="text"
+                                className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
+                                placeholder="Örn: Web Uygulaması Geliştirme"
+                                value={newTopic.name}
+                                onChange={(e) => setNewTopic({ ...newTopic, name: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Açıklama *
+                              </label>
+                              <input
+                                type="text"
+                                className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
+                                placeholder="Konu hakkında açıklama"
+                                value={newTopic.description}
+                                onChange={(e) =>
+                                  setNewTopic({ ...newTopic, description: e.target.value })
+                                }
+                              />
+                            </div>
+                          </div>
+
+                          <button
+                            className="btn bg-[#13126e] text-white px-4 py-2 rounded w-full mt-3"
+                            onClick={handleAddTopic}
+                            type="button"
+                            disabled={!newTopic.name.trim() || !newTopic.description.trim()}
+                          >
+                            <KeenIcon icon="plus" className="mr-2" />
+                            Konu Ekle
+                          </button>
                         </div>
                       </div>
 
