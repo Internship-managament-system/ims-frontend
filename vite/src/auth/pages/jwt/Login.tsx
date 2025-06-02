@@ -64,47 +64,21 @@ const Login = () => {
     location.state?.registeredEmail || null
   );
 
-  // // Departman güncelleme işlemi
-  // const updateDepartment = async (userId: string) => {
-  //   const pendingDepartment = localStorage.getItem('pendingDepartment');
-  //   if (!pendingDepartment) return;
-
-  //   try {
-  //     setDepartmentUpdateStatus('pending');
-      
-  //     // Departman bilgisini güncelle
-  //     await axios.put(`/api/v1/users/${userId}/update`, {
-  //       departmentId: pendingDepartment
-  //     });
-      
-  //     // Başarılı güncelleme
-  //     console.log('Departman bilgisi güncellendi:', pendingDepartment);
-  //     setDepartmentUpdateStatus('success');
-      
-  //     // localStorage'dan temizle
-  //     localStorage.removeItem('pendingDepartment');
-  //   } catch (error) {
-  //     console.error('Departman güncelleme hatası:', error);
-  //     setDepartmentUpdateStatus('error');
-  //   }
-  // };
-
   useEffect(() => {
-  if (currentUser) {
-    if (isCommissionChairman()) {
-      navigate('/commissionChairman/dashboard', { replace: true });
-    } else if (isCommissionMember()) {
-      navigate('/commission/dashboard', { replace: true });
-    } else if (isStudent()) {
-      navigate('/student/dashboard', { replace: true });
-    } else if (isAdmin()) {
-      navigate('/admin/dashboard', { replace: true });
-    } else {
-      navigate('/', { replace: true });
+    if (currentUser) {
+      if (isCommissionChairman()) {
+        navigate('/commissionChairman/dashboard', { replace: true });
+      } else if (isCommissionMember()) {
+        navigate('/commission/dashboard', { replace: true });
+      } else if (isStudent()) {
+        navigate('/student/dashboard', { replace: true });
+      } else if (isAdmin()) {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     }
-  }
-}, [currentUser, isCommissionChairman, isStudent, isCommissionMember, navigate]);
-
+  }, [currentUser, isCommissionChairman, isStudent, isCommissionMember, navigate]);
 
   useEffect(() => {
     // Kayıt sonrası otomatik email doldurma
@@ -112,8 +86,6 @@ const Login = () => {
       formik.setFieldValue('email', registeredEmail);
     }
   }, [registeredEmail]);
-
-
 
   useEffect(() => {
     document.documentElement.style.height = '100%';
