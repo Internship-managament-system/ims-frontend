@@ -51,3 +51,10 @@ export const INTERNSHIP_FORM_OPTIONS_PROGRAM_TYPES = `/api/v1/internship-form-op
 export const INTERNSHIP_FORM_OPTIONS_INTERNSHIP_TYPES = `/api/v1/internship-form-options/internship-types`; // Staj tiplerini listele
 export const INTERNSHIP_FORM_OPTIONS_INTERNSHIP_PERIODS = `/api/v1/internship-form-options/internship-periods`; // Staj dönemlerini listele
 export const INTERNSHIP_FORM_OPTIONS_WEEKLY_WORKING_DAYS = `/api/v1/internship-form-options/weekly-working-days`; // Haftalık çalışma günlerini listele
+
+// Topics endpoints
+export const INTERNSHIP_TOPICS = `/api/v1/internships/topics`;
+export const INTERNSHIP_TOPIC_DETAIL = (id: string | number) => `/api/v1/internships/topics/${id}`;
+export const INTERNSHIP_TOPIC_CREATE = `/api/v1/internships/topics`;
+export const INTERNSHIP_TOPIC_UPDATE = (id: string | number) => `/api/v1/internships/topics/${id}`;
+export const INTERNSHIP_TOPIC_DELETE = (id: string | number) => `/api/v1/internships/topics/${id}`;

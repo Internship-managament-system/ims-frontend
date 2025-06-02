@@ -1,171 +1,127 @@
 import React, { useState } from 'react';
 import { Container } from '@/components';
 import { KeenIcon } from '@/components/keenicons';
-
-interface InternshipTopic {
-  id: string;
-  name: string;
-  description: string;
-  examples: string[];
-  createdDate: string;
-}
+import { SlateEditor } from '@/components/slate-editor';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
+import { 
+  getInternshipTopics, 
+  createInternshipTopic, 
+  updateInternshipTopic, 
+  deleteInternshipTopic,
+  InternshipTopic,
+  NewInternshipTopic
+} from '@/services/topicsService';
 
 const TopicPool: React.FC = () => {
-  const [topics, setTopics] = useState<InternshipTopic[]>([
-    {
-      id: 'Y-1',
-      name: 'Web Uygulaması Geliştirme',
-      description: 'Modern web teknolojileri kullanarak uygulama geliştirme',
-      examples: ['React.js ile e-ticaret sitesi', 'Vue.js ile dashboard', 'Node.js API geliştirme'],
-      createdDate: '2024-01-15'
-    },
-    {
-      id: 'Y-2',
-      name: 'Mobil Uygulama Geliştirme',
-      description: 'iOS ve Android platformları için mobil uygulama geliştirme',
-      examples: ['Flutter ile çoklu platform uygulama', 'React Native projesi', 'Native iOS/Android app'],
-      createdDate: '2024-01-15'
-    },
-    {
-      id: 'Y-3',
-      name: 'Veri Analizi ve Makine Öğrenmesi',
-      description: 'Büyük veri analizi ve yapay zeka uygulamaları',
-      examples: ['Python ile veri madenciliği', 'TensorFlow modeli geliştirme', 'Tableau dashboard'],
-      createdDate: '2024-01-15'
-    },
-    {
-      id: 'D-1',
-      name: 'Gömülü Sistem Geliştirme',
-      description: 'Mikroişlemci tabanlı gömülü sistem projeleri',
-      examples: ['Arduino ile IoT projesi', 'Raspberry Pi uygulaması', 'STM32 programlama'],
-      createdDate: '2024-01-15'
-    },
-    {
-      id: 'D-2',
-      name: 'Ağ Altyapısı ve Güvenlik',
-      description: 'Ağ sistemleri kurulumu ve güvenlik uygulamaları',
-      examples: ['Cisco ağ konfigürasyonu', 'Güvenlik duvarı kurulumu', 'Penetrasyon testleri'],
-      createdDate: '2024-01-15'
-    },
-    {
-      id: 'R-1',
-      name: 'Akademik Araştırma Projesi',
-      description: 'Üniversite laboratuvarlarında araştırma ve geliştirme',
-      examples: ['Bilimsel makale yazımı', 'Deneysel çalışma', 'Patent başvurusu'],
-      createdDate: '2024-01-15'
-    },
-    {
-      id: 'G-1',
-      name: 'Proje Yönetimi ve Süreç Analizi',
-      description: 'İş süreçleri analizi ve proje yönetimi deneyimi',
-      examples: ['Agile metodolojileri', 'Scrum süreçleri', 'İş analizi raporları'],
-      createdDate: '2024-01-15'
-    }
-  ]);
+  const queryClient = useQueryClient();
+  
+  // API'den konuları çek
+  const { data: topics = [], isLoading, error } = useQuery({
+    queryKey: ['internship-topics'],
+    queryFn: getInternshipTopics,
+  });
 
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editingTopic, setEditingTopic] = useState<InternshipTopic | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(5);
-  const [newTopic, setNewTopic] = useState<Partial<InternshipTopic>>({
-    id: "",
-    name: "",
-    description: "",
-    examples: [],
-    createdDate: new Date().toISOString().split('T')[0]
+  const [newTopic, setNewTopic] = useState<Partial<NewInternshipTopic>>({
+    title: "",
+    description: ""
   });
 
-  const [newExample, setNewExample] = useState<string>("");
+  // Konu ekleme mutation
+  const createTopicMutation = useMutation({
+    mutationFn: createInternshipTopic,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['internship-topics'] });
+      resetForm();
+      toast.success('Konu başarıyla eklendi!');
+    },
+    onError: (error: any) => {
+      console.error('Konu ekleme hatası:', error);
+      toast.error('Konu eklenirken bir hata oluştu.');
+    }
+  });
+
+  // Konu güncelleme mutation
+  const updateTopicMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string | number, data: NewInternshipTopic }) => 
+      updateInternshipTopic(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['internship-topics'] });
+      resetForm();
+      toast.success('Konu başarıyla güncellendi!');
+    },
+    onError: (error: any) => {
+      console.error('Konu güncelleme hatası:', error);
+      toast.error('Konu güncellenirken bir hata oluştu.');
+    }
+  });
+
+  // Konu silme mutation
+  const deleteTopicMutation = useMutation({
+    mutationFn: deleteInternshipTopic,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['internship-topics'] });
+      toast.success('Konu başarıyla silindi!');
+    },
+    onError: (error: any) => {
+      console.error('Konu silme hatası:', error);
+      toast.error('Konu silinirken bir hata oluştu.');
+    }
+  });
 
   const handleAddTopic = () => {
-    if (!newTopic.name || !newTopic.description) {
-      alert('Lütfen zorunlu alanları doldurun!');
+    if (!newTopic.title || !newTopic.description) {
+      toast.error('Lütfen zorunlu alanları doldurun!');
       return;
     }
     
-    const topicToAdd: InternshipTopic = {
-      id: newTopic.id || generateTopicId(),
-      name: newTopic.name,
-      description: newTopic.description,
-      examples: newTopic.examples || [],
-      createdDate: newTopic.createdDate || new Date().toISOString().split('T')[0]
-    };
-    
-    setTopics([...topics, topicToAdd]);
-    setCurrentPage(1);
-    resetForm();
-    alert('Konu başarıyla eklendi!');
+    createTopicMutation.mutate({
+      title: newTopic.title,
+      description: newTopic.description
+    });
   };
 
   const handleEditTopic = (topic: InternshipTopic) => {
     setEditingTopic(topic);
-    setNewTopic({...topic});
+    setNewTopic({
+      title: topic.title,
+      description: topic.description
+    });
     setShowAddModal(true);
   };
 
   const handleUpdateTopic = () => {
-    if (!editingTopic || !newTopic.name || !newTopic.description) {
-      alert('Lütfen zorunlu alanları doldurun!');
+    if (!editingTopic || !newTopic.title || !newTopic.description) {
+      toast.error('Lütfen zorunlu alanları doldurun!');
       return;
     }
     
-    setTopics(topics.map(t => 
-      t.id === editingTopic.id 
-        ? { ...t, ...newTopic }
-        : t
-    ));
-    
-    resetForm();
-    alert('Konu başarıyla güncellendi!');
+    updateTopicMutation.mutate({
+      id: editingTopic.id,
+      data: {
+        title: newTopic.title,
+        description: newTopic.description
+      }
+    });
   };
 
   const handleDeleteTopic = (id: string) => {
     if (window.confirm("Bu konuyu silmek istediğinizden emin misiniz?")) {
-      setTopics(topics.filter(t => t.id !== id));
-      alert('Konu silindi!');
+      deleteTopicMutation.mutate(id);
     }
-  };
-
-  const handleAddExample = () => {
-    if (newExample.trim() === "") return;
-    
-    setNewTopic({
-      ...newTopic,
-      examples: [...(newTopic.examples || []), newExample.trim()]
-    });
-    setNewExample("");
-  };
-
-  const handleRemoveExample = (index: number) => {
-    const updatedExamples = [...(newTopic.examples || [])];
-    updatedExamples.splice(index, 1);
-    setNewTopic({
-      ...newTopic,
-      examples: updatedExamples
-    });
   };
 
   const resetForm = () => {
     setShowAddModal(false);
     setEditingTopic(null);
     setNewTopic({
-      id: "",
-      name: "",
-      description: "",
-      examples: [],
-      createdDate: new Date().toISOString().split('T')[0]
+      title: "",
+      description: ""
     });
-    setNewExample("");
-  };
-
-  const generateTopicId = () => {
-    const allNumbers = topics.map(t => {
-      const match = t.id.match(/\d+/);
-      return match ? parseInt(match[0]) : 0;
-    }).filter(n => n > 0);
-    
-    const nextNumber = allNumbers.length > 0 ? Math.max(...allNumbers) + 1 : 1;
-    return `K-${nextNumber}`;
   };
 
   const getFilteredTopics = () => {
@@ -186,6 +142,36 @@ const TopicPool: React.FC = () => {
     setCurrentPage(page);
   };
 
+  // Loading durumu
+  if (isLoading) {
+    return (
+      <Container>
+        <div className="p-5">
+          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <div className="flex justify-center items-center h-64">
+              <div className="text-gray-500">Konular yükleniyor...</div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  // Hata durumu
+  if (error) {
+    return (
+      <Container>
+        <div className="p-5">
+          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <div className="flex justify-center items-center h-64">
+              <div className="text-red-500">Konular yüklenirken bir hata oluştu.</div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <div className="p-5">
@@ -198,9 +184,10 @@ const TopicPool: React.FC = () => {
             <button 
               className="btn bg-[#13126e] text-white px-4 py-2 rounded flex items-center gap-2"
               onClick={() => setShowAddModal(true)}
+              disabled={createTopicMutation.isPending}
             >
               <KeenIcon icon="plus" />
-              <span>Yeni Konu Ekle</span>
+              <span>{createTopicMutation.isPending ? 'Ekleniyor...' : 'Yeni Konu Ekle'}</span>
             </button>
           </div>
 
@@ -215,26 +202,15 @@ const TopicPool: React.FC = () => {
                   <div className="flex justify-between items-start">
                     <div className="flex-grow">
                       <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-lg font-medium text-gray-900">{topic.id}: {topic.name}</h3>
+                        <h3 className="text-lg font-medium text-gray-900">{topic.id}: {topic.title}</h3>
                       </div>
                       
-                      <p className="text-gray-600 mb-4">{topic.description}</p>
+                      <div className="text-gray-600 mb-4" dangerouslySetInnerHTML={{ __html: topic.description }}></div>
                       
                       <div className="mb-4">
                         <span className="text-sm font-medium text-gray-700">Oluşturma Tarihi:</span>
                         <p className="text-sm text-gray-600">{new Date(topic.createdDate).toLocaleDateString('tr-TR')}</p>
                       </div>
-
-                      {topic.examples.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Proje Örnekleri:</h4>
-                          <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                            {topic.examples.map((example, index) => (
-                              <li key={index}>{example}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
                     </div>
                     
                     <div className="flex gap-2 ml-4">
@@ -242,6 +218,7 @@ const TopicPool: React.FC = () => {
                         className="btn bg-blue-100 text-blue-700 p-2 rounded hover:bg-blue-200"
                         onClick={() => handleEditTopic(topic)}
                         title="Düzenle"
+                        disabled={updateTopicMutation.isPending}
                       >
                         <KeenIcon icon="pencil" />
                       </button>
@@ -249,6 +226,7 @@ const TopicPool: React.FC = () => {
                         className="btn bg-red-100 text-red-700 p-2 rounded hover:bg-red-200"
                         onClick={() => handleDeleteTopic(topic.id)}
                         title="Sil"
+                        disabled={deleteTopicMutation.isPending}
                       >
                         <KeenIcon icon="trash" />
                       </button>
@@ -260,7 +238,7 @@ const TopicPool: React.FC = () => {
             
             {getPaginatedTopics().length === 0 && (
               <div className="text-center py-8 bg-gray-50 border border-gray-200 rounded-lg">
-                <p className="text-gray-500">Bu kategoride konu bulunamadı.</p>
+                <p className="text-gray-500">Henüz konu bulunamadı.</p>
               </div>
             )}
           </div>
@@ -355,8 +333,8 @@ const TopicPool: React.FC = () => {
                             type="text" 
                             className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
                             placeholder="Konu adını girin"
-                            value={newTopic.name || ""}
-                            onChange={(e) => setNewTopic({...newTopic, name: e.target.value})}
+                            value={newTopic.title || ""}
+                            onChange={(e) => setNewTopic({...newTopic, title: e.target.value})}
                           />
                         </div>
                         
@@ -364,55 +342,14 @@ const TopicPool: React.FC = () => {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Açıklama *
                           </label>
-                          <textarea 
-                            className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
-                            rows={3}
-                            placeholder="Konu hakkında detaylı açıklama"
+                          <SlateEditor
                             value={newTopic.description || ""}
-                            onChange={(e) => setNewTopic({...newTopic, description: e.target.value})}
+                            onChange={(value) => setNewTopic({...newTopic, description: value})}
+                            placeholder="Konu hakkında detaylı açıklama yazın. Metin biçimlendirme araçlarını kullanabilirsiniz."
+                            className="w-full"
                           />
                         </div>
                       </div>
-                    </div>
-
-                    {/* Proje Örnekleri */}
-                    <div className="bg-yellow-50 p-4 rounded-lg">
-                      <h4 className="text-md font-medium text-gray-900 mb-4">Proje Örnekleri</h4>
-                      
-                      <div className="flex gap-2 mb-3">
-                        <input 
-                          type="text" 
-                          className="flex-grow border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
-                          placeholder="Yeni örnek proje ekle..."
-                          value={newExample}
-                          onChange={(e) => setNewExample(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleAddExample()}
-                        />
-                        <button 
-                          className="btn bg-[#13126e] text-white px-3 py-2 rounded"
-                          onClick={handleAddExample}
-                          type="button"
-                        >
-                          <KeenIcon icon="plus" />
-                        </button>
-                      </div>
-                      
-                      {newTopic.examples && newTopic.examples.length > 0 && (
-                        <div className="space-y-2">
-                          {newTopic.examples.map((example, index) => (
-                            <div key={index} className="flex items-center justify-between bg-white p-2 rounded border border-gray-200">
-                              <span className="text-sm text-gray-700">{example}</span>
-                              <button 
-                                className="btn bg-red-100 text-red-700 p-1 rounded"
-                                onClick={() => handleRemoveExample(index)}
-                                type="button"
-                              >
-                                <KeenIcon icon="trash" className="text-sm" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -421,14 +358,19 @@ const TopicPool: React.FC = () => {
                   <button 
                     className="btn bg-gray-300 text-gray-700 px-6 py-2 rounded"
                     onClick={resetForm}
+                    disabled={createTopicMutation.isPending || updateTopicMutation.isPending}
                   >
                     İptal
                   </button>
                   <button 
                     className="btn bg-[#13126e] text-white px-6 py-2 rounded"
                     onClick={editingTopic ? handleUpdateTopic : handleAddTopic}
+                    disabled={createTopicMutation.isPending || updateTopicMutation.isPending}
                   >
-                    {editingTopic ? 'Güncelle' : 'Ekle'}
+                    {createTopicMutation.isPending || updateTopicMutation.isPending 
+                      ? 'İşleniyor...' 
+                      : (editingTopic ? 'Güncelle' : 'Ekle')
+                    }
                   </button>
                 </div>
               </div>

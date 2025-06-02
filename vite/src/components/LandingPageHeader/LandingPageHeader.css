@@ -91,10 +91,10 @@ header {
 html, body {
   scroll-padding-top: 0 !important;
   scroll-behavior: auto !important;
-  overflow-x: hidden !important;
   margin: 0 !important;
   padding: 0 !important;
   width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* Ek güvenlik için önemli stiller */

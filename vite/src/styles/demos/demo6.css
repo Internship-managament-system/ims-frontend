@@ -1,4 +1,4 @@
-/* Make sidebar divider completely straight with no rounded edges */
+/* Make sidebar divider completely straight with no rounded edges and NO BORDERS */
 .demo6 [class*="sidebar"], 
 .sidebar, 
 .flex.grow > div:first-child,
@@ -8,6 +8,9 @@
 [class*="border-r"],
 [class*="border-l"] {
   border-radius: 0 !important;
+  border-right: none !important;
+  border-left: none !important;
+  box-shadow: none !important;
 }
 
 /* Also remove any potential overflow styling that might be causing rounded corners */
@@ -15,10 +18,14 @@
 .sidebar-container {
   overflow: visible !important;
   border-radius: 0 !important;
+  border-right: none !important;
+  border-left: none !important;
+  box-shadow: none !important;
 }
 
 /* If the divider is its own element */
 .sidebar-divider,
 .vertical-divider {
   border-radius: 0 !important;
+  display: none !important;
 }

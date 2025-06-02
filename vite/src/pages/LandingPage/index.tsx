@@ -4,6 +4,11 @@ import { KeenIcon } from '../../components';
 import LandingPageHeader from '../../components/LandingPageHeader/LandingPageHeader';
 import Footer from '../../layouts/eru/Footer/Footer';
 
+// Slider fotoğraflarını import et
+import slider1 from '/src/public/media/eru/slider1.jpg';
+import slider2 from '/src/public/media/eru/slider2.jpg';
+import slider3 from '/src/public/media/eru/slider3.jpg';
+
 interface NewsItem {
   id: number;
   title: string;
@@ -32,32 +37,11 @@ const LandingPage: React.FC = () => {
     console.log('Slider items:', sliderItems);
   }, [currentSlide]);
 
-  // Örnek slider verileri
-  const sliderItems: SliderItem[] = [
-    {
-      id: 1,
-      title: "2024 Bahar Dönemi Staj Başvuruları",
-      description: "Bahar dönemi staj başvuruları 15 Mart'ta başlayacak. Başvuru süreciniz için gerekli belgelerinizi hazırlayın.",
-      image: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      buttonText: "Detayları Gör",
-      buttonLink: "/auth/login"
-    },
-    {
-      id: 2,
-      title: "Staj Değerlendirme Kriterleri Güncellendi",
-      description: "Yeni staj değerlendirme kriterleri ve defterlerin teslim tarihleri hakkında önemli duyuru.",
-      image: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-      buttonText: "Bilgi Al",
-      buttonLink: "/auth/login"
-    },
-    {
-      id: 3,
-      title: "Online Staj Sunumları",
-      description: "Bu dönem staj sunumları online olarak gerçekleştirilecek. Sunum tarihleri ve detaylar için giriş yapın.",
-      image: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-      buttonText: "Giriş Yap",
-      buttonLink: "/auth/login"
-    }
+  // Slider fotoğrafları
+  const sliderItems = [
+    { id: 1, image: '/media/eru/slider1.jpg' },
+    { id: 2, image: '/media/eru/slider2.jpg' },
+    { id: 3, image: '/media/eru/slider3.jpg' }
   ];
 
   // Örnek haberler
@@ -109,39 +93,66 @@ const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen w-full flex flex-col">
       {/* Header */}
       <LandingPageHeader />
 
       {/* Hero Slider */}
-      <div className="relative w-full max-w-[1920px] mx-auto text-white overflow-hidden" style={{ minHeight: '720px' }}>
+      <div className="relative w-full text-white overflow-hidden" style={{ minHeight: '720px' }}>
         {/* Slides Container */}
         <div 
           className="flex transition-transform duration-500 ease-in-out"
           style={{ transform: `translateX(-${currentSlide * 100}%)` }}
         >
-          {/* Slide 1 */}
-          <div className="w-full flex-shrink-0 bg-gradient-to-r from-purple-500 to-purple-700 flex items-center justify-center text-center" style={{ minHeight: '720px' }}>
-            <div>
-              <h1 className="text-7xl font-bold mb-14">2024 Bahar Dönemi Staj Başvuruları</h1>
-              <p className="text-3xl mb-20 px-16">Bahar dönemi staj başvuruları 15 Mart'ta başlayacak. Başvuru süreciniz için gerekli belgelerinizi hazırlayın.</p>
-            </div>
+          {/* Slide 1 - slider1.jpg */}
+          <div 
+            className="w-full flex-shrink-0 cursor-pointer relative" 
+            style={{ minHeight: '720px' }}
+            onClick={() => {
+              // İleride endpoint eklenecek
+              console.log('Slider 1 tıklandı');
+            }}
+          >
+            <img 
+              src={slider1} 
+              alt="Slider 1"
+              className="w-full h-full object-cover"
+              style={{ minHeight: '720px' }}
+            />
           </div>
 
-          {/* Slide 2 */}
-          <div className="w-full flex-shrink-0 bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center text-center" style={{ minHeight: '720px' }}>
-            <div>
-              <h1 className="text-7xl font-bold mb-14">Staj Değerlendirme Kriterleri Güncellendi</h1>
-              <p className="text-3xl mb-20 px-16">Yeni staj değerlendirme kriterleri ve defterlerin teslim tarihleri hakkında önemli duyuru.</p>
-            </div>
+          {/* Slide 2 - slider2.jpg */}
+          <div 
+            className="w-full flex-shrink-0 cursor-pointer relative" 
+            style={{ minHeight: '720px' }}
+            onClick={() => {
+              // İleride endpoint eklenecek
+              console.log('Slider 2 tıklandı');
+            }}
+          >
+            <img 
+              src={slider2} 
+              alt="Slider 2"
+              className="w-full h-full object-cover"
+              style={{ minHeight: '720px' }}
+            />
           </div>
 
-          {/* Slide 3 */}
-          <div className="w-full flex-shrink-0 bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-center" style={{ minHeight: '720px' }}>
-            <div>
-              <h1 className="text-7xl font-bold mb-14">Online Staj Sunumları</h1>
-              <p className="text-3xl mb-20 px-16">Bu dönem staj sunumları online olarak gerçekleştirilecek. Sunum tarihleri ve detaylar için giriş yapın.</p>
-            </div>
+          {/* Slide 3 - slider3.jpg */}
+          <div 
+            className="w-full flex-shrink-0 cursor-pointer relative" 
+            style={{ minHeight: '720px' }}
+            onClick={() => {
+              // İleride endpoint eklenecek
+              console.log('Slider 3 tıklandı');
+            }}
+          >
+            <img 
+              src={slider3} 
+              alt="Slider 3"
+              className="w-full h-full object-cover"
+              style={{ minHeight: '720px' }}
+            />
           </div>
         </div>
 
@@ -174,7 +185,7 @@ const LandingPage: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-12">
         {/* News Section */}
         <section className="mb-12">
           <div className="text-center mb-8">
@@ -183,7 +194,7 @@ const LandingPage: React.FC = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-7xl mx-auto">
             {/* Genel Duyurular */}
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="bg-[#1e3a8a] text-white px-6 py-4">

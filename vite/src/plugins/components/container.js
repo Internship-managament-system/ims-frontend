@@ -6,16 +6,18 @@ export default plugin(({ addComponents, theme }) => {
     '.container-fixed': {
       'flex-grow': '1',
       'width': '100%',
+      'max-width': 'none',
+      'margin': '0',
       'padding-inline-start': theme('custom.components.container.fixed.px.DEFAULT'), // Logical property for LTR/RTL
       'padding-inline-end': theme('custom.components.container.fixed.px.DEFAULT'),   // Logical property for LTR/RTL
     },
     [`@media (min-width: ${theme('screens.xl')})`]: {
       '.container-fixed': {
-        'margin-inline-start': 'auto',  // Logical property for LTR/RTL
-        'margin-inline-end': 'auto',    // Logical property for LTR/RTL
+        'margin-inline-start': '0',  // Logical property for LTR/RTL
+        'margin-inline-end': '0',    // Logical property for LTR/RTL
         'padding-inline-start': theme('custom.components.container.fixed.px.xl'),  // Logical property for LTR/RTL
         'padding-inline-end': theme('custom.components.container.fixed.px.xl'),    // Logical property for LTR/RTL
-        'max-width': theme('custom.components.container.fixed')['max-width'],
+        'max-width': 'none',
       },
     },
   });
@@ -25,6 +27,8 @@ export default plugin(({ addComponents, theme }) => {
     '.container-fluid': {
       'width': '100%',
       'flex-grow': '1',
+      'max-width': 'none',
+      'margin': '0',
       'padding-inline-start': theme('custom.components.container.fluid.px.DEFAULT'), // Logical property for LTR/RTL
       'padding-inline-end': theme('custom.components.container.fluid.px.DEFAULT'),   // Logical property for LTR/RTL
     },

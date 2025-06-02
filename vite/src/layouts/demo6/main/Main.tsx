@@ -34,14 +34,14 @@ const Main = () => {
         <title>{menuItem?.title}</title>
       </Helmet>
 
-      <div className="flex grow">
+      <div className="flex grow w-full">
         <Sidebar />
         {mobileMode}
 
-        <div className="flex flex-col lg:flex-row grow pt-[--tw-header-height] lg:pt-0">
-          <div className="flex flex-col grow items-stretch bg-white dark:bg-[--tw-content-bg-dark] lg:ms-[--tw-sidebar-width] mt-0 lg:mt-0 m-0 overflow-y-auto">
-            <div className="flex flex-col grow min-h-screen">
-              <main className="grow" role="content">
+        <div className="flex flex-col lg:flex-row grow pt-[--tw-header-height] lg:pt-0 w-full">
+          <div className="flex flex-col grow items-stretch w-full bg-white dark:bg-[--tw-content-bg-dark] overflow-y-auto lg:ml-[290px]">
+            <div className="flex flex-col grow min-h-screen w-full">
+              <main className="grow w-full" role="content">
                 
               <Outlet />
               </main>

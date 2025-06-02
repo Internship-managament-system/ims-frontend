@@ -84,7 +84,7 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
     <div ref={ref}>
       <div className="flex flex-col items-center px-3.5 h-auto py-4">
         {/* Logo ve Sistem Adı */}
-        <Link to="/" className="flex flex-col items-center gap-1 mb-4">
+        <div className="flex flex-col items-center gap-1 mb-4">
           <div className="flex items-center gap-2">
             <img
               src={toAbsoluteUrl('/media/eru/erciyes-logo.png')}
@@ -100,7 +100,7 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
               </span>
             </div>
           </div>
-        </Link>
+        </div>
       </div>
     </div>
   );

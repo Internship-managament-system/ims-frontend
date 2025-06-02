@@ -2,13 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { Container } from '@/components';
 import { KeenIcon } from '@/components/keenicons';
 import axios from 'axios';
-
+import { 
+  getInternshipTopics,
+} from '@/services/topicsService';
+import { useQuery } from 'node_modules/@tanstack/react-query/build/modern/useQuery';
 interface Rule {
   name: string;
   description: string;
   ruleType: string;
   documentIds?: string[];
 }
+
+interface Topic {
+  title: string;
+  description: string;
+  createdDate: string;
+}
+
 
 interface DocumentInfo {
   id: string;
@@ -35,11 +45,14 @@ interface InternshipType {
   rules?: Rule[];
 }
 
+
+
+
 const TypeManagement: React.FC = () => {
   const [types, setTypes] = useState<InternshipType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [documents, setDocuments] = useState<any[]>([]);
-  const [topics, setTopics] = useState<any[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editingType, setEditingType] = useState<InternshipType | null>(null);
   const [newType, setNewType] = useState<Partial<InternshipType>>({
@@ -50,6 +63,7 @@ const TypeManagement: React.FC = () => {
     rules: []
   });
 
+
   const [newTopic, setNewTopic] = useState<{ name: string; description: string }>({
     name: '',
     description: ''
@@ -57,6 +71,10 @@ const TypeManagement: React.FC = () => {
 
   // API Base URL
   const API_BASE_URL = '/api/v1';
+
+ 
+
+
 
   // Belgeleri çek
   const fetchDocuments = async () => {
@@ -72,10 +90,8 @@ const TypeManagement: React.FC = () => {
   // Konuları çek (endpoint daha sonra verilecek)
   const fetchTopics = async () => {
     try {
-      // TODO: Endpoint daha sonra verilecek
-      // const response = await axios.get(`${API_BASE_URL}/topics`);
-      // setTopics(response.data.result || response.data || []);
-      setTopics([]); // Şimdilik boş array
+      const response = await getInternshipTopics();
+      setTopics(response);
     } catch (error) {
       console.error('Konular yüklenirken hata:', error);
       setTopics([]);
@@ -537,7 +553,7 @@ const TypeManagement: React.FC = () => {
                           <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3 bg-white">
                             {topics.map((topic) => (
                               <label
-                                key={topic.id}
+                                key={topic.title}
                                 className="flex items-center p-2 hover:bg-gray-50 rounded"
                               >
                                 <input
@@ -547,7 +563,7 @@ const TypeManagement: React.FC = () => {
                                     newType.rules?.some(
                                       (rule) =>
                                         rule.ruleType === 'TOPIC' &&
-                                        rule.name === topic.name
+                                        rule.name === topic.title
                                     ) || false
                                   }
                                   onChange={(e) => {
@@ -559,7 +575,7 @@ const TypeManagement: React.FC = () => {
                                         rules: [
                                           ...currentRules,
                                           {
-                                            name: topic.name,
+                                            name: topic.title,
                                             description: topic.description,
                                             ruleType: 'TOPIC'
                                           }
@@ -573,7 +589,7 @@ const TypeManagement: React.FC = () => {
                                           (rule) =>
                                             !(
                                               rule.ruleType === 'TOPIC' &&
-                                              rule.name === topic.name
+                                              rule.name === topic.title
                                             )
                                         )
                                       });
@@ -582,7 +598,7 @@ const TypeManagement: React.FC = () => {
                                 />
                                 <div className="flex-grow">
                                   <span className="text-sm font-medium text-gray-700">
-                                    {topic.name}
+                                    {topic.title}
                                   </span>
                                   <span className="text-xs text-gray-500 block">
                                     {topic.description}

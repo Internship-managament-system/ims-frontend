@@ -2,7 +2,16 @@ import React, { useEffect, useRef } from 'react';
 import './LandingPageHeader.css';
 import { useLocation, Link } from 'react-router-dom';
 import { useLanguage } from '../../contexts/languageContext';
-import { KeenIcon } from '../index';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faFacebookF,
+  faXTwitter,
+  faInstagram,
+  faLinkedin,
+  faYoutube,
+  faTelegram
+} from '@fortawesome/free-brands-svg-icons';
+import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 const LandingPageHeader: React.FC = () => {
     const headerRef = useRef<HTMLDivElement>(null);
@@ -60,25 +69,25 @@ const LandingPageHeader: React.FC = () => {
 
                         {/* Sağ taraf - Linkler */}
                         <div className="flex items-center space-x-3">
-                            {/* Sosyal medya ikonları - Ana Sayfa'nın solunda */}
-                            <div className="flex items-center space-x-4 mr-4">
+                            {/* Sosyal medya ikonları - Footer ile aynı */}
+                            <div className="flex items-center space-x-3 mr-4">
                                 <a 
-                                    href="https://www.youtube.com/@ErciyesUni1978" 
+                                    href="https://twitter.com/EruMedya" 
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                     className="text-white hover:text-gray-300 transition-all duration-300 hover:scale-110 transform"
-                                    title="YouTube"
+                                    title="X (Twitter)"
                                 >
-                                    <KeenIcon icon="youtube" className="text-base" />
+                                    <FontAwesomeIcon icon={faXTwitter} className="text-sm" />
                                 </a>
                                 <a 
-                                    href="https://tr.linkedin.com/school/erciyesuniversity/" 
+                                    href="https://facebook.com/EruMedya" 
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                     className="text-white hover:text-gray-300 transition-all duration-300 hover:scale-110 transform"
-                                    title="LinkedIn"
+                                    title="Facebook"
                                 >
-                                    <span className="text-base font-bold border border-white rounded px-1 text-xs">in</span>
+                                    <FontAwesomeIcon icon={faFacebookF} className="text-sm" />
                                 </a>
                                 <a 
                                     href="https://www.instagram.com/erciyesuni1978/" 
@@ -87,34 +96,43 @@ const LandingPageHeader: React.FC = () => {
                                     className="text-white hover:text-gray-300 transition-all duration-300 hover:scale-110 transform"
                                     title="Instagram"
                                 >
-                                    <KeenIcon icon="instagram" className="text-base" />
+                                    <FontAwesomeIcon icon={faInstagram} className="text-sm" />
                                 </a>
                                 <a 
-                                    href="https://x.com/erciyesuni1978" 
+                                    href="https://www.linkedin.com/company/erciyes-university?trk=cp_followed_name_erciyes-university" 
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                     className="text-white hover:text-gray-300 transition-all duration-300 hover:scale-110 transform"
-                                    title="X"
+                                    title="LinkedIn"
                                 >
-                                    <span className="text-base font-bold">𝕏</span>
+                                    <FontAwesomeIcon icon={faLinkedin} className="text-sm" />
                                 </a>
                                 <a 
-                                    href="https://www.facebook.com/ErciyesUni1978/" 
+                                    href="https://www.youtube.com/user/EruMedya" 
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                     className="text-white hover:text-gray-300 transition-all duration-300 hover:scale-110 transform"
-                                    title="Facebook"
+                                    title="YouTube"
                                 >
-                                    <KeenIcon icon="facebook" className="text-base" />
+                                    <FontAwesomeIcon icon={faYoutube} className="text-sm" />
                                 </a>
                                 <a 
-                                    href="https://mail.erciyes.edu.tr/" 
+                                    href="https://t.me/+606my8cwYyUwMWNk" 
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                     className="text-white hover:text-gray-300 transition-all duration-300 hover:scale-110 transform"
-                                    title="Email"
+                                    title="Telegram"
                                 >
-                                    <KeenIcon icon="sms" className="text-base" />
+                                    <FontAwesomeIcon icon={faTelegram} className="text-sm" />
+                                </a>
+                                <a 
+                                    href="mailto:basinyayin@erciyes.edu.tr" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-white hover:text-gray-300 transition-all duration-300 hover:scale-110 transform"
+                                    title="E-mail"
+                                >
+                                    <FontAwesomeIcon icon={faEnvelope} className="text-sm" />
                                 </a>
                             </div>
                             
@@ -142,13 +160,13 @@ const LandingPageHeader: React.FC = () => {
                                 <div className="border-l border-gray-400 h-4 mx-2"></div>
                                 <Link
                                     to="/auth/login"
-                                    className="text-xs hover:text-gray-300 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition-all duration-300 hover:scale-105 transform hover:shadow-lg"
+                                    className="text-xs hover:text-gray-300 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-all duration-300 hover:scale-105 transform hover:shadow-lg"
                                 >
                                     Giriş Yap
                                 </Link>
                                 <Link
                                     to="/auth/signup"
-                                    className="text-xs hover:text-gray-300 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-all duration-300 hover:scale-105 transform hover:shadow-lg"
+                                    className="text-xs hover:text-gray-300 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition-all duration-300 hover:scale-105 transform hover:shadow-lg"
                                 >
                                     Kayıt Ol
                                 </Link>

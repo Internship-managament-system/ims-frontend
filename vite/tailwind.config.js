@@ -520,7 +520,7 @@ module.exports = {
 							DEFAULT: theme('spacing')['6'],
 							xl: theme('spacing')['7.5']
 						},
-						'max-width': theme('screens.xl')
+						'max-width': 'none'
 					},
 					fluid: {
 						px: {
