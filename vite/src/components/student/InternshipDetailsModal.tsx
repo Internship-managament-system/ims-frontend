@@ -50,9 +50,23 @@ export default function InternshipDetailsModal({
 }: InternshipDetailsModalProps) {
   if (!internship) return null;
 
-  const handleDownload = (documentType: 'transcript' | 'internshipBook') => {
-    // Belge indirme işlemleri
-    console.log(`Downloading ${documentType}`);
+  const handleDownload = (documentType: string) => {
+    // İleride gerçek download URL'i backend'den alınacak
+    const downloadUrls: { [key: string]: string } = {
+      'application_form': '/documents/staj-formu.pdf',
+      'acceptance_letter': '/documents/kabul-mektubu.pdf',
+      'evaluation_form': '/documents/degerlendirme-formu.pdf'
+    };
+
+    const downloadUrl = downloadUrls[documentType];
+    if (downloadUrl) {
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `${documentType}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (

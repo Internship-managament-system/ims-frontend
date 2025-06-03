@@ -30,13 +30,6 @@ interface SliderItem {
 const LandingPage: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Debug: Component mount kontrolü
-  useEffect(() => {
-    console.log('LandingPage component mounted!');
-    console.log('Current slide:', currentSlide);
-    console.log('Slider items:', sliderItems);
-  }, [currentSlide]);
-
   // Slider fotoğrafları
   const sliderItems = [
     { id: 1, image: '/media/eru/slider1.jpg' },
@@ -78,18 +71,15 @@ const LandingPage: React.FC = () => {
 
   // Slider otomatik geçiş
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % sliderItems.length);
+    const interval = setInterval(() => {
+      setCurrentSlide((prevSlide) => (prevSlide + 1) % sliderItems.length);
     }, 5000);
-    return () => clearInterval(timer);
+
+    return () => clearInterval(interval);
   }, [sliderItems.length]);
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % sliderItems.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + sliderItems.length) % sliderItems.length);
+  const handleSlideClick = (index: number) => {
+    setCurrentSlide(index);
   };
 
   return (
@@ -106,12 +96,8 @@ const LandingPage: React.FC = () => {
         >
           {/* Slide 1 - slider1.jpg */}
           <div 
-            className="w-full flex-shrink-0 cursor-pointer relative" 
+            className="w-full flex-shrink-0 relative" 
             style={{ minHeight: '720px' }}
-            onClick={() => {
-              // İleride endpoint eklenecek
-              console.log('Slider 1 tıklandı');
-            }}
           >
             <img 
               src={slider1} 
@@ -123,12 +109,8 @@ const LandingPage: React.FC = () => {
 
           {/* Slide 2 - slider2.jpg */}
           <div 
-            className="w-full flex-shrink-0 cursor-pointer relative" 
+            className="w-full flex-shrink-0 relative" 
             style={{ minHeight: '720px' }}
-            onClick={() => {
-              // İleride endpoint eklenecek
-              console.log('Slider 2 tıklandı');
-            }}
           >
             <img 
               src={slider2} 
@@ -140,12 +122,8 @@ const LandingPage: React.FC = () => {
 
           {/* Slide 3 - slider3.jpg */}
           <div 
-            className="w-full flex-shrink-0 cursor-pointer relative" 
+            className="w-full flex-shrink-0 relative" 
             style={{ minHeight: '720px' }}
-            onClick={() => {
-              // İleride endpoint eklenecek
-              console.log('Slider 3 tıklandı');
-            }}
           >
             <img 
               src={slider3} 
@@ -158,13 +136,13 @@ const LandingPage: React.FC = () => {
 
         {/* Navigation Arrows */}
         <button
-          onClick={prevSlide}
+          onClick={() => handleSlideClick((currentSlide - 1 + sliderItems.length) % sliderItems.length)}
           className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all z-10"
         >
           <KeenIcon icon="arrow-left" className="text-xl" />
         </button>
         <button
-          onClick={nextSlide}
+          onClick={() => handleSlideClick((currentSlide + 1) % sliderItems.length)}
           className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all z-10"
         >
           <KeenIcon icon="arrow-right" className="text-xl" />
@@ -175,7 +153,7 @@ const LandingPage: React.FC = () => {
           {[0, 1, 2].map((index) => (
             <button
               key={index}
-              onClick={() => setCurrentSlide(index)}
+              onClick={() => handleSlideClick(index)}
               className={`w-3 h-3 rounded-full transition-all ${
                 index === currentSlide ? 'bg-white' : 'bg-white bg-opacity-50'
               }`}

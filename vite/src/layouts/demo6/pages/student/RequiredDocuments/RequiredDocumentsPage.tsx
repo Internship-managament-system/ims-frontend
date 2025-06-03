@@ -56,14 +56,23 @@ const documents: DocumentItem[] = [
 ];
 
 const RequiredDocumentsPage: React.FC = () => {
-  const handleDownload = (documentId: string, downloadUrl: string | null) => {
+  const handleDownload = async (documentId: string) => {
+    const downloadUrls: { [key: string]: string } = {
+      'staj-formu': '/documents/staj-formu.pdf',
+      'dilekce': '/documents/dilekce.pdf',
+      'sigorta-belgesi': '/documents/sigorta-belgesi.pdf'
+    };
+
+    const downloadUrl = downloadUrls[documentId];
     if (downloadUrl) {
-      // Belge indirme işlemi burada gerçekleştirilecek
-      console.log(`Downloading document: ${documentId}`);
-      // Gerçek indirme işlemi için:
-      // window.open(toAbsoluteUrl(downloadUrl), '_blank');
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `${documentId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } else {
-      console.log(`No download URL available for ${documentId}`);
+      // İleride backend API'den alınacak
     }
   };
 
@@ -98,7 +107,7 @@ const RequiredDocumentsPage: React.FC = () => {
                 <div className="flex flex-col space-y-2 min-w-[180px]">
                   {document.downloadUrl ? (
                     <button 
-                      onClick={() => handleDownload(document.id, document.downloadUrl)}
+                      onClick={() => handleDownload(document.id)}
                       className="btn flex items-center justify-center gap-2 bg-[#13126e] text-white"
                     >
                       <KeenIcon icon="cloud-download" className="text-white" />

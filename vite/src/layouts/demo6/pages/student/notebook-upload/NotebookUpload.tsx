@@ -99,8 +99,14 @@ const NotebookUpload: React.FC = () => {
   };
 
   const handleDownload = (internship: InternshipNotebook) => {
-    // Simüle download
-    console.log(`Downloading ${internship.fileName}`);
+    if (internship.fileName) {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(new Blob([Buffer.from(internship.fileName, 'base64')]));
+      link.download = internship.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (

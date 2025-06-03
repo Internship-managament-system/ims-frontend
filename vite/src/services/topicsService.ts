@@ -9,7 +9,7 @@ import {
 
 // Topic interface
 export interface InternshipTopic {
-  id: string;
+  id?: string;
   title: string;
   description: string;
   createdDate: string;
@@ -31,9 +31,7 @@ export interface UpdateInternshipTopic {
 // Tüm konuları getir
 export const getInternshipTopics = async (): Promise<InternshipTopic[]> => {
   try {
-    console.log('Staj konuları getiriliyor...');
     const response = await axiosClient.get<InternshipTopic[]>(INTERNSHIP_TOPICS);
-    console.log('Staj konuları başarıyla getirildi:', response);
     return response;
   } catch (error) {
     console.error('Staj konuları getirme hatası:', error);
@@ -42,11 +40,9 @@ export const getInternshipTopics = async (): Promise<InternshipTopic[]> => {
 };
 
 // Belirli bir konuyu getir
-export const getInternshipTopicById = async (id: string | number): Promise<InternshipTopic> => {
+export const getInternshipTopicById = async (id: number | string): Promise<InternshipTopic> => {
   try {
-    console.log(`Staj konusu detayı getiriliyor: ${id}`);
     const response = await axiosClient.get<InternshipTopic>(INTERNSHIP_TOPIC_DETAIL(id));
-    console.log('Staj konusu detayı başarıyla getirildi:', response);
     return response;
   } catch (error) {
     console.error('Staj konusu detayı getirme hatası:', error);
@@ -57,9 +53,7 @@ export const getInternshipTopicById = async (id: string | number): Promise<Inter
 // Yeni konu oluştur
 export const createInternshipTopic = async (data: NewInternshipTopic): Promise<InternshipTopic> => {
   try {
-    console.log('Yeni staj konusu oluşturuluyor:', data);
     const response = await axiosClient.post<InternshipTopic>(INTERNSHIP_TOPIC_CREATE, data);
-    console.log('Staj konusu başarıyla oluşturuldu:', response);
     return response;
   } catch (error) {
     console.error('Staj konusu oluşturma hatası:', error);
@@ -68,11 +62,9 @@ export const createInternshipTopic = async (data: NewInternshipTopic): Promise<I
 };
 
 // Konuyu güncelle
-export const updateInternshipTopic = async (id: string | number, data: NewInternshipTopic): Promise<InternshipTopic> => {
+export const updateInternshipTopic = async (id: number | string, data: UpdateInternshipTopic): Promise<InternshipTopic> => {
   try {
-    console.log(`Staj konusu güncelleniyor: ${id}`, data);
     const response = await axiosClient.put<InternshipTopic>(INTERNSHIP_TOPIC_UPDATE(id), data);
-    console.log('Staj konusu başarıyla güncellendi:', response);
     return response;
   } catch (error) {
     console.error('Staj konusu güncelleme hatası:', error);
@@ -81,11 +73,9 @@ export const updateInternshipTopic = async (id: string | number, data: NewIntern
 };
 
 // Konuyu sil
-export const deleteInternshipTopic = async (id: string | number): Promise<void> => {
+export const deleteInternshipTopic = async (id: number | string): Promise<void> => {
   try {
-    console.log(`Staj konusu siliniyor: ${id}`);
     await axiosClient.delete(INTERNSHIP_TOPIC_DELETE(id));
-    console.log('Staj konusu başarıyla silindi');
   } catch (error) {
     console.error('Staj konusu silme hatası:', error);
     throw error;

@@ -16,6 +16,7 @@ import {
 // API yanıtına göre güncellenmiş arayüz
 export interface CommissionMember {
   id: string | number;
+  userId?: string | number;
   name?: string;
   surname?: string;
   fullName?: string;
@@ -54,87 +55,41 @@ export interface Department {
 
 // API yanıtını CommissionMember formatına dönüştür
 const mapApiResponseToCommissionMember = (data: any): CommissionMember => {
-  console.log('mapApiResponseToCommissionMember input (RAW):', JSON.stringify(data));
-  
-  // Veri kontrolü - null veya undefined değilse işle
-  if (!data) {
-    console.error('mapApiResponseToCommissionMember: Geçersiz veri:', data);
-    return {
-      id: '0',
-      email: '',
-      enabled: false,
-      status: 'inactive',
-      role: 'COMMISSION_MEMBER',
-    };
-  }
-  
-  // API yanıtında rol bilgisini kontrol et - farklı alanlar olabilir
-  console.log('API yanıtında role alanı kontrolü:');
-  console.log('- data.role:', data.role);
-  console.log('- data.Role:', data.Role);
-  console.log('- data.userRole:', data.userRole);
-  console.log('- data.authority:', data.authority);
-  console.log('- data.authorities:', data.authorities);
-  
-  // Role değerini belirle - farklı alanlardan kontrol et
-  let roleValue = 'COMMISSION_MEMBER'; // Varsayılan değer
-  
-  if (data.role) {
-    roleValue = data.role;
-  } else if (data.Role) {
-    roleValue = data.Role;
-  } else if (data.userRole) {
-    roleValue = data.userRole;
-  } else if (data.authority) {
-    roleValue = data.authority;
-  } else if (Array.isArray(data.authorities) && data.authorities.length > 0) {
-    // Bazen rol bilgisi authorities dizisinde olabilir
-    roleValue = data.authorities[0];
-  }
-  
-  // Dönüştürülmüş veri - role alanını kesinlikle içermeli
   const mappedData: CommissionMember = {
-    ...data,
-    role: roleValue,
-    title: data.fullName ? data.fullName.split(' ')[0] + ' ' + (data.fullName.split(' ')[1] || '') : '',
+    id: data.id || '',
+    userId: data.userId || data.user_id || '',
+    name: data.name || data.firstName || '',
+    surname: data.surname || data.lastName || '',
+    fullName: data.fullName || `${data.name || data.firstName || ''} ${data.surname || data.lastName || ''}`.trim(),
+    email: data.email || '',
+    role: data.role || data.Role || data.userRole || data.authority || (Array.isArray(data.authorities) ? data.authorities[0] : data.authorities) || 'COMMISSION_MEMBER',
+    departmentId: data.departmentId || data.department_id || data.department?.id || '',
+    departmentName: data.departmentName || data.department_name || data.department?.name || '',
+    enabled: typeof data.enabled === 'boolean' ? data.enabled : true,
+    createdAt: data.createdAt || data.created_at || new Date().toISOString(),
   };
-  
-  console.log(`Kullanıcı: ${mappedData.fullName || `${mappedData.name || ''} ${mappedData.surname || ''}`}`);
-  console.log(`İşlenmiş role: ${mappedData.role}`);
-  
-  console.log('mapApiResponseToCommissionMember output:', mappedData);
+
   return mappedData;
 };
 
 // Tüm komisyon üyelerini getir
 export const getAllCommissionMembers = async (): Promise<CommissionMember[]> => {
   try {
-    console.log('API isteği yapılıyor:', COMMISSION_MEMBERS);
-    const response = await axiosClient.get<any[]>(COMMISSION_MEMBERS);
-    console.log('API yanıtı (RAW) alındı:', JSON.stringify(response));
+    const response = await axiosClient.get<CommissionMember[]>(COMMISSION_MEMBERS);
     
     if (!response) {
-      console.error('API yanıtı boş:', response);
       return [];
     }
     
     if (!Array.isArray(response)) {
-      console.error('API yanıtı bir dizi değil:', response);
-      console.log('Tip:', typeof response, 'Değer:', response);
-      
-      // Dizi değilse zorla diziye dönüştürme deneyelim
       const responseArray = response ? (Array.isArray(response) ? response : [response]) : [];
-      console.log('Dönüştürülmüş dizi:', responseArray);
-      
-      return responseArray.map(mapApiResponseToCommissionMember);
+      return responseArray;
     }
-    
+
     const mappedResponse = response.map(mapApiResponseToCommissionMember);
-    console.log('İşlenmiş API yanıtı:', mappedResponse);
-    
     return mappedResponse;
   } catch (error) {
-    console.error('Komisyon üyeleri getirme hatası:', error);
+    console.error('Komisyon üyelerini getirme hatası:', error);
     throw error;
   }
 };
@@ -155,22 +110,12 @@ export const createCommissionMember = async (memberData: NewCommissionMember): P
   try {
     // Eski tarzda userId gönderiliyorsa
     if (memberData.userId) {
-      console.log(`Komisyon üyesi ekleme isteği (ID ile): /api/v1/commission-members/assign/${memberData.userId}`);
-      
-      // Departman ID'si varsa, request body olarak gönder
       const requestData = memberData.departmentId ? { departmentId: memberData.departmentId } : {};
-      console.log('Komisyon üyesi ekleme veri:', requestData);
-      
       const response = await axiosClient.post<any>(COMMISSION_MEMBER_ASSIGN(memberData.userId), requestData);
-      
-      console.log('Komisyon üyesi ekleme yanıtı:', response);
       return mapApiResponseToCommissionMember(response);
     } 
     // Yeni tarzda form verileri gönderiliyorsa
     else if (memberData.email && memberData.name && memberData.surname) {
-      console.log('Yeni komisyon üyesi ekleme isteği (Form ile):', COMMISSION_MEMBER_CREATE);
-      
-      // API'ye gönderilecek veri formatı
       const apiData = {
         email: memberData.email,
         name: memberData.name,
@@ -178,10 +123,7 @@ export const createCommissionMember = async (memberData: NewCommissionMember): P
         departmentId: memberData.departmentId
       };
       
-      console.log('Komisyon üyesi ekleme veri:', apiData);
       const response = await axiosClient.post<any>(COMMISSION_MEMBER_CREATE, apiData);
-      
-      console.log('Komisyon üyesi ekleme yanıtı:', response);
       return mapApiResponseToCommissionMember(response);
     } 
     else {
@@ -236,13 +178,7 @@ export const deleteCommissionMember = async (id: number): Promise<void> => {
 // Komisyon üyesini başkan yap
 export const makeChairman = async (id: number): Promise<CommissionMember> => {
   try {
-    console.log(`Komisyon başkanı atama isteği yapılıyor: ${id}`);
-    // Backend'de otomatik olarak eski başkanın komisyon başkanlığı görevi kaldırılır
-    // ve yeni başkan atanır. Sistemde sadece bir başkan olabilir.
     const response = await axiosClient.post<any>(COMMISSION_MAKE_CHAIRMAN(id));
-    console.log('Komisyon başkanı atama yanıtı:', response);
-    
-    // Yeni komisyon başkanını döndür
     return mapApiResponseToCommissionMember(response);
   } catch (error) {
     console.error('Komisyon başkanı atama hatası:', error);
@@ -253,13 +189,7 @@ export const makeChairman = async (id: number): Promise<CommissionMember> => {
 // Komisyon başkanını görevden al
 export const removeChairman = async (id: number): Promise<CommissionMember> => {
   try {
-    console.log(`Komisyon başkanını görevden alma isteği yapılıyor: ${id}`);
-    // Bu işlem, mevcut başkanı komisyon üyesi yapar, başkanlık görevi kaldırılır
-    // Sistemde başka bir başkan olmadıkça bu işlem yapılır
     const response = await axiosClient.post<any>(COMMISSION_REMOVE_CHAIRMAN(id));
-    console.log('Komisyon başkanını görevden alma yanıtı:', response);
-    
-    // Artık komisyon üyesi olan eski başkanı döndür
     return mapApiResponseToCommissionMember(response);
   } catch (error) {
     console.error('Komisyon başkanı görevden alma hatası:', error);

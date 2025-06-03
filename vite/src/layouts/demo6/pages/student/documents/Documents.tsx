@@ -13,6 +13,7 @@ interface Document {
   type: 'transcript' | 'internshipBook';
   status: 'pending' | 'uploaded' | 'approved';
   uploadDate?: Date;
+  downloadUrl?: string;
 }
 
 export default function Documents() {
@@ -60,6 +61,17 @@ export default function Documents() {
         return <CheckCircle2 className="h-5 w-5 text-blue-500" />;
       default:
         return <FileText className="h-5 w-5 text-gray-400" />;
+    }
+  };
+
+  const handleDownload = (doc: Document) => {
+    if (doc.downloadUrl) {
+      const link = document.createElement('a');
+      link.href = doc.downloadUrl;
+      link.download = `${doc.type}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -145,8 +157,7 @@ export default function Documents() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    // Belge indirme işlemleri
-                    console.log(`Downloading ${doc.type}`);
+                    handleDownload(doc);
                   }}
                 >
                   <Upload className="h-4 w-4 mr-2" />

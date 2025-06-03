@@ -125,12 +125,10 @@ export const calculateDurationInDays = (startDate: string, endDate: string, week
   return workingDays;
 };
 
-// Tüm staj başvurularını getir (admin için)
+// Tüm staj başvurularını getir
 export const getAllInternshipApplications = async (): Promise<InternshipApplication[]> => {
   try {
-    console.log('Tüm staj başvurularını getirme isteği yapılıyor');
     const response = await axiosClient.get<InternshipApplication[]>(INTERNSHIP_APPLICATIONS);
-    console.log('Staj başvuruları alındı:', response);
     return response;
   } catch (error) {
     console.error('Staj başvurularını getirme hatası:', error);
@@ -139,11 +137,9 @@ export const getAllInternshipApplications = async (): Promise<InternshipApplicat
 };
 
 // Staj başvurusu detayını getir
-export const getInternshipApplicationById = async (id: string): Promise<InternshipApplication> => {
+export const getInternshipApplicationById = async (id: number | string): Promise<InternshipApplication> => {
   try {
-    console.log(`Staj başvurusu detayı getiriliyor: ${id}`);
     const response = await axiosClient.get<InternshipApplication>(INTERNSHIP_APPLICATION_DETAIL(id));
-    console.log('Staj başvurusu detayı alındı:', response);
     return response;
   } catch (error) {
     console.error('Staj başvurusu detayı getirme hatası:', error);
@@ -154,14 +150,13 @@ export const getInternshipApplicationById = async (id: string): Promise<Internsh
 // Yeni staj başvurusu oluştur
 export const createInternshipApplication = async (data: NewInternshipApplication): Promise<InternshipApplication> => {
   try {
-    // Swagger'da görünen örnek yapıya göre alanları düzenle
     const requestData = {
       studentId: data.studentId,
       departmentId: data.departmentId,
       program: data.program,
       internshipPeriod: data.internshipPeriod,
       workplaceName: data.workplaceName,
-      province: data.province.toUpperCase(), // Backend'in beklediği ENUM formatına dönüştür
+      province: data.province.toUpperCase(),
       activityField: data.activityField,
       workplaceEmail: data.workplaceEmail,
       workplacePhone: data.workplacePhone,
@@ -173,27 +168,8 @@ export const createInternshipApplication = async (data: NewInternshipApplication
       internshipType: data.internshipType
     };
     
-    console.log('Staj başvurusu oluşturma isteği yapılıyor:', requestData);
-    console.log('API endpoint:', INTERNSHIP_APPLICATION_CREATE);
-    
-    try {
-      const response = await axiosClient.post<InternshipApplication>(INTERNSHIP_APPLICATION_CREATE, requestData);
-      console.log('Staj başvurusu oluşturuldu:', response);
-      return response;
-    } catch (apiError: any) {
-      console.error('API isteği hatası:', apiError);
-      // Axios hatasında detaylı bilgileri göster
-      if (apiError.response) {
-        console.error('Hata status:', apiError.response.status);
-        console.error('Hata data:', apiError.response.data);
-        console.error('Hata headers:', apiError.response.headers);
-      } else if (apiError.request) {
-        console.error('İstek yapıldı ama yanıt alınamadı:', apiError.request);
-      } else {
-        console.error('İstek oluşturulurken hata:', apiError.message);
-      }
-      throw apiError;
-    }
+    const response = await axiosClient.post<InternshipApplication>(INTERNSHIP_APPLICATION_CREATE, requestData);
+    return response;
   } catch (error) {
     console.error('Staj başvurusu oluşturma hatası:', error);
     throw error;
@@ -203,9 +179,7 @@ export const createInternshipApplication = async (data: NewInternshipApplication
 // Staj başvurusu durumunu güncelle
 export const updateInternshipApplicationStatus = async (id: string, statusData: StatusUpdateRequest): Promise<InternshipApplication> => {
   try {
-    console.log(`Staj başvurusu durumu güncelleniyor: ${id}`, statusData);
     const response = await axiosClient.put<InternshipApplication>(INTERNSHIP_APPLICATION_STATUS_UPDATE(id), statusData);
-    console.log('Staj başvurusu durumu güncellendi:', response);
     return response;
   } catch (error) {
     console.error('Staj başvurusu durumu güncelleme hatası:', error);
@@ -216,9 +190,7 @@ export const updateInternshipApplicationStatus = async (id: string, statusData: 
 // Staj başvurusunu bir kullanıcıya ata
 export const assignInternshipApplication = async (id: string, assignData: AssignRequest): Promise<InternshipApplication> => {
   try {
-    console.log(`Staj başvurusu atanıyor: ${id}`, assignData);
     const response = await axiosClient.put<InternshipApplication>(INTERNSHIP_APPLICATION_ASSIGN(id), assignData);
-    console.log('Staj başvurusu atandı:', response);
     return response;
   } catch (error) {
     console.error('Staj başvurusu atama hatası:', error);
@@ -229,9 +201,7 @@ export const assignInternshipApplication = async (id: string, assignData: Assign
 // Giriş yapmış öğrencinin kendi staj başvurularını getir
 export const getMyInternshipApplications = async (): Promise<InternshipApplication[]> => {
   try {
-    console.log('Kendi staj başvurularını getirme isteği yapılıyor');
     const response = await axiosClient.get<InternshipApplication[]>(INTERNSHIP_APPLICATIONS_ME);
-    console.log('Kendi staj başvuruları alındı:', response);
     return response;
   } catch (error) {
     console.error('Kendi staj başvurularını getirme hatası:', error);
@@ -242,9 +212,7 @@ export const getMyInternshipApplications = async (): Promise<InternshipApplicati
 // Bölüme göre staj başvurularını getir
 export const getInternshipApplicationsByDepartment = async (departmentId: string): Promise<InternshipApplication[]> => {
   try {
-    console.log(`Bölüme göre staj başvurularını getirme isteği yapılıyor: ${departmentId}`);
     const response = await axiosClient.get<InternshipApplication[]>(INTERNSHIP_APPLICATIONS_DEPARTMENT(departmentId));
-    console.log('Bölüme göre staj başvuruları alındı:', response);
     return response;
   } catch (error) {
     console.error('Bölüme göre staj başvurularını getirme hatası:', error);
@@ -255,9 +223,7 @@ export const getInternshipApplicationsByDepartment = async (departmentId: string
 // Giriş yapmış kullanıcıya atanmış staj başvurularını getir
 export const getAssignedInternshipApplications = async (): Promise<InternshipApplication[]> => {
   try {
-    console.log('Atanmış staj başvurularını getirme isteği yapılıyor');
     const response = await axiosClient.get<InternshipApplication[]>(INTERNSHIP_APPLICATIONS_ASSIGNED);
-    console.log('Atanmış staj başvuruları alındı:', response);
     return response;
   } catch (error) {
     console.error('Atanmış staj başvurularını getirme hatası:', error);
@@ -268,14 +234,13 @@ export const getAssignedInternshipApplications = async (): Promise<InternshipApp
 // Staj başvurusunu güncelle
 export const updateInternshipApplication = async (id: string, data: NewInternshipApplication): Promise<InternshipApplication> => {
   try {
-    // Swagger'da görünen örnek yapıya göre alanları düzenle
     const requestData = {
       studentId: data.studentId,
       departmentId: data.departmentId,
       program: data.program,
       internshipPeriod: data.internshipPeriod,
       workplaceName: data.workplaceName,
-      province: data.province.toUpperCase(), // Backend'in beklediği ENUM formatına dönüştür
+      province: data.province.toUpperCase(),
       activityField: data.activityField,
       workplaceEmail: data.workplaceEmail,
       workplacePhone: data.workplacePhone,
@@ -287,10 +252,7 @@ export const updateInternshipApplication = async (id: string, data: NewInternshi
       internshipType: data.internshipType
     };
     
-    console.log(`Staj başvurusu güncelleniyor: ${id}`, requestData);
-    // Güncelleme için başvuru detay endpoint'ini kullanıyoruz (PUT isteği)
     const response = await axiosClient.put<InternshipApplication>(INTERNSHIP_APPLICATION_DETAIL(id), requestData);
-    console.log('Staj başvurusu güncellendi:', response);
     return response;
   } catch (error) {
     console.error('Staj başvurusu güncelleme hatası:', error);

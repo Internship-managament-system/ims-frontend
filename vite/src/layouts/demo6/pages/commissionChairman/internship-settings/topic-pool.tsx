@@ -48,7 +48,7 @@ const TopicPool: React.FC = () => {
   // Konu güncelleme mutation
   const updateTopicMutation = useMutation({
     mutationFn: ({ id, data }: { id: string | number, data: NewInternshipTopic }) => 
-      updateInternshipTopic(id, data),
+      updateInternshipTopic(id, { id: String(id), ...data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['internship-topics'] });
       resetForm();
@@ -97,6 +97,11 @@ const TopicPool: React.FC = () => {
   const handleUpdateTopic = () => {
     if (!editingTopic || !newTopic.title || !newTopic.description) {
       toast.error('Lütfen zorunlu alanları doldurun!');
+      return;
+    }
+
+    if (!editingTopic.id) {
+      toast.error('Konu ID bulunamadı!');
       return;
     }
     
@@ -193,16 +198,17 @@ const TopicPool: React.FC = () => {
 
           {/* Konular Listesi */}
           <div className="space-y-4">
-            {getPaginatedTopics().map((topic) => {
+            {getPaginatedTopics().map((topic, index) => {
+              const uniqueKey = topic.id ? `topic-${topic.id}` : `topic-index-${index}-${currentPage}`;
               return (
                 <div 
-                  key={topic.id} 
+                  key={uniqueKey}
                   className="p-5 rounded-lg border border-gray-200 bg-white"
                 >
                   <div className="flex justify-between items-start">
-                    <div className="flex-grow">
+                    <div key={`content-${topic.id || index}`} className="flex-grow">
                       <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-lg font-medium text-gray-900">{topic.id}: {topic.title}</h3>
+                        <h3 className="text-lg font-medium text-gray-900">{topic.id || `#${index + 1}`}: {topic.title}</h3>
                       </div>
                       
                       <div className="text-gray-600 mb-4" dangerouslySetInnerHTML={{ __html: topic.description }}></div>
@@ -213,8 +219,9 @@ const TopicPool: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex gap-2 ml-4">
+                    <div key={`actions-${topic.id || index}`} className="flex gap-2 ml-4">
                       <button 
+                        key={`edit-${topic.id || index}`}
                         className="btn bg-blue-100 text-blue-700 p-2 rounded hover:bg-blue-200"
                         onClick={() => handleEditTopic(topic)}
                         title="Düzenle"
@@ -223,10 +230,15 @@ const TopicPool: React.FC = () => {
                         <KeenIcon icon="pencil" />
                       </button>
                       <button 
+                        key={`delete-${topic.id || index}`}
                         className="btn bg-red-100 text-red-700 p-2 rounded hover:bg-red-200"
-                        onClick={() => handleDeleteTopic(topic.id)}
+                        onClick={() => {
+                          if (topic.id) {
+                            handleDeleteTopic(topic.id);
+                          }
+                        }}
                         title="Sil"
-                        disabled={deleteTopicMutation.isPending}
+                        disabled={deleteTopicMutation.isPending || !topic.id}
                       >
                         <KeenIcon icon="trash" />
                       </button>
@@ -246,16 +258,17 @@ const TopicPool: React.FC = () => {
           {/* Pagination */}
           {getTotalPages() > 1 && (
             <div className="mt-6 flex justify-between items-center">
-              <div className="flex items-center text-sm text-gray-700">
+              <div key="pagination-info" className="flex items-center text-sm text-gray-700">
                 <span>
                   Toplam {getFilteredTopics().length} konudan {' '}
                   {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, getFilteredTopics().length)} arası gösteriliyor
                 </span>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div key="pagination-controls" className="flex items-center space-x-2">
                 {/* Önceki Sayfa */}
                 <button
+                  key="prev-button"
                   className={`px-3 py-2 rounded text-sm font-medium ${
                     currentPage === 1
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
@@ -272,7 +285,7 @@ const TopicPool: React.FC = () => {
                   const page = index + 1;
                   return (
                     <button
-                      key={page}
+                      key={`pagination-page-${page}-${getTotalPages()}`}
                       className={`px-3 py-2 rounded text-sm font-medium ${
                         currentPage === page
                           ? 'bg-[#13126e] text-white'
@@ -287,6 +300,7 @@ const TopicPool: React.FC = () => {
 
                 {/* Sonraki Sayfa */}
                 <button
+                  key="next-button"
                   className={`px-3 py-2 rounded text-sm font-medium ${
                     currentPage === getTotalPages()
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
@@ -322,10 +336,10 @@ const TopicPool: React.FC = () => {
                 <div className="max-h-[80vh] overflow-y-auto">
                   <div className="space-y-6">
                     {/* Temel Bilgiler */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
+                    <div key="basic-info" className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="text-md font-medium text-gray-900 mb-4">Temel Bilgiler</h4>
                       <div className="grid grid-cols-1 gap-4">
-                        <div>
+                        <div key="title-field">
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Konu Adı *
                           </label>
@@ -338,7 +352,7 @@ const TopicPool: React.FC = () => {
                           />
                         </div>
                         
-                        <div>
+                        <div key="description-field">
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Açıklama *
                           </label>

@@ -131,15 +131,13 @@ const Login = () => {
     initialValues: getInitialValues(),
     validationSchema: loginSchema,
     onSubmit: async (values, { setStatus, setSubmitting }) => {
-      setLoading(true);
-
       try {
-        if (!login) {
-          throw new Error('JWTProvider is required for this form.');
-        }
-
+        setLoading(true);
         await login(values.email, values.password);
-
+        
+        // Başarılı giriş sonrası form'u reset et
+        formik.resetForm();
+        
         if (values.remember) {
           // Beni hatırla seçiliyse email ve şifreyi kaydet
           localStorage.setItem('rememberedEmail', values.email);
@@ -155,11 +153,10 @@ const Login = () => {
 
         // Login başarılı - useEffect içinde currentUser ile yönlendirme yapılacak
         // useEffect, kullanıcıyı rolüne göre yönlendirecek ve varsa departman güncellemesi yapacak
-        console.log('Login successful!');
 
-      } catch (error) {
-        console.error('Login error:', error);
-        setStatus(t('loginError') || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
+      } catch (error: any) {
+        console.error('Login failed:', error);
+        setStatus(error.message || 'Giriş başarısız');
         setSubmitting(false);
         setLoading(false);
       }

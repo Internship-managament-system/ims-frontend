@@ -70,16 +70,6 @@ const SidebarHeader = forwardRef<HTMLDivElement, any>((props, ref) => {
   // Departman adını al (önce API'den çekilen, sonra varsa currentUser'dan)
   const departmentDisplayName = departmentName || currentUser?.departmentName || currentUser?.department;
 
-  // Debug için console log
-  console.log('SidebarHeader Debug:', {
-    userRole: currentUser?.role,
-    shouldShowDepartment,
-    departmentId: currentUser?.departmentId,
-    departmentName,
-    departmentDisplayName,
-    fullUser: currentUser
-  });
-
   return (
     <div ref={ref}>
       <div className="flex flex-col items-center px-3.5 h-auto py-4">

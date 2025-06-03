@@ -6,7 +6,8 @@ import {
   type PropsWithChildren,
   type SetStateAction,
   useEffect,
-  useState
+  useState,
+  useCallback
 } from 'react';
 
 import * as authHelper from '../_helpers';
@@ -99,8 +100,6 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 
     if (currentAuth && currentAuth.access_token) {
       try {
-        console.log('Verifying user with token:', currentAuth.access_token.substring(0, 10) + '...');
-
         // Token expiry kontrolü
         if (authHelper.isTokenExpired && authHelper.isTokenExpired(currentAuth.access_token)) {
           throw new Error('Token expired');
@@ -134,14 +133,10 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const login = async (email: string, password: string) => {
     try {
-      console.log('Starting login request...'); // Debug için
-
       const { data } = await axios.post(LOGIN_URL, {
         email,
         password
       });
-
-      console.log("Login response:", data); // Debug için
 
       // Token kontrolü yapalım
       if (!data.token) {
@@ -153,26 +148,16 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         access_token: data.token,
       } as AuthModel;
 
-      console.log('Saving auth data...'); // Debug için
-
       // Auth kaydet
       saveAuth(authData);
 
       // Token kaydedildikten sonra kullanıcı bilgilerini al
       try {
-        console.log('Fetching user data...'); // Debug için
-
         const { data: userData } = await getUser();
         setCurrentUser(userData.result);
 
         // Profil tamamlanmamışsa setup sayfasına yönlendir
         // Admin ve komisyon başkanı rolü için bu kontrol gerekli değil
-        console.log('Login user data check:', {
-          role: userData.result.role,
-          facultyId: userData.result.facultyId,
-          departmentId: userData.result.departmentId
-        });
-        
         if (userData.result.role !== 'ADMIN' && 
             userData.result.role !== 'COMMISSION_CHAIRMAN' &&
             (!userData.result.facultyId || !userData.result.departmentId)) {
@@ -181,8 +166,6 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
           window.location.href = '/users/info';
           return;
         }
-
-        console.log('User data received:', userData.result); // Debug için
       } catch (getUserError) {
         console.error("User data fetch error:", getUserError);
         // Token sorunuysa auth'u temizle
@@ -206,13 +189,9 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         departmentId  // Departman bilgisini gönderiyoruz
       };
 
-      console.log('Register request body:', registerData);
-
       const response = await axios.post(REGISTER_URL, registerData);
-      console.log('Full register response:', response);
 
       if (response.status === 200 || response.status === 201 || response.status === 204) {
-        console.log('Registration successful (status: ' + response.status + ')');
         return;
       }
 
@@ -221,7 +200,6 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
       console.error('Register error:', error);
 
       if (axios.isAxiosError(error) && error.response?.status === 204) {
-        console.log('Registration successful (204 No Content)');
         return;
       }
 
@@ -231,8 +209,6 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const updateUser = async (userId: string, updateData: any) => {
     try {
-      console.log('Updating user:', userId, 'with data:', updateData);
-
       await axios.put(`/api/v1/users/${userId}/update`, updateData);
 
       // Güncelleme sonrası kullanıcı bilgilerini yenile
@@ -275,11 +251,8 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
   };
 
   const getUser = async () => {
-    console.log('Fetching user info...');
-
     // Bu noktada token otomatik olarak header'a eklenecek
     const response = await axios.get<{ result: UserModel }>(GET_USER_URL);
-    console.log('User info response:', response.data);
     return response;
   };
 

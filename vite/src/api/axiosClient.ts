@@ -19,7 +19,6 @@ axiosInstance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${auth.access_token}`;
     }
     
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
@@ -31,34 +30,21 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
-    console.log(`Response Status: ${response.status}`);
-    console.log(`Response URL: ${response.config.url}`);
-    console.log(`Response Data (Raw):`, response.data);
-    
     // API yanıtı kontrolü
-    // Eğer yanıt result içinde ise onu dön, değilse doğrudan data'yı dön
     if (response.data && response.data.hasOwnProperty('result')) {
-      console.log(`Response Data (result):`, response.data.result);
       return response.data.result;
     }
     
-    // Doğrudan veriyi döndür
     return response.data;
   },
   (error) => {
     console.error('Response error:', error);
     
-    // Hata yanıtını formatla
     if (error.response) {
-      console.log('Error Response Data:', error.response.data);
-      console.log('Error Config URL:', error.config?.url);
-      
-      // API özel hata mesajı varsa onu kullan
       const errorMessage = error.response.data?.message || error.response.data?.error || 'Bir hata oluştu';
       return Promise.reject(new Error(errorMessage));
     }
     
-    // Network hatası veya istek gönderilemeyen diğer hatalar
     return Promise.reject(error);
   }
 );

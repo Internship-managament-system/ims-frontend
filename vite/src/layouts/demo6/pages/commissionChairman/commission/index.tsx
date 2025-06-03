@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Container } from '@/components';
 import AddMemberModal from './components/AddMemberModal';
 import ConfirmModal from './components/ConfirmModal';
@@ -30,9 +30,30 @@ const CommissionManagement: React.FC = () => {
     id: '',
     name: ''
   });
+  const [chairman, setChairman] = useState<CommissionMember | null>(null);
   
   const queryClient = useQueryClient();
   const { currentUser, logout } = useAuthContext();
+  
+  // Komisyon rolünü belirle - Bu fonksiyonu useEffect'ten önce tanımlayalım
+  const getCommissionRole = useCallback((user: CommissionMember): string => {
+    // Role değeri boş veya undefined kontrolü
+    if (!user.role) {
+      console.error('Role değeri bulunamadı:', user);
+      return 'Komisyon Üyesi';
+    }
+    
+    // API'den gelen role değerine göre kontrol et - büyük/küçük harf duyarsız
+    const roleUpper = typeof user.role === 'string' ? user.role.toUpperCase() : '';
+    
+    if (roleUpper === 'COMMISSION_CHAIRMAN' || 
+        roleUpper.includes('CHAIRMAN')) {
+      return 'Komisyon Başkanı';
+    }
+    
+    // Varsayılan olarak komisyon üyesi
+    return 'Komisyon Üyesi';
+  }, []);
   
   // Kullanıcı ve departman bilgilerini yükle
   useEffect(() => {
@@ -72,28 +93,11 @@ const CommissionManagement: React.FC = () => {
   
   // API yanıtını kontrol et
   useEffect(() => {
-    if (users && users.length > 0) {
-      // Gelen veri kontrolü
-      console.log('*** API YANITI DETAYLI KONTROL ***');
-      
-      users.forEach((user, index) => {
-        console.log(`Kullanıcı #${index + 1}:`, user);
-        console.log(`- ID: ${user.id}`);
-        console.log(`- Ad Soyad: ${user.name} ${user.surname}`);
-        console.log(`- Role: ${user.role}`);
-        console.log(`- Role Tipi: ${typeof user.role}`);
-        console.log(`- getCommissionRole sonucu: ${getCommissionRole(user)}`);
-        console.log('----------------------------');
-      });
-      
-      // Komisyon başkanı kullanıcıyı kontrol et
-      const chairmanUser = users.find(user => user.role === 'COMMISSION_CHAIRMAN');
-      console.log('Komisyon başkanı kullanıcı bulundu mu?', chairmanUser ? 'Evet' : 'Hayır');
-      if (chairmanUser) {
-        console.log('Komisyon başkanı kullanıcı detayları:', chairmanUser);
-      }
+    if (users.length > 0) {
+      const chairmanUser = users.find(user => getCommissionRole(user) === 'Komisyon Başkanı');
+      setChairman(chairmanUser || null);
     }
-  }, [users]);
+  }, [users, getCommissionRole]);
 
   // Komisyon üyesi ekleme mutation
   const addMemberMutation = useMutation({
@@ -179,7 +183,6 @@ const CommissionManagement: React.FC = () => {
       return;
     }
 
-    console.log('Komisyon üyesi ekleniyor:', updatedUserData);
     addMemberMutation.mutate(updatedUserData);
   };
 
@@ -278,31 +281,6 @@ const CommissionManagement: React.FC = () => {
   // Görüntülenecek isim belirle
   const getDisplayName = (user: CommissionMember): string => {
     return user.fullName || `${user.name || ''} ${user.surname || ''}`;
-  };
-
-  // Komisyon rolünü belirle
-  const getCommissionRole = (user: CommissionMember): string => {
-    // Debug için role değerini yazdır
-    console.log(`getCommissionRole çağrıldı - Kullanıcı: ${user.name} ${user.surname}, Role: ${user.role}`);
-    
-    // Role değeri boş veya undefined kontrolü
-    if (!user.role) {
-      console.error('Role değeri bulunamadı:', user);
-      return 'Komisyon Üyesi';
-    }
-    
-    // API'den gelen role değerine göre kontrol et - büyük/küçük harf duyarsız
-    const roleUpper = typeof user.role === 'string' ? user.role.toUpperCase() : '';
-    
-    if (roleUpper === 'COMMISSION_CHAIRMAN' || 
-        roleUpper.includes('CHAIRMAN')) {
-      console.log(`${user.name} ${user.surname} için "Komisyon Başkanı" döndürüldü`);
-      return 'Komisyon Başkanı';
-    }
-    
-    console.log(`${user.name} ${user.surname} için "Komisyon Üyesi" döndürüldü`);
-    // Varsayılan olarak komisyon üyesi
-    return 'Komisyon Üyesi';
   };
 
   // İşlem butonlarını göster/gizle - başkan yapma butonunu gösterip göstermeme

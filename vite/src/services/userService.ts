@@ -23,40 +23,19 @@ export interface User {
 // Tüm kullanıcıları getir (normal /users endpoint'i)
 export const getAllUsers = async (): Promise<User[]> => {
   try {
-    console.log('API isteği yapılıyor:', USERS);
+    const response = await axiosClient.get<User[]>(USERS);
     
-    try {
-      const response = await axiosClient.get<User[]>(USERS);
-      console.log('API yanıtı alındı:', response);
-      
-      if (!response) {
-        console.error('API yanıtı boş:', response);
-        return [];
-      }
-      
-      if (!Array.isArray(response)) {
-        console.error('API yanıtı bir dizi değil:', response);
-        // Eğer response bir dizi değilse, zorlama yapma
-        // Doğrudan boş dizi döndür
-        return [];
-      }
-      
-      return response;
-    } catch (apiError: any) {
-      console.error('API çağrısı başarısız oldu:', apiError);
-      
-      // Daha detaylı hata bilgisi için
-      if (apiError.response) {
-        console.error('Hata status:', apiError.response.status);
-        console.error('Hata data:', apiError.response.data);
-      }
-      
-      // API hatası olduğunda boş dizi döndür
+    if (!response) {
       return [];
     }
+    
+    if (!Array.isArray(response)) {
+      return [];
+    }
+    
+    return response;
   } catch (error) {
     console.error('Kullanıcıları getirme hatası:', error);
-    // Üst seviye hata durumunda da boş dizi döndür
     return [];
   }
 };
@@ -64,27 +43,17 @@ export const getAllUsers = async (): Promise<User[]> => {
 // Sistemdeki tüm kullanıcıları getir (komisyon üyesi atanabilecek kullanıcılar)
 export const getAllSystemUsers = async (): Promise<User[]> => {
   try {
-    console.log('Sistem Kullanıcıları API isteği yapılıyor:', COMMISSION_MEMBERS_USERS);
     const response = await axiosClient.get<User[]>(COMMISSION_MEMBERS_USERS);
-    console.log('Sistem Kullanıcıları API yanıtı (RAW):', JSON.stringify(response));
     
     if (!response) {
-      console.error('API yanıtı boş:', response);
       return [];
     }
     
     if (!Array.isArray(response)) {
-      console.error('API yanıtı bir dizi değil:', response);
-      console.log('Tip:', typeof response, 'Değer:', response);
-      
-      // Dizi değilse zorla diziye dönüştürme deneyelim
       const responseArray = response ? (Array.isArray(response) ? response : [response]) : [];
-      console.log('Dönüştürülmüş dizi:', responseArray);
-      
       return responseArray;
     }
     
-    console.log('İşlenmiş sistem kullanıcıları:', response);
     return response;
   } catch (error) {
     console.error('Sistem kullanıcılarını getirme hatası:', error);

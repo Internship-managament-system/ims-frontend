@@ -107,7 +107,6 @@ const TypeManagement: React.FC = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/internships`);
-      console.log("osman1" + response?.data?.result);
       const typesList = response?.data?.result || [];
       
       // Her staj türü için detay bilgisini çek (rules'ları almak için)
@@ -124,7 +123,6 @@ const TypeManagement: React.FC = () => {
       );
       
       setTypes(typesWithDetails);
-      console.log('osman:' + types);
     } catch (error) {
       console.error('Staj türleri yüklenirken hata:', error);
       setTypes([]);

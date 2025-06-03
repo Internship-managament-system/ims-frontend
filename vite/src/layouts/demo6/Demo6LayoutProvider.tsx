@@ -1,5 +1,5 @@
 //Demo6LayoutProvider.tsx
-import { createContext, type PropsWithChildren, useContext, useEffect, useState } from 'react';
+import { createContext, type PropsWithChildren, useContext, useEffect, useState, useCallback } from 'react';
 import { MENU_SIDEBAR } from '@/config';
 import { useMenus } from '@/providers';
 import { ILayoutConfig, useLayout } from '@/providers';
@@ -17,9 +17,7 @@ export interface IDemo6LayoutProviderProps {
 const initalLayoutProps: IDemo6LayoutProviderProps = {
   layout: Demo6LayoutConfig, // Default layout configuration
   mobileSidebarOpen: false, // Mobile sidebar is closed by default
-  setMobileSidebarOpen: (open: boolean) => {
-    console.log(`${open}`);
-  }
+  setMobileSidebarOpen: () => {} // Default no-op function
 };
 
 // Create a context to manage the layout-related state and logic for Demo6 layout
@@ -47,6 +45,11 @@ const Demo6LayoutProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     setCurrentLayout(layout); // Update the current layout in the global layout state
   }, [layout, setCurrentLayout]); // Re-run this effect if layout or setCurrentLayout changes
+
+  const toggleSidebar = useCallback(() => {
+    const newSidebarOpen = !mobileSidebarOpen;
+    setMobileSidebarOpen(newSidebarOpen);
+  }, [mobileSidebarOpen]);
 
   // Provide the layout state, sticky header state, and sidebar state to children components via context
   return (
