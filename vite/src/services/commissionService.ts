@@ -56,7 +56,7 @@ export interface Department {
 // API yanıtını CommissionMember formatına dönüştür
 const mapApiResponseToCommissionMember = (data: any): CommissionMember => {
   const mappedData: CommissionMember = {
-    id: data.id || '',
+    id: data.id ||  '',
     userId: data.userId || data.user_id || '',
     name: data.name || data.firstName || '',
     surname: data.surname || data.lastName || '',
@@ -66,6 +66,7 @@ const mapApiResponseToCommissionMember = (data: any): CommissionMember => {
     departmentId: data.departmentId || data.department_id || data.department?.id || '',
     departmentName: data.departmentName || data.department_name || data.department?.name || '',
     enabled: typeof data.enabled === 'boolean' ? data.enabled : true,
+    status: data.status || data.accountStatus || data.userStatus || 'ACTIVE',
     createdAt: data.createdAt || data.created_at || new Date().toISOString(),
   };
 
