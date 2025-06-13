@@ -7,12 +7,12 @@ import {
   INTERNSHIP_TOPIC_DELETE
 } from '@/api/endpoints';
 
-// Topic interface
+// Topic interface - API'den dönen gerçek yapı
 export interface InternshipTopic {
-  id?: string;
+  id: string;
   title: string;
   description: string;
-  createdDate: string;
+  createdDate?: string; // API'de yok, frontend'de geçici oluşturacağız
 }
 
 // Yeni topic oluşturma için interface
@@ -28,14 +28,32 @@ export interface UpdateInternshipTopic {
   description: string;
 }
 
+// API response interface - direkt array dönüyor
+type TopicsApiResponse = Array<{
+  id: string;
+  title: string;
+  description: string;
+}>;
+
 // Tüm konuları getir
 export const getInternshipTopics = async (): Promise<InternshipTopic[]> => {
   try {
-    const response = await axiosClient.get<InternshipTopic[]>(INTERNSHIP_TOPICS);
-    return response;
+    const response = await axiosClient.get<TopicsApiResponse>(INTERNSHIP_TOPICS);
+    
+    
+    // API'den gelen veriyi frontend formatına çevir
+    const topics: InternshipTopic[] = response.map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      createdDate: new Date().toISOString() // Geçici tarih, API'de olmadığı için
+    }));
+    
+    return topics;
   } catch (error) {
     console.error('Staj konuları getirme hatası:', error);
-    throw error;
+    // Hata durumunda boş array döndür ki sayfa çökmesin
+    return [];
   }
 };
 

@@ -181,13 +181,19 @@ const TopicPool: React.FC = () => {
     <Container>
       <div className="p-5">
         <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-8">
             <div>
-              <h2 className="text-xl font-semibold">Konu Havuzu Yönetimi</h2>
-              <p className="text-gray-600 mt-1">Staj konularını kategorilere göre yönetin ve düzenleyin</p>
+              <h2 className="text-2xl font-bold text-gray-900">Konu Havuzu Yönetimi</h2>
+              <p className="text-gray-600 mt-2">Staj konularını kategorilere göre yönetin ve düzenleyin</p>
+              <div className="flex items-center gap-4 mt-3">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <KeenIcon icon="book" className="text-sm" />
+                  <span>{getFilteredTopics().length} Konu</span>
+                </div>
+              </div>
             </div>
             <button 
-              className="btn bg-[#13126e] text-white px-4 py-2 rounded flex items-center gap-2"
+              className="btn bg-[#13126e] text-white px-6 py-3 rounded-lg flex items-center gap-3 hover:bg-[#0f0f5a] transition-colors shadow-lg"
               onClick={() => setShowAddModal(true)}
               disabled={createTopicMutation.isPending}
             >
@@ -197,60 +203,85 @@ const TopicPool: React.FC = () => {
           </div>
 
           {/* Konular Listesi */}
-          <div className="space-y-4">
-            {getPaginatedTopics().map((topic, index) => {
-              const uniqueKey = topic.id ? `topic-${topic.id}` : `topic-index-${index}-${currentPage}`;
-              return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {getPaginatedTopics().map((topic, index) => (
                 <div 
-                  key={uniqueKey}
-                  className="p-5 rounded-lg border border-gray-200 bg-white"
+                  key={`topic-${topic.id}`}
+                  className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
                 >
-                  <div className="flex justify-between items-start">
-                    <div key={`content-${topic.id || index}`} className="flex-grow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-lg font-medium text-gray-900">{topic.id || `#${index + 1}`}: {topic.title}</h3>
-                      </div>
-                      
-                      <div className="text-gray-600 mb-4" dangerouslySetInnerHTML={{ __html: topic.description }}></div>
-                      
-                      <div className="mb-4">
-                        <span className="text-sm font-medium text-gray-700">Oluşturma Tarihi:</span>
-                        <p className="text-sm text-gray-600">{new Date(topic.createdDate).toLocaleDateString('tr-TR')}</p>
+                  {/* Başlık Bölümü */}
+                  <div className="bg-gradient-to-r from-[#13126e] to-[#1a1875] p-4">
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-xl font-bold text-white flex-grow pr-4">
+                        {topic.title}
+                      </h3>
+                      <div className="flex gap-2 ml-4 flex-shrink-0">
+                        <button 
+                          key={`edit-${topic.id}`}
+                          className="p-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+                          onClick={() => handleEditTopic(topic)}
+                          title="Düzenle"
+                          disabled={updateTopicMutation.isPending}
+                        >
+                          <KeenIcon icon="pencil" className="text-sm" />
+                        </button>
+                        <button 
+                          key={`delete-${topic.id}`}
+                          className="p-2 bg-white/20 text-white rounded-lg hover:bg-red-500 hover:bg-opacity-80 transition-colors"
+                          onClick={() => handleDeleteTopic(topic.id)}
+                          title="Sil"
+                          disabled={deleteTopicMutation.isPending}
+                        >
+                          <KeenIcon icon="trash" className="text-sm" />
+                        </button>
                       </div>
                     </div>
-                    
-                    <div key={`actions-${topic.id || index}`} className="flex gap-2 ml-4">
-                      <button 
-                        key={`edit-${topic.id || index}`}
-                        className="btn bg-blue-100 text-blue-700 p-2 rounded hover:bg-blue-200"
-                        onClick={() => handleEditTopic(topic)}
-                        title="Düzenle"
-                        disabled={updateTopicMutation.isPending}
-                      >
-                        <KeenIcon icon="pencil" />
-                      </button>
-                      <button 
-                        key={`delete-${topic.id || index}`}
-                        className="btn bg-red-100 text-red-700 p-2 rounded hover:bg-red-200"
-                        onClick={() => {
-                          if (topic.id) {
-                            handleDeleteTopic(topic.id);
-                          }
-                        }}
-                        title="Sil"
-                        disabled={deleteTopicMutation.isPending || !topic.id}
-                      >
-                        <KeenIcon icon="trash" />
-                      </button>
+                  </div>
+
+                  {/* İçerik Bölümü */}
+                  <div className="p-6">
+                    <div 
+                      className="text-gray-700 leading-relaxed [&>p]:mb-3 [&>p]:text-gray-700 [&>p]:leading-relaxed
+                        [&>strong]:text-gray-900 [&>strong]:font-semibold
+                        [&>ol]:list-decimal [&>ol]:ml-6 [&>ol]:space-y-2 [&>ol]:my-4
+                        [&>ul]:list-disc [&>ul]:ml-6 [&>ul]:space-y-2 [&>ul]:my-4
+                        [&>li]:text-gray-700 [&>li]:leading-relaxed [&>li]:pl-1
+                        [&>ol>li]:text-gray-700 [&>ol>li]:leading-relaxed
+                        [&>ul>li]:text-gray-700 [&>ul>li]:leading-relaxed
+                        [&>h1]:text-lg [&>h1]:font-semibold [&>h1]:text-gray-900 [&>h1]:mb-2 [&>h1]:mt-4
+                        [&>h2]:text-base [&>h2]:font-semibold [&>h2]:text-gray-900 [&>h2]:mb-2 [&>h2]:mt-4
+                        [&>h3]:text-sm [&>h3]:font-semibold [&>h3]:text-gray-900 [&>h3]:mb-2 [&>h3]:mt-4"
+                      dangerouslySetInnerHTML={{ __html: topic.description }}
+                    />
+                  </div>
+
+                  {/* Alt Bilgi */}
+                  <div className="px-6 py-3 bg-gray-50 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <div className="flex items-center gap-2">
+                        <KeenIcon icon="calendar" className="text-xs" />
+                        <span>
+                          Oluşturma: {topic.createdDate ? new Date(topic.createdDate).toLocaleDateString('tr-TR') : 'Bilinmiyor'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            
             
             {getPaginatedTopics().length === 0 && (
-              <div className="text-center py-8 bg-gray-50 border border-gray-200 rounded-lg">
-                <p className="text-gray-500">Henüz konu bulunamadı.</p>
+              <div className="col-span-full text-center py-12 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl">
+                <KeenIcon icon="folder-minus" className="text-6xl text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Henüz Konu Eklenmemiş</h3>
+                <p className="text-gray-500 mb-4">Staj konu havuzuna yeni konular ekleyerek başlayabilirsiniz.</p>
+                <button 
+                  className="btn bg-[#13126e] text-white px-4 py-2 rounded-lg flex items-center gap-2 mx-auto"
+                  onClick={() => setShowAddModal(true)}
+                >
+                  <KeenIcon icon="plus" />
+                  <span>İlk Konuyu Ekle</span>
+                </button>
               </div>
             )}
           </div>

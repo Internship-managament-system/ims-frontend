@@ -3,7 +3,7 @@ import { getAuth } from '@/auth/_helpers';
 
 // Axios instance oluştur
 const axiosInstance = axios.create({
-  baseURL: '', // Artık endpoint'lerde tam URL kullandığımız için baseURL boş olmalı
+  baseURL: '', // Vite proxy kullanacağız
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
@@ -41,7 +41,25 @@ axiosInstance.interceptors.response.use(
     console.error('Response error:', error);
     
     if (error.response) {
-      const errorMessage = error.response.data?.message || error.response.data?.error || 'Bir hata oluştu';
+      const status = error.response.status;
+      const errorData = error.response.data;
+      
+      let errorMessage = 'Bir hata oluştu';
+      
+      if (status === 400) {
+        errorMessage = errorData?.message || errorData?.error || 'Geçersiz istek';
+      } else if (status === 401) {
+        errorMessage = 'Yetkisiz erişim. Lütfen giriş yapın.';
+      } else if (status === 403) {
+        errorMessage = 'Bu işlem için yetkiniz bulunmuyor.';
+      } else if (status === 404) {
+        errorMessage = 'İstenen kaynak bulunamadı.';
+      } else if (status === 500) {
+        errorMessage = 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.';
+      } else {
+        errorMessage = errorData?.message || errorData?.error || `HTTP ${status} hatası`;
+      }
+      
       return Promise.reject(new Error(errorMessage));
     }
     
