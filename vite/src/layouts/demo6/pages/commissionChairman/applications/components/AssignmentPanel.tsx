@@ -1,6 +1,7 @@
 // src/layouts/demo6/pages/admin/applications/components/AssignmentPanel.tsx
 import React, { useState } from 'react';
 import { KeenIcon } from '@/components/keenicons';
+import { useToast } from '@/components/ui/use-toast';
 
 interface CommissionMember {
   id: number;
@@ -24,6 +25,7 @@ interface AssignmentTask {
 }
 
 const AssignmentPanel: React.FC = () => {
+  const { toast } = useToast();
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [assignmentMode, setAssignmentMode] = useState<'auto' | 'manual'>('manual');
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
@@ -152,8 +154,24 @@ const AssignmentPanel: React.FC = () => {
     }
   };
 
-  const handleAutoAssignment = () => {
-    alert('Otomatik atama işlemi başlatılacak!');
+  const handleAutoAssign = () => {
+    if (selectedCategories.length === 0) {
+      toast({ title: "Hata", description: "Lütfen en az bir kategori seçiniz.", type: "error" });
+      return;
+    }
+
+    if (selectedMembers.length === 0) {
+      toast({ title: "Hata", description: "Lütfen en az bir komisyon üyesi seçiniz.", type: "error" });
+      return;
+    }
+
+    // Otomatik atama işlemi
+    toast({ title: "Bilgi", description: "Otomatik atama işlemi başlatılacak!", type: "info" });
+    
+    // API çağrısı simülasyonu
+    setTimeout(() => {
+      toast({ title: "Başarılı", description: `${selectedCategories.length} kategori için atama başarıyla tamamlandı!`, type: "success" });
+    }, 2000);
   };
 
   const handleManualAssignment = () => {
@@ -342,7 +360,7 @@ const AssignmentPanel: React.FC = () => {
             <div className="flex space-x-2">
               {assignmentMode === 'auto' ? (
                 <button
-                  onClick={handleAutoAssignment}
+                  onClick={handleAutoAssign}
                   disabled={selectedCategories.length === 0}
                   className="flex-1 btn bg-[#13126e] text-white py-2 px-4 rounded hover:bg-[#1f1e7e] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >

@@ -6,6 +6,9 @@ import {
   getInternshipTopics,
 } from '@/services/topicsService';
 import { useQuery } from 'node_modules/@tanstack/react-query/build/modern/useQuery';
+import { useToast } from '@/components/ui/use-toast';
+import parse, { domToReact } from 'html-react-parser';
+
 interface Rule {
   name: string;
   description: string;
@@ -49,6 +52,7 @@ interface InternshipType {
 
 
 const TypeManagement: React.FC = () => {
+  const { toast } = useToast();
   const [types, setTypes] = useState<InternshipType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [documents, setDocuments] = useState<any[]>([]);
@@ -68,6 +72,10 @@ const TypeManagement: React.FC = () => {
     name: '',
     description: ''
   });
+
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedType, setSelectedType] = useState<any | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
   // API Base URL
   const API_BASE_URL = '/api/v1';
@@ -91,7 +99,13 @@ const TypeManagement: React.FC = () => {
   const fetchTopics = async () => {
     try {
       const response = await getInternshipTopics();
-      setTopics(response);
+      // Tip dönüşümü: InternshipTopic[] -> Topic[]
+      const topics: Topic[] = response.map((item: any) => ({
+        title: item.title,
+        description: item.description,
+        createdDate: item.createdDate || ''
+      }));
+      setTopics(topics);
     } catch (error) {
       console.error('Konular yüklenirken hata:', error);
       setTopics([]);
@@ -140,10 +154,9 @@ const TypeManagement: React.FC = () => {
 
   const handleAddType = async () => {
     if (!newType.name || !newType.description) {
-      alert('Lütfen zorunlu alanları doldurun!');
+      toast({ title: "Hata", description: "Lütfen zorunlu alanları doldurun!", type: "error" });
       return;
     }
-    
     try {
       const typeData = {
         name: newType.name,
@@ -151,21 +164,19 @@ const TypeManagement: React.FC = () => {
         durationOfDays: newType.durationOfDays || 25,
         rules: newType.rules || []
       };
-
       const response = await axios.post(`${API_BASE_URL}/internships`, typeData, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
-
       if (response.status === 200 || response.status === 201) {
         await fetchInternshipTypes(); // Listeyi yenile
         resetForm();
-        alert('Staj türü başarıyla eklendi!');
+        toast({ title: "Başarılı", description: "Staj türü başarıyla eklendi!", type: "success" });
       }
     } catch (error) {
       console.error('Staj türü eklenirken hata:', error);
-      alert('Staj türü eklenirken bir hata oluştu!');
+      toast({ title: "Hata", description: "Staj türü eklenirken bir hata oluştu!", type: "error" });
     }
   };
 
@@ -177,7 +188,7 @@ const TypeManagement: React.FC = () => {
 
   const handleUpdateType = async () => {
     if (!editingType || !newType.name || !newType.description) {
-      alert('Lütfen zorunlu alanları doldurun!');
+      toast({ title: "Hata", description: "Lütfen zorunlu alanları doldurun!", type: "error" });
       return;
     }
     
@@ -202,11 +213,11 @@ const TypeManagement: React.FC = () => {
       if (response.status === 200) {
         await fetchInternshipTypes(); // Listeyi yenile
         resetForm();
-        alert('Staj türü başarıyla güncellendi!');
+        toast({ title: "Başarılı", description: "Staj türü başarıyla güncellendi!", type: "success" });
       }
     } catch (error) {
       console.error('Staj türü güncellenirken hata:', error);
-      alert('Staj türü güncellenirken bir hata oluştu!');
+      toast({ title: "Hata", description: "Staj türü güncellenirken bir hata oluştu!", type: "error" });
     }
   };
 
@@ -217,11 +228,11 @@ const TypeManagement: React.FC = () => {
 
         if (response.status === 200) {
           await fetchInternshipTypes(); // Listeyi yenile
-          alert('Staj türü başarıyla silindi!');
+          toast({ title: "Başarılı", description: "Staj türü başarıyla silindi!", type: "success" });
         }
       } catch (error) {
         console.error('Staj türü silinirken hata:', error);
-        alert('Staj türü silinirken bir hata oluştu!');
+        toast({ title: "Hata", description: "Staj türü silinirken bir hata oluştu!", type: "error" });
       }
     }
   };
@@ -265,6 +276,109 @@ const TypeManagement: React.FC = () => {
     setNewTopic({ name: '', description: '' });
   };
 
+  // Kart tıklanınca detay sorgusu at
+  const handleTypeClick = async (typeId: string) => {
+    setLoadingDetail(true);
+    setDetailModalOpen(true);
+    try {
+      const response = await axios.get(`/api/v1/internships/${typeId}`);
+      // Sadece gerekli alanları al
+      const data = response.data.result;
+      setSelectedType({
+        name: data.name,
+        description: data.description,
+        durationOfDays: data.durationOfDays,
+        rules: (data.rules || []).map((rule: any) => ({
+          name: rule.name,
+          description: rule.description,
+          type: rule.type
+        }))
+      });
+    } catch (error) {
+      setSelectedType(null);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  // Yardımcı fonksiyon: HTML açıklamayı sıralı maddeye çevir
+  function renderDescription(description: string) {
+    if (!description) return null;
+    if (/<[a-z][\s\S]*>/i.test(description)) {
+      return (
+        <div className="text-xs text-gray-500 mt-1 space-y-1">
+          {parse(description, {
+            replace: (domNode: any) => {
+              if (domNode.name === 'ol') {
+                return <ol className="list-decimal pl-6 space-y-1">{domToReact(domNode.children)}</ol>;
+              }
+              if (domNode.name === 'ul') {
+                return <ul className="list-disc pl-6 space-y-1">{domToReact(domNode.children)}</ul>;
+              }
+              if (domNode.name === 'li') {
+                return <li>{domToReact(domNode.children)}</li>;
+              }
+              if (domNode.name === 'p') {
+                return <p className="mb-1">{domToReact(domNode.children)}</p>;
+              }
+            }
+          })}
+        </div>
+      );
+    }
+    return <div className="text-xs text-gray-500 mt-1">{description}</div>;
+  }
+
+  // TypeDetailModal güncelle
+  const TypeDetailModal = ({ open, onClose, type, loading }: { open: boolean; onClose: () => void; type: any | null; loading: boolean }) => {
+    if (!open) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="bg-white rounded-2xl shadow-2xl p-10 max-w-3xl w-full relative border-2 border-[#13126e] min-h-[400px]">
+          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
+            <KeenIcon icon="cross" className="text-2xl" />
+          </button>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center h-40">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#13126e] mb-4"></div>
+              <span className="text-gray-500">Yükleniyor...</span>
+            </div>
+          ) : type ? (
+            <>
+              <h2 className="text-3xl font-bold text-[#13126e] mb-2 flex items-center gap-2">
+                <KeenIcon icon="briefcase" className="text-[#13126e] text-2xl" />
+                {type.name}
+              </h2>
+              <p className="text-gray-600 mb-4 text-lg">{type.description}</p>
+              <div className="mb-4">
+                <span className="inline-block bg-[#13126e] text-white text-sm px-4 py-2 rounded-full font-semibold">
+                  Süre: {type.durationOfDays} iş günü
+                </span>
+              </div>
+              {/* Kurallar */}
+              {type.rules && type.rules.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-base font-semibold text-gray-700 mb-2">Kurallar</h4>
+                  <ul className="list-disc pl-6 space-y-4">
+                    {type.rules.map((rule: any, idx: number) => (
+                      <li key={idx}>
+                        <span className="font-semibold text-blue-900 text-base">{rule.name}</span>
+                        <span className="ml-2 text-xs text-gray-400 align-middle">[{rule.type}]</span>
+                        {rule.description && rule.description !== rule.name && renderDescription(rule.description)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center text-gray-500">Detaylar yüklenemedi.</div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Container>
       <div className="p-5">
@@ -294,53 +408,38 @@ const TypeManagement: React.FC = () => {
               </div>
             ) : (
               <>
-                {types.map((type) => (
-                  <div key={type.id} className="p-5 rounded-lg border border-gray-200 bg-white">
+                {types.slice(0, 2).map((type) => (
+                  <div
+                    key={type.id}
+                    className="p-5 rounded-2xl border-2 border-[#13126e] bg-gradient-to-br from-[#f5f7fa] to-[#e9ecf8] shadow-md hover:shadow-xl transition-shadow cursor-pointer group relative"
+                    onClick={() => handleTypeClick(type.id)}
+                  >
                     <div className="flex justify-between items-start">
                       <div className="flex-grow">
                         <div className="flex items-center gap-3 mb-3">
-                          <h3 className="text-lg font-medium text-gray-900">{type.name}</h3>
-                          <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                            {type.rules ? type.rules.length : 0} kural
-                          </span>
+                          <h3 className="text-lg font-bold text-[#13126e] group-hover:underline">{type.name}</h3>
                         </div>
-
-                        <p className="text-gray-600 mb-4">{type.description}</p>
-                        
+                        <p className="text-gray-700 mb-4">{type.description}</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                           {type.durationOfDays && (
                             <div>
-                              <span className="text-sm font-medium text-gray-700">Süre (İş Günü):</span>
-                              <p className="text-sm text-gray-600">{type.durationOfDays} gün</p>
+                              <span className="text-sm font-medium text-[#13126e]">Süre (İş Günü):</span>
+                              <p className="text-sm text-gray-700">{type.durationOfDays} gün</p>
                             </div>
                           )}
                         </div>
-                        
-                        {type.rules && type.rules.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">Kurallar:</h4>
-                            <div className="flex flex-wrap gap-1">
-                              {type.rules.map((rule, index) => (
-                                <span key={index} className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-                                  {rule.name} ({rule.ruleType})
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                       </div>
-
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex gap-2 ml-4 z-10">
                         <button
                           className="btn bg-blue-100 text-blue-700 p-2 rounded hover:bg-blue-200"
-                          onClick={() => handleEditType(type)}
+                          onClick={e => { e.stopPropagation(); handleEditType(type); }}
                           title="Düzenle"
                         >
                           <KeenIcon icon="pencil" />
                         </button>
                         <button
                           className="btn bg-red-100 text-red-700 p-2 rounded hover:bg-red-200"
-                          onClick={() => handleDeleteType(type.id)}
+                          onClick={e => { e.stopPropagation(); handleDeleteType(type.id); }}
                           title="Sil"
                         >
                           <KeenIcon icon="trash" />
@@ -360,6 +459,9 @@ const TypeManagement: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Detay Modalı */}
+        <TypeDetailModal open={detailModalOpen} onClose={() => setDetailModalOpen(false)} type={selectedType} loading={loadingDetail} />
 
         {/* Ekleme/Düzenleme Modal */}
         {showAddModal && (

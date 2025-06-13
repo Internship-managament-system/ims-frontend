@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container } from '@/components';
 import { KeenIcon } from '@/components/keenicons';
 import axios from 'axios';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Document {
   id: string;
@@ -11,46 +12,30 @@ interface Document {
   documentType?: string;
 }
 
-// Success Toast Component
-const SuccessToast = ({ show, onClose, message }: { show: boolean; onClose: () => void; message: string }) => {
-  useEffect(() => {
-    if (show) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [show, onClose]);
-
-  if (!show) return null;
-
+// Onay Modalı
+const ConfirmModal = ({ open, onConfirm, onCancel, message }: { open: boolean; onConfirm: () => void; onCancel: () => void; message: string }) => {
+  if (!open) return null;
   return (
-    <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right-2 duration-300">
-      <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px]">
-        <KeenIcon icon="check-circle" className="text-2xl" />
-        <div className="flex-1">
-          <p className="font-medium">Başarılı!</p>
-          <p className="text-sm opacity-90">{message}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-lg shadow-lg p-8 min-w-[320px]">
+        <p className="mb-6 text-gray-800">{message}</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={onCancel} className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">İptal</button>
+          <button onClick={onConfirm} className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white">Sil</button>
         </div>
-        <button onClick={onClose} className="text-white hover:bg-green-600 rounded p-1">
-          <KeenIcon icon="cross" className="text-lg" />
-        </button>
       </div>
     </div>
   );
 };
 
 const Documents: React.FC = () => {
+  const { toast } = useToast();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage] = useState<number>(6);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedDocumentType, setSelectedDocumentType] = useState<string>('all');
-  const [showSuccessToast, setShowSuccessToast] = useState<boolean>(false);
-  const [toastMessage, setToastMessage] = useState<string>('');
 
   const [newDocument, setNewDocument] = useState<Partial<Document>>({
     fileName: '',
@@ -60,6 +45,12 @@ const Documents: React.FC = () => {
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewDocument, setViewDocument] = useState<Document | null>(null);
 
   // API Base URL
   const API_BASE_URL = '/api/v1';
@@ -71,23 +62,11 @@ const Documents: React.FC = () => {
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      
-      if (searchTerm) {
-        params.append('fileName', searchTerm);
-      }
-      if (selectedDocumentType !== 'all') {
-        params.append('documentType', selectedDocumentType);
-      }
-      if (searchTerm) {
-        params.append('description', searchTerm);
-      }
-
-      const response = await axios.get(`${API_BASE_URL}/documents?${params.toString()}`);
+      const response = await axios.get(`${API_BASE_URL}/documents`);
       setDocuments(response.data.result || response.data || []);
     } catch (error) {
       console.error('Belgeler yüklenirken hata:', error);
-      alert('Belgeler yüklenirken bir hata oluştu!');
+      toast({ title: "Hata", description: "Belgeler yüklenirken bir hata oluştu!", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -97,16 +76,6 @@ const Documents: React.FC = () => {
   useEffect(() => {
     fetchDocuments();
   }, []);
-
-  // Arama ve filtre değişikliklerinde yeniden yükle
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchDocuments();
-      setCurrentPage(1);
-    }, 500); // 500ms debounce
-
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm, selectedDocumentType]);
 
   // Dosya adını temizleme fonksiyonu
   const sanitizeFileName = (fileName: string): string => {
@@ -124,7 +93,7 @@ const Documents: React.FC = () => {
 
   const handleAddDocument = async () => {
     if (!newDocument.fileName || selectedFileTypes.length === 0 || !selectedFile) {
-      alert('Lütfen tüm zorunlu alanları doldurun, belge türü seçin ve dosya yükleyin!');
+      toast({ title: "Hata", description: "Lütfen tüm zorunlu alanları doldurun, belge türü seçin ve dosya yükleyin!", type: "error" });
       return;
     }
 
@@ -159,14 +128,13 @@ const Documents: React.FC = () => {
       if (response.status === 200 || response.status === 201) {
         await fetchDocuments();
         resetForm();
-        setShowSuccessToast(true);
-        setToastMessage('Belge başarıyla yüklendi!');
+        toast({ title: "Başarılı", description: "Belge başarıyla yüklendi!", type: "success" });
       }
     } catch (error: any) {
       console.error('❌ Upload Error:', error);
       console.error('❌ Error Response:', error.response?.data);
       console.error('❌ Error Status:', error.response?.status);
-      alert(`Hata: ${error.response?.data?.message || error.message}`);
+      toast({ title: "Hata", description: error.response?.data?.message || error.message, type: "error" });
     }
   };
 
@@ -181,7 +149,7 @@ const Documents: React.FC = () => {
 
   const handleUpdateDocument = async () => {
     if (!editingDocument || !newDocument.fileName || selectedFileTypes.length === 0) {
-      alert('Lütfen zorunlu alanları doldurun ve belge türü seçin!');
+      toast({ title: "Hata", description: "Lütfen zorunlu alanları doldurun ve belge türü seçin!", type: "error" });
       return;
     }
 
@@ -205,30 +173,39 @@ const Documents: React.FC = () => {
       if (response.status === 200) {
         await fetchDocuments(); // Listeyi yenile
         resetForm();
-        setShowSuccessToast(true);
-        setToastMessage('Belge başarıyla güncellendi!');
+        toast({ title: "Başarılı", description: "Belge başarıyla güncellendi!", type: "success" });
       }
     } catch (error) {
       console.error('Belge güncellenirken hata:', error);
-      alert('Belge güncellenirken bir hata oluştu!');
+      toast({ title: "Hata", description: "Belge güncellenirken bir hata oluştu!", type: "error" });
     }
   };
 
   const handleDeleteDocument = async (id: string) => {
-    if (window.confirm("Bu belgeyi silmek istediğinizden emin misiniz?")) {
-      try {
-        const response = await axios.delete(`${API_BASE_URL}/documents/${id}`);
-        
-        if (response.status === 200) {
-          await fetchDocuments(); // Listeyi yenile
-          setShowSuccessToast(true);
-          setToastMessage('Belge başarıyla silindi!');
-        }
-      } catch (error) {
-        console.error('Belge silinirken hata:', error);
-        alert('Belge silinirken bir hata oluştu!');
+    setDeleteId(id);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/documents/${deleteId}`);
+      if (response.status === 200) {
+        await fetchDocuments();
+        toast({ title: "Başarılı", description: "Belge başarıyla silindi!", type: "success" });
       }
+    } catch (error) {
+      console.error('Belge silinirken hata:', error);
+      toast({ title: "Hata", description: "Belge silinirken bir hata oluştu!", type: "error" });
+    } finally {
+      setConfirmOpen(false);
+      setDeleteId(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setConfirmOpen(false);
+    setDeleteId(null);
   };
 
   const handleDownloadDocument = async (document: Document) => {
@@ -243,33 +220,17 @@ const Documents: React.FC = () => {
       link.download = getDisplayFileName(document).replace('Dosya adı belirtilmemiş', 'belge');
       link.click();
       window.URL.revokeObjectURL(url);
+      toast({ title: "Başarılı", description: "Belge başarıyla indirildi!", type: "success" });
     } catch (error) {
       console.error('Belge indirilirken hata:', error);
-      alert('Belge indirilirken bir hata oluştu!');
+      toast({ title: "Hata", description: "Belge indirilirken bir hata oluştu!", type: "error" });
     }
   };
 
   // Dosyayı görüntüle - file:// protokolünü HTTP'ye çevir
   const handleViewDocument = (document: Document) => {
-    let fileAddress = document.fileAddress;
-    
-    if (fileAddress && fileAddress.trim()) {
-      // file:/// protokolünü çıkar
-      if (fileAddress.startsWith('file:///')) {
-        fileAddress = fileAddress.replace('file:///', '');
-      }
-      
-      // Backend server üzerinden dosyayı serve et
-      // Path'i temizle
-      const cleanPath = fileAddress.replace(/^[A-Z]:/, '').replace(/\\/g, '/');
-      
-      // Backend'de static file serving endpoint'i kullan
-      const httpUrl = `${window.location.origin}${cleanPath}`;
-      
-      window.open(httpUrl, '_blank');
-    } else {
-      alert('Dosya yolu bulunamadı!');
-    }
+    setViewDocument(document);
+    setViewModalOpen(true);
   };
 
   const resetForm = () => {
@@ -301,12 +262,6 @@ const Documents: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-  };
-
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setSelectedDocumentType('all');
-    setCurrentPage(1);
   };
 
   const getFileIcon = (fileName: string) => {
@@ -362,6 +317,36 @@ const Documents: React.FC = () => {
     return document.documentType || 'Tür belirtilmemiş';
   };
 
+  // Belge görüntüleme modalı
+  const DocumentViewModal = ({ open, onClose, document }: { open: boolean; onClose: () => void; document: Document | null }) => {
+    if (!open || !document) return null;
+    let fileAddress = document.fileAddress || '';
+    let httpUrl = fileAddress;
+    if (!fileAddress.startsWith('C:/')) {
+      httpUrl = `${API_BASE_URL}/documents/${document.id}`;
+    }
+    const ext = (document.fileName || '').split('.').pop()?.toLowerCase();
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-3xl w-full relative border-2 border-[#13126e] min-h-[400px] flex flex-col">
+          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
+            <KeenIcon icon="cross" className="text-2xl" />
+          </button>
+          <h2 className="text-xl font-bold text-[#13126e] mb-4">{document.fileName}</h2>
+          <div className="flex-1 flex items-center justify-center">
+            {ext === 'pdf' ? (
+              <iframe src={httpUrl} title="Belge" className="w-full h-[60vh] rounded border" />
+            ) : ext === 'jpg' || ext === 'jpeg' || ext === 'png' ? (
+              <img src={httpUrl} alt={document.fileName} className="max-h-[60vh] max-w-full rounded border" />
+            ) : (
+              <a href={httpUrl} target="_blank" rel="noopener noreferrer" className="text-[#13126e] underline font-semibold">Belgeyi yeni sekmede aç</a>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Container>
       <div className="p-5">
@@ -380,46 +365,6 @@ const Documents: React.FC = () => {
             </button>
           </div>
 
-          {/* Filtreler */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Arama</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
-                  placeholder="Dosya adı, tür veya açıklama..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <KeenIcon icon="magnifier" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Belge Türü</label>
-              <select
-                className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
-                value={selectedDocumentType}
-                onChange={(e) => setSelectedDocumentType(e.target.value)}
-              >
-                <option value="all">Tümü</option>
-                {documentTypes.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-end">
-              <button
-                className="w-full bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300 transition-colors"
-                onClick={handleClearFilters}
-              >
-                Filtreleri Temizle
-              </button>
-            </div>
-          </div>
-
           {/* Belgeler Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading ? (
@@ -430,81 +375,63 @@ const Documents: React.FC = () => {
             ) : (
               <>
                 {getPaginatedDocuments().map((document) => (
-                  <div key={document.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group">
+                  <div
+                    key={document.id}
+                    className="bg-white border-2 border-[#13126e]/20 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col min-h-[260px]"
+                  >
                     {/* Belge Header */}
-                    <div className="p-4 border-b border-gray-100">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${getFileIconColor(getDisplayFileName(document))}`}>
-                          <KeenIcon icon={getFileIcon(getDisplayFileName(document))} className="text-xl" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <button
-                            onClick={() => handleViewDocument(document)}
-                            className="text-base font-semibold text-gray-900 hover:text-[#13126e] transition-colors truncate block w-full text-left cursor-pointer group-hover:text-[#13126e]"
-                            title="Belgeyi yeni sekmede aç"
-                          >
-                            {getDisplayFileName(document)}
-                          </button>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                              {getDisplayDocumentType(document)}
-                            </span>
-                          </div>
-                        </div>
+                    <div className="p-5 bg-gradient-to-r from-[#13126e] to-[#3a3a8e]">
+                      <div className="flex flex-col gap-2">
+                        <span className="text-lg font-bold text-white truncate" title={getDisplayFileName(document)}>
+                          {getDisplayFileName(document)}
+                        </span>
+                        <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold bg-white/80 text-[#13126e] w-fit">
+                          {getDisplayDocumentType(document)}
+                        </span>
                       </div>
                     </div>
 
                     {/* Belge İçeriği */}
-                    <div className="p-4">
-                      <div className="mb-3">
-                        <h4 className="text-sm font-medium text-gray-700 mb-1">Açıklama</h4>
-                        <p className="text-gray-600 text-sm leading-relaxed">
+                    <div className="flex-1 p-5 flex flex-col justify-between">
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-[#13126e] mb-1">Açıklama</h4>
+                        <p className="text-gray-700 text-sm leading-relaxed min-h-[40px]">
                           {document.description || 'Açıklama eklenmemiş.'}
-                        </p>
-                      </div>
-                      
-                      <div className="mb-3">
-                        <h4 className="text-sm font-medium text-gray-700 mb-1">Dosya Yolu</h4>
-                        <p className="text-xs text-gray-500 bg-gray-50 p-2 rounded break-all">
-                          {getDisplayFileAddress(document)}
                         </p>
                       </div>
                     </div>
 
                     {/* Belge Eylemler */}
-                    <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-                      <div className="flex justify-between items-center">
+                    <div className="px-5 py-3 bg-[#f5f7fa] border-t border-[#13126e]/10 flex justify-between items-center">
+                      <button
+                        onClick={() => handleViewDocument(document)}
+                        className="flex items-center gap-2 text-[#13126e] hover:text-[#0f0f5a] font-semibold text-sm transition-colors"
+                      >
+                        <KeenIcon icon="eye" className="text-base" />
+                        Görüntüle
+                      </button>
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleViewDocument(document)}
-                          className="flex items-center gap-2 text-[#13126e] hover:text-[#0f0f5a] font-medium text-sm transition-colors"
+                          className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors flex items-center justify-center"
+                          onClick={() => handleDownloadDocument(document)}
+                          title="İndir"
                         >
-                          <KeenIcon icon="eye" className="text-sm" />
-                          Görüntüle
+                          <KeenIcon icon="arrow-down" className="text-base" />
                         </button>
-                        
-                        <div className="flex items-center gap-1">
-                          <button 
-                            className="p-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors flex items-center justify-center"
-                            onClick={() => handleDownloadDocument(document)}
-                            title="İndir"
-                          >
-                            <KeenIcon icon="arrow-down" className="text-sm" />
-                          </button>
-                          <button 
-                            className="p-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                            onClick={() => handleEditDocument(document)}
-                            title="Düzenle"
-                          >
-                            <KeenIcon icon="pencil" className="text-sm" />
-                          </button>
-                          <button 
-                            className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                            onClick={() => handleDeleteDocument(document.id)}
-                            title="Sil"
-                          >
-                            <KeenIcon icon="trash" className="text-sm" />
-                          </button>
-                        </div>
+                        <button
+                          className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                          onClick={() => handleEditDocument(document)}
+                          title="Düzenle"
+                        >
+                          <KeenIcon icon="pencil" className="text-base" />
+                        </button>
+                        <button
+                          className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                          onClick={() => handleDeleteDocument(document.id)}
+                          title="Sil"
+                        >
+                          <KeenIcon icon="trash" className="text-base" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -715,12 +642,11 @@ const Documents: React.FC = () => {
           </div>
         )}
 
-        {/* Success Toast */}
-        <SuccessToast 
-          show={showSuccessToast}
-          onClose={() => setShowSuccessToast(false)}
-          message={toastMessage}
-        />
+        {/* Onay Modalı */}
+        <ConfirmModal open={confirmOpen} onConfirm={confirmDelete} onCancel={cancelDelete} message="Bu belgeyi silmek istediğinizden emin misiniz?" />
+
+        {/* Belge görüntüleme modalı */}
+        <DocumentViewModal open={viewModalOpen} onClose={() => setViewModalOpen(false)} document={viewDocument} />
       </div>
     </Container>
   );

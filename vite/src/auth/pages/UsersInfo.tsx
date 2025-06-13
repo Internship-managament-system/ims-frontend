@@ -5,6 +5,7 @@ import { KeenIcon } from '@/components/keenicons';
 import Header from '@/layouts/eru/Header/Header';
 import Footer from '@/layouts/eru/Footer/Footer';
 import axios from 'axios';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Faculty {
   id: string;
@@ -20,6 +21,7 @@ interface Department {
 const ProfileSetup: React.FC = () => {
   const { currentUser, updateUser } = useAuthContext();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const [selectedFaculty, setSelectedFaculty] = useState<string>('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('');
@@ -73,7 +75,7 @@ const ProfileSetup: React.FC = () => {
       } catch (error) {
         console.error('Veri yükleme hatası:', error);
         // API hatası durumunda kullanıcıyı bilgilendir
-        alert('Fakülte ve bölüm bilgileri yüklenirken hata oluştu. Sayfayı yenilemeyi deneyin.');
+        toast({ title: "Hata", description: 'Fakülte ve bölüm bilgileri yüklenirken hata oluştu. Sayfayı yenilemeyi deneyin.', type: "error" });
       } finally {
         setLoading(false);
       }
@@ -97,12 +99,12 @@ const ProfileSetup: React.FC = () => {
     e.preventDefault();
     
     if (!selectedFaculty || !selectedDepartment) {
-      alert('Lütfen fakülte ve bölüm seçimi yapınız.');
+      toast({ title: "Hata", description: "Lütfen fakülte ve bölüm seçimi yapınız.", type: "error" });
       return;
     }
 
     if (!currentUser?.id) {
-      alert('Kullanıcı bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+      toast({ title: "Hata", description: "Kullanıcı bilgisi bulunamadı. Lütfen tekrar giriş yapın.", type: "error" });
       navigate('/auth/login');
       return;
     }
@@ -137,6 +139,8 @@ const ProfileSetup: React.FC = () => {
       } else {
         navigate('/');
       }
+
+      toast({ title: "Başarılı", description: "Kullanıcı bilgileri başarıyla güncellendi!", type: "success" });
     } catch (error: any) {
       console.error('Profil güncelleme hatası:', error);
       console.error('Error details:', {
@@ -162,7 +166,7 @@ const ProfileSetup: React.FC = () => {
         errorMessage = error.response.data.message;
       }
       
-      alert(errorMessage);
+      toast({ title: "Hata", description: errorMessage, type: "error" });
     } finally {
       setIsSubmitting(false);
     }

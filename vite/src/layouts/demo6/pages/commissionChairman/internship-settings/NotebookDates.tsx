@@ -1,6 +1,7 @@
 // /src/layouts/demo6/pages/admin/internship-settings/NotebookDates.tsx
 import React, { useState } from 'react';
 import { Container } from '@/components';
+import { useToast } from '@/components/ui/use-toast';
 
 interface DateRange {
   startDate: string;
@@ -8,6 +9,7 @@ interface DateRange {
 }
 
 const NotebookDates: React.FC = () => {
+  const { toast } = useToast();
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: '2025-05-15',
     endDate: '2025-06-15'
@@ -21,20 +23,24 @@ const NotebookDates: React.FC = () => {
   const [isActive, setIsActive] = useState<boolean>(true);
 
   const handleSave = () => {
-    // Validate dates
-    if (new Date(tempDateRange.startDate) >= new Date(tempDateRange.endDate)) {
-      alert("Başlangıç tarihi bitiş tarihinden önce olmalıdır.");
-      return;
+    if (tempDateRange.startDate && tempDateRange.endDate) {
+      const start = new Date(tempDateRange.startDate);
+      const end = new Date(tempDateRange.endDate);
+
+      if (start >= end) {
+        toast({ title: "Hata", description: "Başlangıç tarihi bitiş tarihinden önce olmalıdır.", type: "error" });
+        return;
+      }
+
+      setIsSaving(true);
+
+      // Simulated API call to save the setting
+      setTimeout(() => {
+        setDateRange(tempDateRange);
+        setIsEditing(false);
+        setIsSaving(false);
+      }, 800);
     }
-
-    setIsSaving(true);
-
-    // Simulated API call to save the setting
-    setTimeout(() => {
-      setDateRange(tempDateRange);
-      setIsEditing(false);
-      setIsSaving(false);
-    }, 800);
   };
 
   const formatDate = (dateString: string) => {

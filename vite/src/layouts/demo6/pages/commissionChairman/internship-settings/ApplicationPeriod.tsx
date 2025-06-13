@@ -1,8 +1,10 @@
 // /src/layouts/demo6/pages/admin/internship-settings/ApplicationPeriod.tsx
 import React, { useState } from 'react';
 import { Container } from '@/components';
+import { useToast } from '@/components/ui/use-toast';
 
 const ApplicationPeriod: React.FC = () => {
+  const { toast } = useToast();
   const [applicationPeriod, setApplicationPeriod] = useState<number>(14);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [tempValue, setTempValue] = useState<number>(14);
@@ -10,7 +12,7 @@ const ApplicationPeriod: React.FC = () => {
 
   const handleSave = () => {
     if (tempValue < 1) {
-      alert("Başvuru süresi en az 1 gün olmalıdır.");
+      toast({ title: "Hata", description: "Başvuru süresi en az 1 gün olmalıdır.", type: "error" });
       return;
     }
     

@@ -1,5 +1,6 @@
 // src/layouts/demo6/pages/admin/applications/components/AssignmentStatus.tsx
 import React, { useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 interface CommissionMember {
   id: number;
@@ -18,6 +19,7 @@ const AssignmentStatus: React.FC<AssignmentStatusProps> = ({
   internshipNotebooks = 3, 
   graduateNotebooks = 2 
 }) => {
+  const { toast } = useToast();
   const [showMembersDropdown, setShowMembersDropdown] = useState(false);
   const [commissionMembers, setCommissionMembers] = useState<CommissionMember[]>([
     { id: 1, name: 'Prof. Dr. Ali Demir', selected: true },
@@ -32,6 +34,21 @@ const AssignmentStatus: React.FC<AssignmentStatusProps> = ({
     setCommissionMembers(commissionMembers.map(member => 
       member.id === id ? { ...member, selected: !member.selected } : member
     ));
+  };
+
+  const handleAssign = () => {
+    if (selectedMembers.length === 0) {
+      toast({ title: "Hata", description: "Lütfen en az bir komisyon üyesi seçiniz.", type: "error" });
+      return;
+    }
+
+    // Atama işlemi
+    toast({ title: "Bilgi", description: "Seçili komisyon üyeleri arasında atama yapılacak!", type: "info" });
+    
+    // API çağrısı simülasyonu
+    setTimeout(() => {
+      toast({ title: "Başarılı", description: "Atama işlemi başarıyla tamamlandı!", type: "success" });
+    }, 2000);
   };
 
   return (
@@ -102,11 +119,7 @@ const AssignmentStatus: React.FC<AssignmentStatusProps> = ({
                 </button>
                 <button 
                   className="px-3 py-1 bg-[#13126e] text-white rounded text-sm"
-                  onClick={() => {
-                    // Execute the assignment process here
-                    alert('Seçili komisyon üyeleri arasında atama yapılacak!');
-                    setShowMembersDropdown(false);
-                  }}
+                  onClick={handleAssign}
                 >
                   Seçilenlere Ata
                 </button>

@@ -5,6 +5,7 @@ import { AppRouting } from '@/routing';
 import { PathnameProvider } from '@/providers';
 import { Toaster } from '@/components/ui/sonner';
 import { LanguageProvider } from './contexts/languageContext';
+import { Toaster as HotToaster } from 'react-hot-toast';
 const { BASE_URL } = import.meta.env;
 
 const App = () => {
@@ -25,10 +26,11 @@ const App = () => {
       }}
     >
       <LanguageProvider>
-      <PathnameProvider>
-        <AppRouting />
-      </PathnameProvider>
-      <Toaster />
+        <PathnameProvider>
+          <AppRouting />
+        </PathnameProvider>
+        <Toaster />
+        <HotToaster position="top-right" />
       </LanguageProvider>
     </BrowserRouter>
   );

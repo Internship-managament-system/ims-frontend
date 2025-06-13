@@ -13,6 +13,22 @@ import {
   NewInternshipTopic
 } from '@/services/topicsService';
 
+// Onay Modalı
+const ConfirmModal = ({ open, onConfirm, onCancel, message }: { open: boolean; onConfirm: () => void; onCancel: () => void; message: string }) => {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-lg shadow-lg p-8 min-w-[320px]">
+        <p className="mb-6 text-gray-800">{message}</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={onCancel} className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">İptal</button>
+          <button onClick={onConfirm} className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white">Sil</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const TopicPool: React.FC = () => {
   const queryClient = useQueryClient();
   
@@ -30,6 +46,8 @@ const TopicPool: React.FC = () => {
     title: "",
     description: ""
   });
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Konu ekleme mutation
   const createTopicMutation = useMutation({
@@ -115,9 +133,21 @@ const TopicPool: React.FC = () => {
   };
 
   const handleDeleteTopic = (id: string) => {
-    if (window.confirm("Bu konuyu silmek istediğinizden emin misiniz?")) {
-      deleteTopicMutation.mutate(id);
+    setDeleteId(id);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deleteId) {
+      deleteTopicMutation.mutate(deleteId);
     }
+    setConfirmOpen(false);
+    setDeleteId(null);
+  };
+
+  const cancelDelete = () => {
+    setConfirmOpen(false);
+    setDeleteId(null);
   };
 
   const resetForm = () => {
@@ -422,6 +452,9 @@ const TopicPool: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Onay Modalı */}
+        <ConfirmModal open={confirmOpen} onConfirm={confirmDelete} onCancel={cancelDelete} message="Bu konuyu silmek istediğinizden emin misiniz?" />
       </div>
     </Container>
   );
