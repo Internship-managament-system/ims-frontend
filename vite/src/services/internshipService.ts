@@ -7,7 +7,9 @@ import {
   INTERNSHIP_APPLICATION_ASSIGN,
   INTERNSHIP_APPLICATIONS_ME,
   INTERNSHIP_APPLICATIONS_DEPARTMENT,
-  INTERNSHIP_APPLICATIONS_ASSIGNED
+  INTERNSHIP_APPLICATIONS_ASSIGNED,
+  INTERNSHIPS,
+  INTERNSHIP_DETAIL
 } from '@/api/endpoints';
 
 // Staj başvurusu durumları
@@ -15,6 +17,23 @@ export type InternshipStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED'
 
 // Staj başvuru türleri
 export type InternshipType = 'VOLUNTARY' | 'COMPULSORY';
+
+// Staj arayüzü (DB tablosundan gelen veriler)
+export interface Internship {
+  id: string;
+  name: string;
+  description: string;
+}
+
+// Staj detayı arayüzü
+export interface InternshipDetail {
+  id: string;
+  name: string;
+  description: string;
+  durationOfDays: number;
+  departmentId: string;
+  rules: any[];
+}
 
 // Staj başvurusu arayüzü (Swagger'dan alınan son yapıya göre güncellendi)
 export interface InternshipApplication {
@@ -60,21 +79,18 @@ export interface InternshipApplication {
 
 // Yeni staj başvurusu oluşturmak için arayüz (Swagger ve backend isteklerine göre güncellendi)
 export interface NewInternshipApplication {
-  studentId: string;
-  departmentId: string;
-  program: string;
-  internshipPeriod: string;
+  internshipId: string;
   workplaceName: string;
   province: string;
+  companyName: string;
   activityField: string;
-  workplaceEmail: string;
-  workplacePhone: string;
-  workplaceAddress: string;
-  startDate: string;
-  endDate: string;
-  weeklyWorkingDays: string;
+  companyEmail: string;
+  companyPhone: string;
+  companyAddress: string;
+  startDate: string; // YYYY-MM-DD
+  weeklyWorkingDays: number;
   hasGeneralHealthInsurance: boolean;
-  internshipType: InternshipType;
+  applicationType: 'VOLUNTARY' | 'MANDATORY';
 }
 
 // Durum güncelleme için arayüz
@@ -148,27 +164,23 @@ export const getInternshipApplicationById = async (id: number | string): Promise
 };
 
 // Yeni staj başvurusu oluştur
-export const createInternshipApplication = async (data: NewInternshipApplication): Promise<InternshipApplication> => {
+export const createInternshipApplication = async (data: NewInternshipApplication): Promise<any> => {
   try {
     const requestData = {
-      studentId: data.studentId,
-      departmentId: data.departmentId,
-      program: data.program,
-      internshipPeriod: data.internshipPeriod,
+      internshipId: data.internshipId,
       workplaceName: data.workplaceName,
-      province: data.province.toUpperCase(),
+      province: data.province,
+      companyName: data.companyName,
       activityField: data.activityField,
-      workplaceEmail: data.workplaceEmail,
-      workplacePhone: data.workplacePhone,
-      workplaceAddress: data.workplaceAddress,
+      companyEmail: data.companyEmail,
+      companyPhone: data.companyPhone,
+      companyAddress: data.companyAddress,
       startDate: data.startDate,
-      endDate: data.endDate,
       weeklyWorkingDays: data.weeklyWorkingDays,
       hasGeneralHealthInsurance: data.hasGeneralHealthInsurance,
-      internshipType: data.internshipType
+      applicationType: data.applicationType
     };
-    
-    const response = await axiosClient.post<InternshipApplication>(INTERNSHIP_APPLICATION_CREATE, requestData);
+    const response = await axiosClient.post(INTERNSHIP_APPLICATION_CREATE, requestData);
     return response;
   } catch (error) {
     console.error('Staj başvurusu oluşturma hatası:', error);
@@ -235,27 +247,45 @@ export const getAssignedInternshipApplications = async (): Promise<InternshipApp
 export const updateInternshipApplication = async (id: string, data: NewInternshipApplication): Promise<InternshipApplication> => {
   try {
     const requestData = {
-      studentId: data.studentId,
-      departmentId: data.departmentId,
-      program: data.program,
-      internshipPeriod: data.internshipPeriod,
+      internshipId: data.internshipId,
       workplaceName: data.workplaceName,
-      province: data.province.toUpperCase(),
+      province: data.province,
+      companyName: data.companyName,
       activityField: data.activityField,
-      workplaceEmail: data.workplaceEmail,
-      workplacePhone: data.workplacePhone,
-      workplaceAddress: data.workplaceAddress,
+      companyEmail: data.companyEmail,
+      companyPhone: data.companyPhone,
+      companyAddress: data.companyAddress,
       startDate: data.startDate,
-      endDate: data.endDate,
       weeklyWorkingDays: data.weeklyWorkingDays,
       hasGeneralHealthInsurance: data.hasGeneralHealthInsurance,
-      internshipType: data.internshipType
+      applicationType: data.applicationType
     };
-    
     const response = await axiosClient.put<InternshipApplication>(INTERNSHIP_APPLICATION_DETAIL(id), requestData);
     return response;
   } catch (error) {
     console.error('Staj başvurusu güncelleme hatası:', error);
+    throw error;
+  }
+};
+
+// Stajları getir
+export const getInternships = async (): Promise<Internship[]> => {
+  try {
+    const response = await axiosClient.get<Internship[]>(INTERNSHIPS);
+    return response;
+  } catch (error) {
+    console.error('Stajları getirme hatası:', error);
+    throw error;
+  }
+};
+
+// Staj detayını getir
+export const getInternshipDetail = async (id: string): Promise<InternshipDetail> => {
+  try {
+    const response = await axiosClient.get<InternshipDetail>(INTERNSHIP_DETAIL(id));
+    return response;
+  } catch (error) {
+    console.error('Staj detayı getirme hatası:', error);
     throw error;
   }
 }; 

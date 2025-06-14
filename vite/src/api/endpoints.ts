@@ -44,13 +44,11 @@ export const INTERNSHIP_APPLICATIONS_ME = `/api/v1/internship-applications/me`; 
 export const INTERNSHIP_APPLICATIONS_DEPARTMENT = (departmentId: string | number) => `/api/v1/internship-applications/department/${departmentId}`; // Bölüme göre staj başvurularını listele
 export const INTERNSHIP_APPLICATIONS_ASSIGNED = `/api/v1/internship-applications/assigned-to-me`; // Giriş yapmış kullanıcıya atanmış staj başvurularını listele
 
-// Staj başvuru form seçenekleri endpoints
-export const INTERNSHIP_FORM_OPTIONS_ALL = `/api/v1/internship-form-options/all`; // Tüm staj formu seçeneklerini getir
 export const INTERNSHIP_FORM_OPTIONS_PROVINCES = `/api/v1/internship-form-options/provinces`; // İlleri listele
-export const INTERNSHIP_FORM_OPTIONS_PROGRAM_TYPES = `/api/v1/internship-form-options/program-types`; // Program tiplerini listele
-export const INTERNSHIP_FORM_OPTIONS_INTERNSHIP_TYPES = `/api/v1/internship-form-options/internship-types`; // Staj tiplerini listele
-export const INTERNSHIP_FORM_OPTIONS_INTERNSHIP_PERIODS = `/api/v1/internship-form-options/internship-periods`; // Staj dönemlerini listele
-export const INTERNSHIP_FORM_OPTIONS_WEEKLY_WORKING_DAYS = `/api/v1/internship-form-options/weekly-working-days`; // Haftalık çalışma günlerini listele
+
+// Internships endpoints
+export const INTERNSHIPS = `/api/v1/internships`; // Stajları listele
+export const INTERNSHIP_DETAIL = (id: string) => `/api/v1/internships/${id}`; // Staj detayı
 
 // Topics endpoints
 export const INTERNSHIP_TOPICS = `/api/v1/internships/topics`;

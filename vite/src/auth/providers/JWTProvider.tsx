@@ -157,9 +157,10 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         setCurrentUser(userData.result);
 
         // Profil tamamlanmamışsa setup sayfasına yönlendir
-        // Admin ve komisyon başkanı rolü için bu kontrol gerekli değil
+        // Admin, komisyon başkanı ve öğrenci rolü için bu kontrol gerekli değil
         if (userData.result.role !== 'ADMIN' && 
             userData.result.role !== 'COMMISSION_CHAIRMAN' &&
+            userData.result.role !== 'STUDENT' &&
             (!userData.result.facultyId || !userData.result.departmentId)) {
           // Bu kontrol profil bilgilerinin eksik olduğunu varsayar
           // Backend'den gelen user modelinde bu alanlar varsa

@@ -168,6 +168,20 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
+  const handlePasswordKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      formik.handleSubmit();
+    }
+  };
+
+  const handleEmailKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      formik.handleSubmit();
+    }
+  };
+
   return (
     <div className="login-container" id="login-page-root">
       <div id="page-top-anchor" style={{ position: 'absolute', top: 0, left: 0, height: 0, width: '100%' }}></div>
@@ -213,6 +227,7 @@ const Login = () => {
                   className={clsx('form-control', {
                     'is-invalid': formik.touched.email && formik.errors.email
                   })}
+                  onKeyDown={handleEmailKeyDown}
                 />
               </label>
               {formik.touched.email && formik.errors.email && (
@@ -240,9 +255,10 @@ const Login = () => {
                   className={clsx('form-control', {
                     'is-invalid': formik.touched.password && formik.errors.password
                   })}
+                  onKeyDown={handlePasswordKeyDown}
                 />
                 {formik.values.password && (
-                  <button className="btn btn-icon" onClick={togglePassword}>
+                  <button type="button" className="btn btn-icon" onClick={togglePassword}>
                     <KeenIcon icon="eye" className={clsx('text-gray-500', { hidden: showPassword })} />
                     <KeenIcon
                       icon="eye-slash"

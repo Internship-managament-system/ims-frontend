@@ -6,17 +6,36 @@ import {
   getInternshipApplicationById,
   NewInternshipApplication, 
   InternshipType,
-  calculateDurationInDays
+  calculateDurationInDays,
+  getInternships,
+  Internship,
+  getInternshipDetail,
+  InternshipDetail
 } from '@/services/internshipService';
 import { getAllDepartments } from '@/services/departmentService';
-import {
-  getAllFormOptions,
-  SelectOption
-} from '@/services/formOptionsService';
+import { getProvinces } from '@/services/formOptionsService';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { useAuthContext } from '@/auth/useAuthContext';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
+
+// Form için ayrı interface (UI'da string değerler kullanıyoruz)
+interface InternshipApplicationFormData {
+  internshipId: string;
+  workplaceName: string;
+  province: string;
+  companyName: string;
+  activityField: string;
+  companyEmail: string;
+  companyPhone: string;
+  companyAddress: string;
+  startDate: string;
+  weeklyWorkingDays: 'FIVE_DAYS' | 'SIX_DAYS';
+  hasGeneralHealthInsurance: boolean;
+  applicationType: 'VOLUNTARY' | 'MANDATORY';
+  endDate?: string;
+  durationInDays?: number;
+}
 
 const InternshipApplicationPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,23 +44,24 @@ const InternshipApplicationPage: React.FC = () => {
   const isUpdate = location.state?.isUpdate || id ? true : false;
   const applicationData = location.state?.application || null;
   
-  const [formData, setFormData] = useState<Omit<NewInternshipApplication, 'studentId'> & { durationInDays: number }>({
-    departmentId: '',
-    program: '',
-    internshipPeriod: '',
+  const [formData, setFormData] = useState<InternshipApplicationFormData>({
+    internshipId: '',
     workplaceName: '',
     province: '',
+    companyName: '',
     activityField: '',
-    workplaceEmail: '',
-    workplacePhone: '',
-    workplaceAddress: '',
+    companyEmail: '',
+    companyPhone: '',
+    companyAddress: '',
     startDate: '',
-    endDate: '',
-    durationInDays: 0,
     weeklyWorkingDays: 'FIVE_DAYS',
     hasGeneralHealthInsurance: false,
-    internshipType: 'VOLUNTARY' as InternshipType
+    applicationType: 'VOLUNTARY',
   });
+
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [weeklyWorkingDaysOptions, setWeeklyWorkingDaysOptions] = useState([]);
+  const [selectedInternshipDetail, setSelectedInternshipDetail] = useState<InternshipDetail | null>(null);
 
   // Kullanıcı bilgilerini al
   const auth = useAuthContext();
@@ -52,6 +72,12 @@ const InternshipApplicationPage: React.FC = () => {
   const { data: departments = [] } = useQuery({
     queryKey: ['departments'],
     queryFn: getAllDepartments
+  });
+
+  // Stajları getir
+  const { data: internships = [], isLoading: internshipsLoading, error: internshipsError } = useQuery({
+    queryKey: ['internships'],
+    queryFn: getInternships
   });
 
   // Kullanıcının bölüm bilgisini form verilerine otomatik olarak set et
@@ -77,48 +103,26 @@ const InternshipApplicationPage: React.FC = () => {
   twoWeeksLater.setDate(today.getDate() + 14);
   const twoWeeksLaterFormatted = twoWeeksLater.toISOString().split('T')[0];
 
-  // Form seçeneklerini getir
-  const { data: formOptions, isLoading: optionsLoading, error: optionsError } = useQuery({
-    queryKey: ['form-options'],
-    queryFn: getAllFormOptions,
-    // Hata durumunda tekrar deneme seçenekleri
-    retry: 3,
-    retryDelay: 1000,
-    // Cache süresini belirleme
-    staleTime: 1000 * 60 * 5 // 5 dakika
-  });
-
-  // Form seçenekleri yüklenirken hata olursa
+  // Sadece iller için getProvinces fonksiyonu ve provinces state'i bırakıldı
   useEffect(() => {
-    if (optionsError) {
-      console.error('Form seçenekleri yüklenirken hata:', optionsError);
-      toast.error('Form seçenekleri yüklenemedi. Lütfen sayfayı yenileyin.');
-    }
-  }, [optionsError]);
+    getProvinces().then((res: any) => setProvinces(res || []));
+  }, []);
 
-  // Yükleme durumunda ve opsiyonlar gelmezse varsayılan değerler
-  const provinces = formOptions?.provinces || [];
-  const programTypes = formOptions?.programTypes || [];
-  const internshipTypes = formOptions?.internshipTypes || [];
-  const internshipPeriods = formOptions?.internshipPeriods || [];
-  const weeklyWorkingDays = formOptions?.weeklyWorkingDays || [];
-
-  // Başlangıç tarihi ve haftalık çalışma günlerine göre bitiş tarihini hesapla
-  const calculateEndDate = (startDate: string, weeklyWorkDaysOption: string): string => {
-    if (!startDate) return '';
-    
-    // Haftalık çalışma günlerini belirle (5 gün veya 6 gün)
-    const workingDaysNumber = weeklyWorkDaysOption === 'FIVE_DAYS' ? 5 : 6;
+  // Başlangıç tarihi ve staj süresine göre bitiş tarihini hesapla
+  const calculateEndDateFromDuration = (startDate: string, durationInDays: number, weeklyWorkingDays: 'FIVE_DAYS' | 'SIX_DAYS'): string => {
+    if (!startDate || !durationInDays) return '';
     
     const start = new Date(startDate);
     let workingDaysCount = 0;
     let currentDate = new Date(start);
     
-    // 20 iş günü tamamlanana kadar günleri say
-    while (workingDaysCount < 20) {
+    const workingDaysPerWeek = weeklyWorkingDays === 'FIVE_DAYS' ? 5 : 6;
+    
+    // Toplam iş günü sayısına ulaşana kadar günleri say
+    while (workingDaysCount < durationInDays) {
       const dayOfWeek = currentDate.getDay(); // 0 = Pazar, 1 = Pazartesi, ..., 6 = Cumartesi
       
-      if (workingDaysNumber === 5) {
+      if (workingDaysPerWeek === 5) {
         // 5 gün çalışma: Pazartesi-Cuma (1-5)
         if (dayOfWeek >= 1 && dayOfWeek <= 5) {
           workingDaysCount++;
@@ -130,13 +134,12 @@ const InternshipApplicationPage: React.FC = () => {
         }
       }
       
-      // 20 iş günü tamamlanmadıysa bir sonraki güne geç
-      if (workingDaysCount < 20) {
+      // Hedef iş günü sayısına ulaşmadıysa bir sonraki güne geç
+      if (workingDaysCount < durationInDays) {
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
     
-    // ISO formatında tarihi döndür (YYYY-MM-DD)
     return currentDate.toISOString().split('T')[0];
   };
 
@@ -144,7 +147,7 @@ const InternshipApplicationPage: React.FC = () => {
   useEffect(() => {
     if (formData.startDate) {
       // Bitiş tarihini hesapla
-      const endDate = calculateEndDate(formData.startDate, formData.weeklyWorkingDays);
+      const endDate = calculateEndDateFromDuration(formData.startDate, formData.durationInDays || 0, formData.weeklyWorkingDays);
       
       // Staj süresini hesapla - iş günlerini (hafta içi günleri) say
       let duration = 0;
@@ -160,7 +163,7 @@ const InternshipApplicationPage: React.FC = () => {
         durationInDays: duration
       }));
     }
-  }, [formData.startDate, formData.weeklyWorkingDays]);
+  }, [formData.startDate, formData.weeklyWorkingDays, formData.durationInDays]);
 
   // Başvuru detayını getir (eğer güncelleme modundaysa)
   const { data: applicationDetail, isLoading: applicationLoading } = useQuery({
@@ -173,21 +176,20 @@ const InternshipApplicationPage: React.FC = () => {
   useEffect(() => {
     if (applicationDetail) {
       setFormData({
-        departmentId: applicationDetail.departmentId || '',
-        program: applicationDetail.program || '',
-        internshipPeriod: applicationDetail.internshipPeriod || '',
+        internshipId: applicationDetail.internshipId || '',
         workplaceName: applicationDetail.workplaceName || '',
         province: applicationDetail.province || '',
+        companyName: (applicationDetail as any).companyName || '',
         activityField: applicationDetail.activityField || '',
-        workplaceEmail: applicationDetail.workplaceEmail || '',
-        workplacePhone: applicationDetail.workplacePhone || '',
-        workplaceAddress: applicationDetail.workplaceAddress || '',
+        companyEmail: (applicationDetail as any).companyEmail || '',
+        companyPhone: (applicationDetail as any).companyPhone || '',
+        companyAddress: (applicationDetail as any).companyAddress || '',
         startDate: applicationDetail.startDate ? new Date(applicationDetail.startDate).toISOString().split('T')[0] : '',
-        endDate: applicationDetail.endDate ? new Date(applicationDetail.endDate).toISOString().split('T')[0] : '',
-        durationInDays: applicationDetail.durationInDays || 0,
-        weeklyWorkingDays: applicationDetail.weeklyWorkingDays || 'FIVE_DAYS',
+        weeklyWorkingDays: (typeof applicationDetail.weeklyWorkingDays === 'number' 
+          ? (applicationDetail.weeklyWorkingDays === 5 ? 'FIVE_DAYS' : 'SIX_DAYS')
+          : (applicationDetail.weeklyWorkingDays as 'FIVE_DAYS' | 'SIX_DAYS')) || 'FIVE_DAYS',
         hasGeneralHealthInsurance: applicationDetail.hasGeneralHealthInsurance || false,
-        internshipType: applicationDetail.internshipType || 'VOLUNTARY',
+        applicationType: (applicationDetail as any).applicationType || 'VOLUNTARY',
       });
     }
   }, [applicationDetail]);
@@ -196,24 +198,39 @@ const InternshipApplicationPage: React.FC = () => {
   useEffect(() => {
     if (applicationData && isUpdate) {
       setFormData({
-        departmentId: applicationData.departmentId || '',
-        program: applicationData.program || '',
-        internshipPeriod: applicationData.internshipPeriod || '',
+        internshipId: applicationData.internshipId || '',
         workplaceName: applicationData.workplaceName || '',
         province: applicationData.province || '',
+        companyName: (applicationData as any).companyName || '',
         activityField: applicationData.activityField || '',
-        workplaceEmail: applicationData.workplaceEmail || '',
-        workplacePhone: applicationData.workplacePhone || '',
-        workplaceAddress: applicationData.workplaceAddress || '',
+        companyEmail: (applicationData as any).companyEmail || '',
+        companyPhone: (applicationData as any).companyPhone || '',
+        companyAddress: (applicationData as any).companyAddress || '',
         startDate: applicationData.startDate ? new Date(applicationData.startDate).toISOString().split('T')[0] : '',
-        endDate: applicationData.endDate ? new Date(applicationData.endDate).toISOString().split('T')[0] : '',
-        durationInDays: applicationData.durationInDays || 0,
-        weeklyWorkingDays: applicationData.weeklyWorkingDays || 'FIVE_DAYS',
+        weeklyWorkingDays: (typeof applicationData.weeklyWorkingDays === 'number' 
+          ? (applicationData.weeklyWorkingDays === 5 ? 'FIVE_DAYS' : 'SIX_DAYS')
+          : (applicationData.weeklyWorkingDays as 'FIVE_DAYS' | 'SIX_DAYS')) || 'FIVE_DAYS',
         hasGeneralHealthInsurance: applicationData.hasGeneralHealthInsurance || false,
-        internshipType: applicationData.internshipType || 'VOLUNTARY',
+        applicationType: (applicationData as any).applicationType || 'VOLUNTARY',
       });
     }
   }, [applicationData, isUpdate]);
+
+  // Staj seçilince detayını getir
+  useEffect(() => {
+    if (formData.internshipId) {
+      getInternshipDetail(formData.internshipId)
+        .then(detail => {
+          setSelectedInternshipDetail(detail);
+        })
+        .catch(error => {
+          console.error('Staj detayı getirme hatası:', error);
+          setSelectedInternshipDetail(null);
+        });
+    } else {
+      setSelectedInternshipDetail(null);
+    }
+  }, [formData.internshipId]);
 
   // Staj başvurusu oluşturma mutation'ı
   const createApplicationMutation = useMutation({
@@ -242,17 +259,13 @@ const InternshipApplicationPage: React.FC = () => {
     },
     onError: (error: any) => {
       console.error('Güncelleme hatası:', error);
-      if (error.response) {
-        console.error('Hata detayları:', error.response);
-      }
-      toast.error(`Başvuru güncellenirken hata: ${error.message || 'Bilinmeyen hata'}`);
+      toast.error(`Güncelleme sırasında hata: ${error.message || 'Bilinmeyen hata'}`);
     }
   });
 
   // Form alanlarını güncelle
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    
     if (type === 'checkbox') {
       const isChecked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({
@@ -262,7 +275,11 @@ const InternshipApplicationPage: React.FC = () => {
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: value
+        [name]: name === 'weeklyWorkingDays'
+          ? (value === 'FIVE_DAYS' || value === 'SIX_DAYS'
+              ? (value as 'FIVE_DAYS' | 'SIX_DAYS')
+              : 'FIVE_DAYS')
+          : value
       }));
     }
   };
@@ -276,46 +293,42 @@ const InternshipApplicationPage: React.FC = () => {
       return;
     }
     
-    // Tarihleri doğru formata çevir (YYYY-MM-DD)
     const formatDate = (dateString: string) => {
       if (!dateString) return '';
       const date = new Date(dateString);
       return date.toISOString().split('T')[0];
     };
     
-    // Province değerini düzgün formata çevir (backend ENUM bekliyor - ANKARA, ISTANBUL gibi)
     const formatProvince = (provinceValue: string) => {
-      // Eğer zaten büyük harfli ise olduğu gibi döndür
       if (provinceValue === provinceValue.toUpperCase()) {
         return provinceValue;
       }
-      
-      // Değilse büyük harfe çevir
       return provinceValue.toUpperCase();
     };
     
-    // API'ye gönderilecek veriyi hazırla - Swagger belgesine göre
+    const formatWeeklyWorkingDays = (weeklyWorkingDays: string): number => {
+      // Backend'de weeklyWorkingDays sayısal değer bekliyor
+      // FIVE_DAYS = 5, SIX_DAYS = 6 olarak dönüştürüyoruz
+      return weeklyWorkingDays === 'FIVE_DAYS' ? 5 : 6;
+    };
+    
     const submissionData: NewInternshipApplication = {
-      studentId: userId,
-      departmentId: formData.departmentId,
-      program: formData.program,
-      internshipPeriod: formData.internshipPeriod,
+      internshipId: formData.internshipId,
       workplaceName: formData.workplaceName,
-      province: formatProvince(formData.province), // Enum değeri olarak gönderilmeli (ANKARA, ISTANBUL vb.)
+      province: formatProvince(formData.province),
+      companyName: formData.companyName,
       activityField: formData.activityField,
-      workplaceEmail: formData.workplaceEmail,
-      workplacePhone: formData.workplacePhone,
-      workplaceAddress: formData.workplaceAddress,
+      companyEmail: formData.companyEmail,
+      companyPhone: formData.companyPhone,
+      companyAddress: formData.companyAddress,
       startDate: formatDate(formData.startDate),
-      endDate: formatDate(formData.endDate),
-      weeklyWorkingDays: formData.weeklyWorkingDays,
+      weeklyWorkingDays: formatWeeklyWorkingDays(formData.weeklyWorkingDays),
       hasGeneralHealthInsurance: formData.hasGeneralHealthInsurance,
-      internshipType: formData.internshipType
+      applicationType: formData.applicationType,
     };
     
     console.log(`Staj başvurusu ${isUpdate ? 'güncelleniyor' : 'gönderiliyor'}:`, submissionData);
     
-    // Formu gönder - güncelleme veya oluşturma
     if (isUpdate && id) {
       updateApplicationMutation.mutate(submissionData);
     } else {
@@ -326,21 +339,18 @@ const InternshipApplicationPage: React.FC = () => {
   // Formu sıfırla
   const resetForm = () => {
     setFormData({
-      departmentId: '',
-      program: '',
-      internshipPeriod: '',
+      internshipId: '',
       workplaceName: '',
       province: '',
+      companyName: '',
       activityField: '',
-      workplaceEmail: '',
-      workplacePhone: '',
-      workplaceAddress: '',
+      companyEmail: '',
+      companyPhone: '',
+      companyAddress: '',
       startDate: '',
-      endDate: '',
-      durationInDays: 0,
       weeklyWorkingDays: 'FIVE_DAYS',
       hasGeneralHealthInsurance: false,
-      internshipType: 'VOLUNTARY'
+      applicationType: 'VOLUNTARY',
     });
   };
 
@@ -358,135 +368,63 @@ const InternshipApplicationPage: React.FC = () => {
           </p>
         </div>
 
-        {(optionsLoading || applicationLoading) ? (
+        {(applicationLoading) ? (
           <div className="flex items-center justify-center p-8 bg-white rounded-lg shadow">
             <div className="animate-spin mr-3">
               <KeenIcon icon="spinner" className="h-6 w-6 text-primary" />
             </div>
             <span>Veriler yükleniyor...</span>
           </div>
-        ) : optionsError ? (
-          <div className="bg-white p-8 rounded-lg shadow text-center">
-            <KeenIcon icon="error" className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Form seçenekleri yüklenemedi</h3>
-            <p className="text-gray-600 mb-4">Form seçeneklerini getirirken bir hata oluştu. Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="bg-[#13126e] text-white py-2 px-4 rounded"
-            >
-              Sayfayı Yenile
-            </button>
-          </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Staj Bilgileri */}
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <h2 className="text-lg font-medium mb-4">Staj Bilgileri</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">Bölüm</label>
-                  <select
-                    name="departmentId"
-                    value={formData.departmentId}
-                    disabled
-                    className="border border-gray-300 rounded p-2 bg-gray-100 cursor-not-allowed"
-                    required
-                  >
-                    <option value="">Bölüm Seçiniz</option>
-                    {departments.map((dept) => (
-                      <option key={dept.id} value={dept.id}>{dept.name}</option>
-                    ))}
-                  </select>
-                  <small className="text-gray-500 mt-1">Bölüm bilgisi kullanıcı profilinden otomatik olarak alınmaktadır.</small>
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">Program</label>
-                  <select
-                    name="program"
-                    value={formData.program}
-                    onChange={handleInputChange}
-                    className="border border-gray-300 rounded p-2"
-                    required
-                  >
-                    <option value="">Program Seçiniz</option>
-                    {programTypes.map(program => (
-                      <option key={program.value} value={program.value}>{program.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">Staj Dönemi</label>
-                  <select
-                    name="internshipPeriod"
-                    value={formData.internshipPeriod}
-                    onChange={handleInputChange}
-                    className="border border-gray-300 rounded p-2"
-                    required
-                  >
-                    <option value="">Dönem Seçiniz</option>
-                    {internshipPeriods.map(period => (
-                      <option key={period.value} value={period.value}>{period.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex flex-col">
                   <label className="mb-1 text-sm font-medium">Staj Türü</label>
                   <select
-                    name="internshipType"
-                    value={formData.internshipType}
+                    name="applicationType"
+                    value={formData.applicationType}
                     onChange={handleInputChange}
                     className="border border-gray-300 rounded p-2"
                     required
                   >
-                    <option value="">Staj Türü Seçiniz</option>
-                    {internshipTypes.map(type => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
-                    ))}
+                    <option value="VOLUNTARY">Gönüllü</option>
+                    <option value="MANDATORY">Zorunlu</option>
                   </select>
                 </div>
-
-                <div className="flex items-center mt-4">
-                  <input
-                    type="checkbox"
-                    id="hasGeneralHealthInsurance"
-                    name="hasGeneralHealthInsurance"
-                    checked={formData.hasGeneralHealthInsurance}
-                    onChange={(e) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        hasGeneralHealthInsurance: e.target.checked
-                      }));
-                    }}
-                    className="mr-2"
-                  />
-                  <label htmlFor="hasGeneralHealthInsurance" className="text-sm">
-                    Genel Sağlık Sigortam var
-                  </label>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-sm font-medium">Staj</label>
+                  <select
+                    name="internshipId"
+                    value={formData.internshipId}
+                    onChange={handleInputChange}
+                    className="border border-gray-300 rounded p-2"
+                    required
+                  >
+                    <option value="">Staj Seçiniz</option>
+                    {internshipsLoading ? (
+                      <option disabled>Stajlar yükleniyor...</option>
+                    ) : internshipsError ? (
+                      <option disabled>Stajlar yüklenirken hata oluştu</option>
+                    ) : (
+                      internships.map((intern: Internship) => (
+                        <option key={intern.id} value={intern.id}>{intern.name}</option>
+                      ))
+                    )}
+                  </select>
                 </div>
               </div>
             </div>
-
-            {/* Şirket Bilgileri */}
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <h2 className="text-lg font-medium mb-4">İş Yeri Bilgileri</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col">
                   <label className="mb-1 text-sm font-medium">İş Yeri Adı</label>
-                  <input
-                    type="text"
-                    name="workplaceName"
-                    value={formData.workplaceName}
-                    onChange={handleInputChange}
-                    className="border border-gray-300 rounded p-2"
-                    required
-                  />
+                  <input type="text" name="workplaceName" value={formData.workplaceName} onChange={handleInputChange} className="border border-gray-300 rounded p-2" required />
                 </div>
-
                 <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">İl/Ülke</label>
+                  <label className="mb-1 text-sm font-medium">İl</label>
                   <select
                     name="province"
                     value={formData.province}
@@ -494,164 +432,87 @@ const InternshipApplicationPage: React.FC = () => {
                     className="border border-gray-300 rounded p-2"
                     required
                   >
-                    <option value="">İl/Ülke Seçiniz</option>
-                    {provinces.map(province => (
+                    <option value="">İl Seçiniz</option>
+                    {provinces.map((province: any) => (
                       <option key={province.value} value={province.value}>{province.label}</option>
                     ))}
                   </select>
-                  <small className="text-gray-500 mt-1">Backend'e ENUM formatında gönderilecektir (ör: ANKARA)</small>
                 </div>
-
+                <div className="flex flex-col">
+                  <label className="mb-1 text-sm font-medium">Şirket Adı</label>
+                  <input type="text" name="companyName" value={formData.companyName} onChange={handleInputChange} className="border border-gray-300 rounded p-2" required />
+                </div>
                 <div className="flex flex-col">
                   <label className="mb-1 text-sm font-medium">Faaliyet Alanı</label>
-                  <input
-                    type="text"
-                    name="activityField"
-                    value={formData.activityField}
-                    onChange={handleInputChange}
-                    className="border border-gray-300 rounded p-2"
-                    required
-                  />
+                  <input type="text" name="activityField" value={formData.activityField} onChange={handleInputChange} className="border border-gray-300 rounded p-2" required />
                 </div>
-
                 <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">İş Yeri E-posta</label>
-                  <input
-                    type="email"
-                    name="workplaceEmail"
-                    value={formData.workplaceEmail}
-                    onChange={handleInputChange}
-                    className="border border-gray-300 rounded p-2"
-                    required
-                  />
+                  <label className="mb-1 text-sm font-medium">Şirket E-posta</label>
+                  <input type="email" name="companyEmail" value={formData.companyEmail} onChange={handleInputChange} className="border border-gray-300 rounded p-2" required />
                 </div>
-
                 <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">İş Yeri Telefon</label>
-                  <input
-                    type="tel"
-                    name="workplacePhone"
-                    value={formData.workplacePhone}
-                    onChange={handleInputChange}
-                    className="border border-gray-300 rounded p-2"
-                    required
-                  />
+                  <label className="mb-1 text-sm font-medium">Şirket Telefon</label>
+                  <input type="tel" name="companyPhone" value={formData.companyPhone} onChange={handleInputChange} className="border border-gray-300 rounded p-2" required />
                 </div>
-
                 <div className="flex flex-col md:col-span-2">
-                  <label className="mb-1 text-sm font-medium">İş Yeri Adresi</label>
-                  <textarea
-                    name="workplaceAddress"
-                    value={formData.workplaceAddress}
-                    onChange={handleInputChange}
-                    className="border border-gray-300 rounded p-2"
-                    rows={3}
-                    required
-                  />
+                  <label className="mb-1 text-sm font-medium">Şirket Adresi</label>
+                  <textarea name="companyAddress" value={formData.companyAddress} onChange={handleInputChange} className="border border-gray-300 rounded p-2" rows={3} required />
                 </div>
               </div>
             </div>
-
-            {/* Staj Tarihleri ve Günleri */}
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <h2 className="text-lg font-medium mb-4">Staj Tarihleri ve Çalışma Günleri</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div className="flex flex-col">
                   <label className="mb-1 text-sm font-medium">Başlangıç Tarihi</label>
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={formData.startDate}
+                  <input type="date" name="startDate" value={formData.startDate} onChange={handleInputChange} className="border border-gray-300 rounded p-2" required />
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-sm font-medium">Haftalık Çalışma Gün Sayısı</label>
+                  <select
+                    name="weeklyWorkingDays"
+                    value={formData.weeklyWorkingDays}
                     onChange={handleInputChange}
-                    min={todayFormatted}
                     className="border border-gray-300 rounded p-2"
                     required
+                  >
+                    <option value="FIVE_DAYS">5 Gün</option>
+                    <option value="SIX_DAYS">6 Gün</option>
+                  </select>
+                </div>
+                <div className="flex flex-col">
+                  <label className="mb-1 text-sm font-medium">Toplam Süre</label>
+                  <input 
+                    type="text" 
+                    value={selectedInternshipDetail ? `${selectedInternshipDetail.durationOfDays} iş günü` : ''} 
+                    className="border border-gray-300 rounded p-2 bg-gray-50" 
+                    readOnly 
+                    placeholder="Staj seçiniz"
                   />
                 </div>
-
                 <div className="flex flex-col">
                   <label className="mb-1 text-sm font-medium">Bitiş Tarihi</label>
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={formData.endDate}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 bg-gray-100 cursor-not-allowed"
-                    required
+                  <input 
+                    type="text" 
+                    value={
+                      formData.startDate && selectedInternshipDetail 
+                        ? new Date(calculateEndDateFromDuration(formData.startDate, selectedInternshipDetail.durationOfDays, formData.weeklyWorkingDays)).toLocaleDateString('tr-TR')
+                        : ''
+                    } 
+                    className="border border-gray-300 rounded p-2 bg-gray-50" 
+                    readOnly 
+                    placeholder="Başlangıç tarihi giriniz"
                   />
-                  <small className="text-gray-500 mt-1">Başlangıç tarihine göre otomatik hesaplanır</small>
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm font-medium">Staj Süresi (Gün)</label>
-                  <input
-                    type="number"
-                    name="durationInDays"
-                    value={formData.durationInDays}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 bg-gray-100"
-                  />
-                  <small className="text-gray-500 mt-1">Başlangıç ve bitiş tarihlerine göre otomatik hesaplanır</small>
                 </div>
               </div>
-
-              <div>
-                <label className="mb-2 text-sm font-medium block">Haftalık Çalışma Gün Sayısı</label>
-                <select
-                  name="weeklyWorkingDays"
-                  value={formData.weeklyWorkingDays}
-                  onChange={handleInputChange}
-                  className="border border-gray-300 rounded p-2 w-full md:w-64"
-                  required
-                >
-                  <option value="">Seçiniz</option>
-                  {weeklyWorkingDays.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex items-center">
+                <input type="checkbox" id="hasGeneralHealthInsurance" name="hasGeneralHealthInsurance" checked={formData.hasGeneralHealthInsurance} onChange={handleInputChange} className="mr-2" />
+                <label htmlFor="hasGeneralHealthInsurance" className="text-sm">Genel Sağlık Sigortam var</label>
               </div>
             </div>
-
-            {/* Form buttons */}
             <div className="flex justify-end space-x-3 mt-8">
-              {isUpdate ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/student/my-applications')}
-                    className="bg-gray-200 text-gray-800 py-2 px-6 rounded font-medium"
-                  >
-                    İptal
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-green-500 text-white py-2 px-6 rounded font-medium"
-                    disabled={updateApplicationMutation.isPending}
-                  >
-                    {updateApplicationMutation.isPending ? 'Güncelleniyor...' : 'Güncelle'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="reset"
-                    onClick={resetForm}
-                    className="bg-gray-200 text-gray-800 py-2 px-6 rounded font-medium"
-                  >
-                    Sıfırla
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-600 text-white py-2 px-6 rounded font-medium"
-                    disabled={createApplicationMutation.isPending}
-                  >
-                    {createApplicationMutation.isPending ? 'Gönderiliyor...' : 'Başvuru Yap'}
-                  </button>
-                </>
-              )}
+              <button type="reset" onClick={resetForm} className="bg-gray-200 text-gray-800 py-2 px-6 rounded font-medium">Sıfırla</button>
+              <button type="submit" className="bg-blue-600 text-white py-2 px-6 rounded font-medium" disabled={createApplicationMutation.isPending}>{createApplicationMutation.isPending ? 'Gönderiliyor...' : 'Başvuru Yap'}</button>
             </div>
           </form>
         )}
