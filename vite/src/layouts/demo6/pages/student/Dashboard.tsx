@@ -6,8 +6,8 @@ import { useMenus } from '@/providers';
 import { Container } from '@/components';
 import { KeenIcon } from '@/components/keenicons';
 import { 
-  getMyInternshipApplications, 
-  InternshipApplication, 
+  getMyInternshipApplicationsList, 
+  InternshipApplicationListItem,
   InternshipType, 
   InternshipStatus,
   getInternships,
@@ -33,7 +33,6 @@ interface Application {
 interface ApplicationForm {
   internshipId: string;
   internshipType: string;
-  workplaceName: string;
   province: string;
   program: string;
   internshipPeriod: string;
@@ -61,7 +60,6 @@ const Dashboard: React.FC = () => {
   const [formData, setFormData] = useState<ApplicationForm>({
     internshipId: '',
     internshipType: 'VOLUNTARY',
-    workplaceName: '',
     province: '',
     program: '',
     internshipPeriod: '',
@@ -75,10 +73,10 @@ const Dashboard: React.FC = () => {
     hasGeneralHealthInsurance: false
   });
 
-  // API'den kullanıcının staj başvurularını çek
+  // API'den kullanıcının staj başvurularını çek (YENİ API)
   const { data: applications = [], isLoading: applicationsLoading, error: applicationsError } = useQuery({
-    queryKey: ['myInternshipApplications'],
-    queryFn: getMyInternshipApplications
+    queryKey: ['internshipApplicationsList'],
+    queryFn: getMyInternshipApplicationsList
   });
 
   // API'den stajları çek
@@ -109,10 +107,35 @@ const Dashboard: React.FC = () => {
         return 'bg-red-100 text-red-800';
       case 'COMPLETED':
         return 'bg-blue-100 text-blue-800';
-      case 'IN_PROGRESS':
+      case 'READY_FOR_ASSIGNMENT':
         return 'bg-purple-100 text-purple-800';
+      case 'ASSIGNED':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'IN_PROGRESS':
+        return 'bg-orange-100 text-orange-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return 'Beklemede';
+      case 'APPROVED':
+        return 'Onaylandı';
+      case 'REJECTED':
+        return 'Reddedildi';
+      case 'COMPLETED':
+        return 'Tamamlandı';
+      case 'READY_FOR_ASSIGNMENT':
+        return 'Atamaya Hazır';
+      case 'ASSIGNED':
+        return 'Atandı';
+      case 'IN_PROGRESS':
+        return 'Devam Ediyor';
+      default:
+        return status;
     }
   };
 
@@ -189,7 +212,6 @@ const Dashboard: React.FC = () => {
     setFormData({
       internshipId: '',
       internshipType: 'VOLUNTARY',
-      workplaceName: '',
       province: '',
       program: '',
       internshipPeriod: '',
@@ -248,37 +270,35 @@ const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                  <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="px-4 py-2 text-sm font-medium text-gray-500">İşyeri</th>
-                        <th className="px-4 py-2 text-sm font-medium text-gray-500">Staj Dönemi</th>
-                        <th className="px-4 py-2 text-sm font-medium text-gray-500">Tarih</th>
+                        <th className="px-4 py-2 text-sm font-medium text-gray-500">Staj Adı</th>
+                        <th className="px-4 py-2 text-sm font-medium text-gray-500">Şirket</th>
+                        <th className="px-4 py-2 text-sm font-medium text-gray-500">Başvuru Tarihi</th>
                         <th className="px-4 py-2 text-sm font-medium text-gray-500">Durum</th>
                         <th className="px-4 py-2 text-sm font-medium text-gray-500">İşlem</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {applications.map((application: InternshipApplication) => (
+                      {applications.map((application: InternshipApplicationListItem) => (
                         <tr key={application.id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="px-4 py-3">
                             <div>
-                              <p className="font-medium">{application.workplaceName}</p>
-                              <p className="text-sm text-gray-500">{application.activityField}</p>
+                              <p className="font-medium">{application.internshipName}</p>
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <span>{application.internshipPeriodText}</span>
+                            <span>{application.companyName}</span>
                           </td>
                           <td className="px-4 py-3">
                             <div>
-                              <p className="text-sm">{new Date(application.startDate).toLocaleDateString('tr-TR')} - {new Date(application.endDate).toLocaleDateString('tr-TR')}</p>
-                              <p className="text-xs text-gray-500">{application.durationInDays} gün</p>
+                              <p className="text-sm">{new Date(application.appliedDate).toLocaleDateString('tr-TR')}</p>
                             </div>
                           </td>
                           <td className="px-4 py-3">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
-                              {application.statusText}
+                              {getStatusLabel(application.status)}
                             </span>
                           </td>
                           <td className="px-4 py-3">
@@ -396,36 +416,6 @@ const Dashboard: React.FC = () => {
                 {/* İş Yeri Bilgileri */}
                 <div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        İş Yeri Adı *
-                      </label>
-                      <input
-                        type="text"
-                        name="workplaceName"
-                        value={formData.workplaceName}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#13126e] focus:border-[#13126e]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Program *
-                      </label>
-                      <select
-                        name="program"
-                        value={formData.program}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#13126e] focus:border-[#13126e]"
-                      >
-                        <option value="">Program Seçin</option>
-                        {/* programTypes.map(program => (
-                          <option key={program.value} value={program.value}>{program.label}</option>
-                        )) */}
-                      </select>
-                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         İşyeri İl/Ülke *

@@ -51,7 +51,6 @@ export interface InternshipApplication {
   programText: string;
   internshipPeriod: string;
   internshipPeriodText: string;
-  workplaceName: string;
   province: string;
   provinceText: string;
   activityField: string;
@@ -80,7 +79,6 @@ export interface InternshipApplication {
 // Yeni staj başvurusu oluşturmak için arayüz (Swagger ve backend isteklerine göre güncellendi)
 export interface NewInternshipApplication {
   internshipId: string;
-  workplaceName: string;
   province: string;
   companyName: string;
   activityField: string;
@@ -168,7 +166,6 @@ export const createInternshipApplication = async (data: NewInternshipApplication
   try {
     const requestData = {
       internshipId: data.internshipId,
-      workplaceName: data.workplaceName,
       province: data.province,
       companyName: data.companyName,
       activityField: data.activityField,
@@ -180,10 +177,27 @@ export const createInternshipApplication = async (data: NewInternshipApplication
       hasGeneralHealthInsurance: data.hasGeneralHealthInsurance,
       applicationType: data.applicationType
     };
+    
+    console.log('🌐 Axios\'a gönderilecek requestData:', requestData);
+    console.log('🌐 API URL:', INTERNSHIP_APPLICATION_CREATE);
+    
     const response = await axiosClient.post(INTERNSHIP_APPLICATION_CREATE, requestData);
+    
+    console.log('✅ API Success Response:', response);
     return response;
-  } catch (error) {
-    console.error('Staj başvurusu oluşturma hatası:', error);
+    
+  } catch (error: any) {
+    console.error('❌ API Error in createInternshipApplication:', error);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error response:', error.response);
+    console.error('❌ Error config:', error.config);
+    
+    if (error.response) {
+      console.error('❌ Error response status:', error.response.status);
+      console.error('❌ Error response data:', error.response.data);
+      console.error('❌ Error response headers:', error.response.headers);
+    }
+    
     throw error;
   }
 };
@@ -210,11 +224,30 @@ export const assignInternshipApplication = async (id: string, assignData: Assign
   }
 };
 
-// Giriş yapmış öğrencinin kendi staj başvurularını getir
-export const getMyInternshipApplications = async (): Promise<InternshipApplication[]> => {
+// Giriş yapmış öğrencinin kendi staj başvurularını getir (YENİ API)
+export const getMyInternshipApplicationsList = async (): Promise<InternshipApplicationListItem[]> => {
   try {
-    const response = await axiosClient.get<InternshipApplication[]>(INTERNSHIP_APPLICATIONS_ME);
-    return response;
+    const response: any = await axiosClient.get(INTERNSHIP_APPLICATIONS);
+    console.log('📋 FULL API RESPONSE:', JSON.stringify(response, null, 2));
+    
+    // API response yapısını kontrol et
+    if (response.result && Array.isArray(response.result)) {
+      console.log('✅ response.result kullanılıyor:', response.result.length, 'öğe');
+      return response.result;
+    }
+    
+    if (response.data?.result && Array.isArray(response.data.result)) {
+      console.log('✅ response.data.result kullanılıyor:', response.data.result.length, 'öğe');
+      return response.data.result;
+    }
+    
+    if (Array.isArray(response)) {
+      console.log('✅ response direkt array:', response.length, 'öğe');
+      return response;
+    }
+    
+    console.error('❌ API response beklenmeyen formatta:', typeof response);
+    return [];
   } catch (error) {
     console.error('Kendi staj başvurularını getirme hatası:', error);
     throw error;
@@ -243,30 +276,6 @@ export const getAssignedInternshipApplications = async (): Promise<InternshipApp
   }
 };
 
-// Staj başvurusunu güncelle
-export const updateInternshipApplication = async (id: string, data: NewInternshipApplication): Promise<InternshipApplication> => {
-  try {
-    const requestData = {
-      internshipId: data.internshipId,
-      workplaceName: data.workplaceName,
-      province: data.province,
-      companyName: data.companyName,
-      activityField: data.activityField,
-      companyEmail: data.companyEmail,
-      companyPhone: data.companyPhone,
-      companyAddress: data.companyAddress,
-      startDate: data.startDate,
-      weeklyWorkingDays: data.weeklyWorkingDays,
-      hasGeneralHealthInsurance: data.hasGeneralHealthInsurance,
-      applicationType: data.applicationType
-    };
-    const response = await axiosClient.put<InternshipApplication>(INTERNSHIP_APPLICATION_DETAIL(id), requestData);
-    return response;
-  } catch (error) {
-    console.error('Staj başvurusu güncelleme hatası:', error);
-    throw error;
-  }
-};
 
 // Stajları getir
 export const getInternships = async (): Promise<Internship[]> => {
@@ -279,6 +288,7 @@ export const getInternships = async (): Promise<Internship[]> => {
   }
 };
 
+
 // Staj detayını getir
 export const getInternshipDetail = async (id: string): Promise<InternshipDetail> => {
   try {
@@ -286,6 +296,122 @@ export const getInternshipDetail = async (id: string): Promise<InternshipDetail>
     return response;
   } catch (error) {
     console.error('Staj detayı getirme hatası:', error);
+    throw error;
+  }
+};
+
+// Yeni API için başvuru listesi arayüzü
+export interface InternshipApplicationListItem {
+  id: string;
+  internshipName: string;
+  companyName: string;
+  status: string;
+  appliedDate: string;
+}
+
+// Yeni API için başvuru detayı arayüzü
+export interface InternshipApplicationDetail {
+  id: string;
+  studentId: string;
+  internshipId: string;
+  companyId: string;
+  studentName: string;
+  studentSurname: string;
+  companyName: string;
+  internshipName: string;
+  startDate: string;
+  endDate: string;
+  hasGeneralHealthInsurance: boolean;
+  status: string;
+  type: string;
+  requirements: InternshipRequirement[];
+}
+
+export interface InternshipRequirement {
+  id: string;
+  name: string;
+  description: string;
+  ruleType: string;
+  status: string;
+  documentIds: string[];
+  documents: InternshipDocument[];
+}
+
+export interface InternshipDocument {
+  id: string;
+  fileAddress: string;
+  fileName: string;
+  documentType: string;
+  description: string;
+}
+
+// Yeni API response wrapper'ları
+export interface InternshipApplicationListResponse {
+  result: InternshipApplicationListItem[];
+}
+
+export interface InternshipApplicationDetailResponse {
+  result: InternshipApplicationDetail;
+}
+
+// Staj başvurusu detayını getir (YENİ API)
+export const getInternshipApplicationDetailById = async (id: string): Promise<InternshipApplicationDetail> => {
+  try {
+    console.log('🔍 Detay API çağrısı yapılıyor, ID:', id);
+    const response: any = await axiosClient.get(INTERNSHIP_APPLICATION_DETAIL(id));
+    console.log('📋 FULL DETAIL RESPONSE:', JSON.stringify(response, null, 2));
+    
+    if (response.result) {
+      return response.result;
+    }
+    
+    if (response.data?.result) {
+      return response.data.result;
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Staj başvurusu detayı getirme hatası:', error);
+    throw error;
+  }
+};
+
+// Document yükleme endpoint'i
+const UPLOAD_DOCUMENT = (id: string, requirementId: string) => `/api/v1/internship-applications/${id}/add-document/${requirementId}`;
+
+// Document yükleme fonksiyonu
+export const uploadInternshipDocument = async (
+  applicationId: string, 
+  requirementId: string, 
+  file: File, 
+  fileName: string
+): Promise<any> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('fileName', fileName);
+
+    console.log('📤 Document yükleme başlatılıyor:', {
+      applicationId,
+      requirementId,
+      fileName,
+      fileSize: file.size
+    });
+
+    const response = await axiosClient.put(
+      UPLOAD_DOCUMENT(applicationId, requirementId),
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    console.log('✅ Document yükleme başarılı:', response);
+    return response;
+  } catch (error) {
+    console.error('❌ Document yükleme hatası:', error);
     throw error;
   }
 }; 

@@ -1,29 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Container } from '@/components';
 import { KeenIcon } from '@/components/keenicons';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { getMyInternshipApplications, InternshipApplication, InternshipStatus } from '@/services/internshipService';
+import { 
+  getMyInternshipApplicationsList, 
+  getInternshipApplicationDetailById,
+  uploadInternshipDocument,
+  InternshipApplicationListItem,
+  InternshipApplicationDetail 
+} from '@/services/internshipService';
 import { Link, useNavigate } from 'react-router-dom';
 
-// Başvuru durumu için renk ve etiket bilgileri
-const statusConfig: Record<InternshipStatus, { label: string; color: string }> = {
+// Yeni başvuru durumu için renk ve etiket bilgileri
+const statusConfig: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Beklemede', color: 'bg-yellow-100 text-yellow-800' },
   APPROVED: { label: 'Onaylandı', color: 'bg-green-100 text-green-800' },
   REJECTED: { label: 'Reddedildi', color: 'bg-red-100 text-red-800' },
   COMPLETED: { label: 'Tamamlandı', color: 'bg-blue-100 text-blue-800' },
+  READY_FOR_ASSIGNMENT: { label: 'Beklemede', color: 'bg-yellow-100 text-yellow-800' },
+  ASSIGNED: { label: 'Onaylandı', color: 'bg-indigo-100 text-indigo-800' },
+  IN_PROGRESS: { label: 'Devam Ediyor', color: 'bg-orange-100 text-orange-800' },
 };
 
 const MyApplicationsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedApplication, setSelectedApplication] = useState<InternshipApplication | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<InternshipApplicationDetail | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [uploadingDocuments, setUploadingDocuments] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
-  // Öğrencinin kendi başvurularını getir
+  const queryClient = useQueryClient();
+
+  // Öğrencinin kendi başvurularını getir (YENİ API)
   const { data: applications = [], isLoading, isError } = useQuery({
-    queryKey: ['my-internship-applications'],
-    queryFn: getMyInternshipApplications
+    queryKey: ['internship-applications-list'],
+    queryFn: getMyInternshipApplicationsList
   });
 
   // Hata durumunda kullanıcıya bildir
@@ -33,32 +45,71 @@ const MyApplicationsPage: React.FC = () => {
     }
   }, [isError]);
 
-  // Detay modalını aç
-  const openDetailsModal = (application: InternshipApplication) => {
-    setSelectedApplication(application);
-    setShowDetailsModal(true);
+  // Detay modalını aç (API'den detayları getir)
+  const openDetailsModal = async (application: InternshipApplicationListItem) => {
+    try {
+      const details = await getInternshipApplicationDetailById(application.id);
+      setSelectedApplication(details);
+      setShowDetailsModal(true);
+    } catch (error) {
+      toast.error('Başvuru detayları yüklenirken hata oluştu.');
+    }
   };
 
   // Modalı kapat
   const closeModal = () => {
-    setSelectedApplication(null);
     setShowDetailsModal(false);
-  };
-
-  // Başvuru güncelleme sayfasına yönlendir
-  const handleUpdateApplication = (application: InternshipApplication) => {
-    navigate(`/student/application-form/${application.id}`, { state: { isUpdate: true, application } });
+    setSelectedApplication(null);
   };
 
   // Arama filtreleme
   const filteredApplications = applications.filter((app) => {
     const searchLower = searchTerm.toLowerCase();
     return (
-      app.workplaceName.toLowerCase().includes(searchLower) ||
+      app.companyName.toLowerCase().includes(searchLower) ||
+      app.internshipName.toLowerCase().includes(searchLower) ||
       app.status.toLowerCase().includes(searchLower) ||
-      (app.statusText && app.statusText.toLowerCase().includes(searchLower))
+      (statusConfig[app.status]?.label || '').toLowerCase().includes(searchLower)
     );
   });
+
+  // Document yükleme fonksiyonu
+  const handleDocumentUpload = async (requirementId: string, file: File) => {
+    if (!selectedApplication) return;
+
+    const uploadKey = `${selectedApplication.id}-${requirementId}`;
+    setUploadingDocuments(prev => new Set([...prev, uploadKey]));
+
+    try {
+      await uploadInternshipDocument(
+        selectedApplication.id,
+        requirementId,
+        file,
+        file.name
+      );
+
+      toast.success('Belge başarıyla yüklendi!');
+      
+      // Detay verisini yenile
+      queryClient.invalidateQueries({ 
+        queryKey: ['internship-application-detail', selectedApplication.id] 
+      });
+      
+      // Modal'ı yeniden aç (güncel veriyle)
+      const updatedDetail = await getInternshipApplicationDetailById(selectedApplication.id);
+      setSelectedApplication(updatedDetail);
+
+    } catch (error) {
+      console.error('Document upload error:', error);
+      toast.error('Belge yüklenirken bir hata oluştu');
+    } finally {
+      setUploadingDocuments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(uploadKey);
+        return newSet;
+      });
+    }
+  };
 
   return (
     <Container>
@@ -66,6 +117,11 @@ const MyApplicationsPage: React.FC = () => {
         <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-medium text-gray-900">Staj Başvurularım</h2>
+            <Link to="/student/application-form">
+              <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Yeni Başvuru
+              </button>
+            </Link>
           </div>
 
           <div className="mb-4 flex justify-end">
@@ -109,9 +165,8 @@ const MyApplicationsPage: React.FC = () => {
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="px-4 py-2 text-sm font-medium text-gray-500">Başvuru Tarihi</th>
-                    <th className="px-4 py-2 text-sm font-medium text-gray-500">İşyeri</th>
-                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Staj Dönemi</th>
-                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Staj Türü</th>
+                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Staj Adı</th>
+                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Şirket</th>
                     <th className="px-4 py-2 text-sm font-medium text-gray-500">Durum</th>
                     <th className="px-4 py-2 text-sm font-medium text-gray-500">İşlemler</th>
                   </tr>
@@ -119,7 +174,7 @@ const MyApplicationsPage: React.FC = () => {
                 <tbody>
                   {filteredApplications.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-4 text-center text-gray-500">
+                      <td colSpan={5} className="px-4 py-4 text-center text-gray-500">
                         Henüz staj başvurunuz bulunmamaktadır
                       </td>
                     </tr>
@@ -127,39 +182,30 @@ const MyApplicationsPage: React.FC = () => {
                     filteredApplications.map((application) => (
                       <tr key={application.id} className="border-b border-gray-200">
                         <td className="px-4 py-3 text-sm text-gray-700">
-                          {new Date(application.createdAt).toLocaleDateString('tr-TR')}
+                          {new Date(application.appliedDate).toLocaleDateString('tr-TR')}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{application.workplaceName}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700">
-                          {application.internshipPeriodText}
+                        <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                          {application.internshipName}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-700">
-                          {application.internshipTypeText}
+                          {application.companyName}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <span
                             className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                              statusConfig[application.status].color
+                              statusConfig[application.status]?.color || 'bg-gray-100 text-gray-800'
                             }`}
                           >
-                            {application.statusText || statusConfig[application.status].label}
+                            {statusConfig[application.status]?.label || application.status}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm flex gap-2">
                           <button
-                            className="btn bg-blue-500 text-white text-xs py-1 px-2 rounded"
+                            className="btn bg-blue-500 text-white text-xs py-1 px-2 rounded hover:bg-blue-600"
                             onClick={() => openDetailsModal(application)}
                           >
                             Detay
                           </button>
-                          {application.status === 'PENDING' && (
-                            <button
-                              className="btn bg-green-500 text-white text-xs py-1 px-2 rounded"
-                              onClick={() => handleUpdateApplication(application)}
-                            >
-                              Güncelle
-                            </button>
-                          )}
                         </td>
                       </tr>
                     ))
@@ -170,39 +216,44 @@ const MyApplicationsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Detay Modalı */}
+        {/* Detay Modalı - YENİ API İLE */}
         {showDetailsModal && selectedApplication && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900">Staj Başvurusu Detayı</h3>
-                <button className="text-gray-500" onClick={closeModal}>
+                <button className="text-gray-500 hover:text-gray-700" onClick={closeModal}>
                   <KeenIcon icon="cross" className="h-5 w-5" />
                 </button>
               </div>
 
               <div className="space-y-6">
+                {/* Başvuru Durumu */}
                 <div>
                   <h4 className="text-md font-medium mb-2">Başvuru Durumu</h4>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <span
-                        className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
-                          statusConfig[selectedApplication.status].color
-                        }`}
-                      >
-                        {selectedApplication.statusText || statusConfig[selectedApplication.status].label}
-                      </span>
-                      <span className="text-gray-600">
-                        Son güncelleme: {new Date(selectedApplication.updatedAt).toLocaleString('tr-TR')}
-                      </span>
-                    </div>
+                    <span
+                      className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
+                        statusConfig[selectedApplication.status]?.color || 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {statusConfig[selectedApplication.status]?.label || selectedApplication.status}
+                    </span>
                   </div>
                 </div>
 
+                {/* Genel Bilgiler */}
                 <div>
                   <h4 className="text-md font-medium mb-2">Genel Bilgiler</h4>
                   <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Staj Adı</p>
+                      <p>{selectedApplication.internshipName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Şirket</p>
+                      <p>{selectedApplication.companyName}</p>
+                    </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Başlangıç Tarihi</p>
                       <p>{new Date(selectedApplication.startDate).toLocaleDateString('tr-TR')}</p>
@@ -213,65 +264,98 @@ const MyApplicationsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Staj Türü</p>
-                      <p>{selectedApplication.internshipTypeText}</p>
+                      <p>{selectedApplication.type === 'VOLUNTARY' ? 'Gönüllü' : 'Zorunlu'}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Sağlık Sigortası</p>
                       <p>{selectedApplication.hasGeneralHealthInsurance ? 'Var' : 'Yok'}</p>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Çalışma Günleri</p>
-                      <p>
-                        {selectedApplication.weeklyWorkingDaysText}
-                      </p>
-                    </div>
                   </div>
                 </div>
 
+                {/* Öğrenci Bilgileri */}
                 <div>
-                  <h4 className="text-md font-medium mb-2">İşyeri Bilgileri</h4>
+                  <h4 className="text-md font-medium mb-2">Öğrenci Bilgileri</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">İşyeri Adı</p>
-                      <p>{selectedApplication.workplaceName}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">İl/Ülke</p>
-                      <p>{selectedApplication.provinceText}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Faaliyet Alanı</p>
-                      <p>{selectedApplication.activityField}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">E-posta</p>
-                      <p>{selectedApplication.workplaceEmail}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Telefon</p>
-                      <p>{selectedApplication.workplacePhone}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-sm font-medium text-gray-500">Adres</p>
-                      <p>{selectedApplication.workplaceAddress}</p>
+                      <p className="text-sm font-medium text-gray-500">Ad Soyad</p>
+                      <p>{selectedApplication.studentName} {selectedApplication.studentSurname}</p>
                     </div>
                   </div>
                 </div>
 
+                {/* Requirements */}
+                {selectedApplication.requirements && selectedApplication.requirements.length > 0 && (
+                  <div>
+                    <h4 className="text-md font-medium mb-2">Gereksinimler</h4>
+                    <div className="space-y-3">
+                      {selectedApplication.requirements.map((requirement) => (
+                        <div key={requirement.id} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h5 className="text-sm font-medium">{requirement.name}</h5>
+                            <span
+                              className={`px-2 py-1 text-xs rounded-full ${
+                                requirement.status === 'APPROVED'
+                                  ? 'bg-green-100 text-green-800'
+                                  : requirement.status === 'REJECTED'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}
+                            >
+                              {requirement.status}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">{requirement.description}</p>
+                          <p className="text-xs text-gray-500">Tür: {requirement.ruleType}</p>
+                          
+                          {/* Document Upload for DOCUMENT type requirements */}
+                          {requirement.ruleType === 'DOCUMENT' && (
+                            <div className="mt-3">
+                              <div className="flex items-center gap-3">
+                                <label className="text-sm font-medium text-gray-700">
+                                  Belge Yükle:
+                                </label>
+                                <input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      handleDocumentUpload(requirement.id, file);
+                                    }
+                                  }}
+                                  className="text-sm text-gray-600 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                  disabled={uploadingDocuments.has(`${selectedApplication.id}-${requirement.id}`)}
+                                />
+                                {uploadingDocuments.has(`${selectedApplication.id}-${requirement.id}`) && (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500"></div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Documents */}
+                          {requirement.documents && requirement.documents.length > 0 && (
+                            <div className="mt-3">
+                              <p className="text-sm font-medium text-gray-700 mb-2">Yüklenen Belgeler:</p>
+                              <div className="space-y-1">
+                                {requirement.documents.map((doc: any) => (
+                                  <div key={doc.id} className="text-sm text-blue-600 hover:text-blue-800">
+                                    📄 {doc.fileName}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex justify-end gap-3">
-                  {selectedApplication.status === 'PENDING' && (
-                    <button
-                      className="btn bg-green-500 text-white py-2 px-4 rounded"
-                      onClick={() => {
-                        closeModal();
-                        handleUpdateApplication(selectedApplication);
-                      }}
-                    >
-                      Güncelle
-                    </button>
-                  )}
                   <button
-                    className="btn bg-gray-200 text-gray-800 py-2 px-4 rounded"
+                    className="btn bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300"
                     onClick={closeModal}
                   >
                     Kapat

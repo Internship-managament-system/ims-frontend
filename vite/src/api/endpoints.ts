@@ -38,6 +38,7 @@ export const COMMISSION_DEPARTMENT_MEMBERS = (departmentId: string | number) => 
 export const INTERNSHIP_APPLICATIONS = `/api/v1/internship-applications`; // Tüm staj başvurularını listele
 export const INTERNSHIP_APPLICATION_DETAIL = (id: string | number) => `/api/v1/internship-applications/${id}`; // Staj başvurusu detayını getir
 export const INTERNSHIP_APPLICATION_CREATE = `/api/v1/internship-applications`; // Yeni staj başvurusu oluştur
+export const INTERNSHIP_APPLICATION_UPDATE = (id: string | number) => `/api/v1/internship-applications/${id}`; // Staj başvurusunu güncelle
 export const INTERNSHIP_APPLICATION_STATUS_UPDATE = (id: string | number) => `/api/v1/internship-applications/${id}/status`; // Staj başvurusu durumunu güncelle
 export const INTERNSHIP_APPLICATION_ASSIGN = (id: string | number) => `/api/v1/internship-applications/${id}/assign`; // Staj başvurusunu bir kullanıcıya ata
 export const INTERNSHIP_APPLICATIONS_ME = `/api/v1/internship-applications/me`; // Giriş yapmış öğrencinin kendi staj başvurularını listele

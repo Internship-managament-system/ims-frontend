@@ -129,7 +129,7 @@ const InternshipApplicationsPage: React.FC = () => {
     const studentNumber = app.studentEmail?.substring(0, 10) || '';
     
     return (
-      app.workplaceName.toLowerCase().includes(searchLower) ||
+      ((app as any).companyName || '').toLowerCase().includes(searchLower) ||
       app.status.toLowerCase().includes(searchLower) ||
       studentNumber.toLowerCase().includes(searchLower) ||
       (app.studentFullName || '').toLowerCase().includes(searchLower) ||
@@ -213,7 +213,7 @@ const InternshipApplicationsPage: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-700">
                           <div>
-                            <p>{application.workplaceName}</p>
+                            <p>{(application as any).companyName || 'Şirket Adı'}</p>
                             <p className="text-xs text-gray-500">{application.activityField}</p>
                           </div>
                         </td>
@@ -317,7 +317,7 @@ const InternshipApplicationsPage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-medium text-gray-500">İş Yeri Adı</p>
-                      <p>{selectedApplication.workplaceName}</p>
+                      <p>{(selectedApplication as any).companyName || 'Şirket Adı'}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">İl/Ülke</p>
