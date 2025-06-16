@@ -5,12 +5,15 @@ import {
   INTERNSHIP_APPLICATION_CREATE,
   INTERNSHIP_APPLICATION_STATUS_UPDATE,
   INTERNSHIP_APPLICATION_ASSIGN,
+  INTERNSHIP_APPLICATIONS_AUTO_ASSIGN,
+  INTERNSHIP_APPLICATIONS_MANUAL_ASSIGN,
   INTERNSHIP_APPLICATIONS_ME,
   INTERNSHIP_APPLICATIONS_DEPARTMENT,
   INTERNSHIP_APPLICATIONS_ASSIGNED,
   INTERNSHIPS,
   INTERNSHIP_DETAIL
 } from '@/api/endpoints';
+
 
 // Staj başvurusu durumları
 export type InternshipStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
@@ -34,6 +37,8 @@ export interface InternshipDetail {
   departmentId: string;
   rules: any[];
 }
+
+
 
 // Staj başvurusu arayüzü (Swagger'dan alınan son yapıya göre güncellendi)
 export interface InternshipApplication {
@@ -477,6 +482,77 @@ export const getInternshipApplicationsForCommission = async (): Promise<Internsh
     return [];
   } catch (error) {
     console.error('Komisyon başkanı başvuru listesi getirme hatası:', error);
+    throw error;
+  }
+};
+
+// Yeni atama interface'leri
+export interface AutoAssignRequest {
+  userId?: string; // Opsiyonel, backend otomatik belirleyebilir
+  applicationIds?: string[]; // Opsiyonel, hangi başvurular atanacak
+}
+
+export interface ManualAssignRequest {
+  userId: string; // Atanacak komisyon üyesi ID'si
+  applicationIds: string[]; // Atanacak başvuru ID'leri
+}
+
+export interface ManualAssignCommand {
+  userId: string;
+  applicationIds: string[];
+}
+
+// Otomatik atama fonksiyonu
+export const autoAssignInternshipApplications = async (data?: AutoAssignRequest): Promise<any> => {
+  try {
+    const requestData = data || {};
+    
+    console.log('🔄 Otomatik atama başlatılıyor, requestData:', requestData);
+    console.log('🌐 API URL:', INTERNSHIP_APPLICATIONS_AUTO_ASSIGN);
+    
+    const response = await axiosClient.put(INTERNSHIP_APPLICATIONS_AUTO_ASSIGN, requestData);
+    
+    console.log('✅ Otomatik atama API Success Response:', response);
+    return response;
+    
+  } catch (error: any) {
+    console.error('❌ Otomatik atama API Error:', error);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error response:', error.response);
+    
+    if (error.response) {
+      console.error('❌ Error response status:', error.response.status);
+      console.error('❌ Error response data:', error.response?.data);
+    }
+    
+    throw error;
+  }
+};
+
+// Manuel atama fonksiyonu
+export const manualAssignInternshipApplications = async (data: ManualAssignRequest): Promise<any> => {
+  try {
+    // Backend bir array bekliyor, tek bir objeyi array içinde gönder
+    const requestData = [data];
+    
+    console.log('👤 Manuel atama başlatılıyor, requestData:', requestData);
+    console.log('🌐 API URL:', INTERNSHIP_APPLICATIONS_MANUAL_ASSIGN);
+    
+    const response = await axiosClient.put(INTERNSHIP_APPLICATIONS_MANUAL_ASSIGN, requestData);
+    
+    console.log('✅ Manuel atama API Success Response:', response);
+    return response;
+    
+  } catch (error: any) {
+    console.error('❌ Manuel atama API Error:', error);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error response:', error.response);
+    
+    if (error.response) {
+      console.error('❌ Error response status:', error.response.status);
+      console.error('❌ Error response data:', error.response?.data);
+    }
+    
     throw error;
   }
 }; 

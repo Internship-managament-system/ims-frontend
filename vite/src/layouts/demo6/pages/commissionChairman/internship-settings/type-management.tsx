@@ -78,9 +78,6 @@ const TypeManagement: React.FC = () => {
   // API Base URL
   const API_BASE_URL = '/api/v1';
 
- 
-
-
 
   // Belgeleri çek
   const fetchDocuments = async () => {
@@ -329,59 +326,175 @@ const TypeManagement: React.FC = () => {
   }
 
   // TypeDetailModal güncelle
+  const getRuleTypeColor = (ruleType: string) => {
+    switch (ruleType) {
+      case 'DOCUMENT':
+        return 'bg-blue-100 text-blue-800 border border-blue-200';
+      case 'TOPIC':
+        return 'bg-green-100 text-green-800 border border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border border-gray-200';
+    }
+  };
+
+  const getRuleTypeIcon = (ruleType: string) => {
+    switch (ruleType) {
+      case 'DOCUMENT':
+        return 'document';
+      case 'TOPIC':
+        return 'book';
+      default:
+        return 'information-2';
+    }
+  };
+
+  const getRuleTypeText = (ruleType: string) => {
+    switch (ruleType) {
+      case 'DOCUMENT':
+        return '📄 Belge';
+      case 'TOPIC':
+        return '📚 Konu';
+      default:
+        return ruleType;
+    }
+  };
+
   const TypeDetailModal = ({ open, onClose, type, loading }: { open: boolean; onClose: () => void; type: any | null; loading: boolean }) => {
     if (!open) return null;
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full relative border-2 border-[#13126e] max-h-[90vh] overflow-hidden flex flex-col">
-          <div className="flex justify-between items-center p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-[#13126e] flex items-center gap-2">
-              <KeenIcon icon="briefcase" className="text-[#13126e] text-xl" />
-              {type?.name || 'Staj Türü Detayı'}
-            </h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
-              <KeenIcon icon="cross" className="text-2xl" />
-            </button>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full relative border-2 border-[#13126e] max-h-[90vh] overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="relative bg-gradient-to-r from-[#13126e] to-[#1f1e7e] text-white p-6">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-xl">
+                  <KeenIcon icon="briefcase" className="text-white text-2xl" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">{type?.name || 'Staj Türü Detayı'}</h2>
+                  <p className="text-blue-100 text-sm mt-1">Staj türü kurallarını ve detaylarını inceleyin</p>
+                </div>
+              </div>
+              <button 
+                onClick={onClose} 
+                className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-xl transition-all duration-200"
+              >
+                <KeenIcon icon="cross" className="text-2xl" />
+              </button>
+            </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-40">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#13126e] mb-4"></div>
-                <span className="text-gray-500">Yükleniyor...</span>
+              <div className="flex flex-col items-center justify-center h-60">
+                <div className="relative">
+                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#13126e]/20"></div>
+                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-t-[#13126e] absolute top-0 left-0"></div>
+                </div>
+                <span className="text-gray-600 mt-4 font-medium">Detaylar yükleniyor...</span>
               </div>
             ) : type ? (
               <>
-                <p className="text-gray-600 mb-4 text-lg">{type.description}</p>
-                <div className="mb-6">
-                  <span className="inline-block bg-[#13126e] text-white text-sm px-4 py-2 rounded-full font-semibold">
-                    Süre: {type.durationOfDays} iş günü
-                  </span>
+                {/* Genel Bilgiler */}
+                <div className="mb-8 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                  <div className="bg-gradient-to-r from-[#13126e] to-[#1f1e7e] p-4">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <KeenIcon icon="information-2" className="text-white text-xl" />
+                      Genel Bilgiler
+                    </h3>
+                  </div>
+                  
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <KeenIcon icon="text" className="text-[#13126e] text-lg" />
+                          <span className="text-sm font-semibold text-[#13126e]">Açıklama</span>
+                        </div>
+                        <p className="text-gray-800 text-lg leading-relaxed">{type.description}</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <KeenIcon icon="time" className="text-[#13126e] text-lg" />
+                          <span className="text-sm font-semibold text-[#13126e]">Süre</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-2 bg-[#13126e] text-white px-4 py-2 rounded-xl font-semibold">
+                            <KeenIcon icon="calendar" className="text-sm" />
+                            {type.durationOfDays} iş günü
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
                 {/* Kurallar */}
-                {type.rules && type.rules.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-base font-semibold text-gray-700 mb-4 border-b border-gray-200 pb-2">Kurallar</h4>
-                    <ul className="space-y-4">
-                      {type.rules.map((rule: any, idx: number) => (
-                        <li key={idx} className="border-l-4 border-[#13126e] pl-4 py-2">
-                          <div className="flex flex-wrap items-center gap-2 mb-2">
-                            <span className="font-semibold text-blue-900 text-base">{rule.name}</span>
-                            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">[{rule.type}]</span>
-                          </div>
-                          {rule.description && rule.description !== rule.name && (
-                            <div className="text-gray-600 text-sm">
-                              {renderDescription(rule.description)}
+                {type.rules && type.rules.length > 0 ? (
+                  <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div className="bg-gradient-to-r from-[#13126e] to-[#1f1e7e] p-4">
+                      <h4 className="text-lg font-bold text-white flex items-center gap-2">
+                        <KeenIcon icon="setting-2" className="text-white text-xl" />
+                        Kurallar ve Gereksinimler
+                        <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold">
+                          {type.rules.length} kural
+                        </span>
+                      </h4>
+                    </div>
+                    
+                    <div className="p-6">
+                      <div className="space-y-6">
+                        {type.rules.map((rule: any, idx: number) => (
+                          <div key={idx} className="border border-gray-200 rounded-2xl overflow-hidden bg-gradient-to-r from-gray-50 to-blue-50/30">
+                            <div className="p-5">
+                              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-[#13126e]/10 rounded-xl">
+                                    <KeenIcon icon={getRuleTypeIcon(rule.type)} className="text-[#13126e] text-lg" />
+                                  </div>
+                                  <h5 className="font-bold text-gray-900 text-lg">{rule.name}</h5>
+                                </div>
+                                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold ${getRuleTypeColor(rule.type)}`}>
+                                  <KeenIcon icon={getRuleTypeIcon(rule.type)} className="text-sm" />
+                                  {getRuleTypeText(rule.type)}
+                                </span>
+                              </div>
+                              
+                              {rule.description && rule.description !== rule.name && (
+                                <div className="text-gray-600 text-sm bg-white/70 p-4 rounded-xl border-l-4 border-[#13126e]">
+                                  {renderDescription(rule.description)}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div className="p-12 text-center">
+                      <div className="p-4 bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                        <KeenIcon icon="setting-2" className="text-4xl text-gray-400" />
+                      </div>
+                      <h4 className="text-xl font-semibold text-gray-700 mb-2">Kural Bulunmuyor</h4>
+                      <p className="text-gray-500">Bu staj türü için henüz kural tanımlanmamış.</p>
+                    </div>
                   </div>
                 )}
               </>
             ) : (
-              <div className="text-center text-gray-500">Detaylar yüklenemedi.</div>
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                <div className="p-12 text-center">
+                  <div className="p-4 bg-red-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                    <KeenIcon icon="warning" className="text-4xl text-red-400" />
+                  </div>
+                  <h4 className="text-xl font-semibold text-gray-700 mb-2">Detaylar Yüklenemedi</h4>
+                  <p className="text-gray-500">Staj türü detayları yüklenirken bir hata oluştu.</p>
+                </div>
+              </div>
             )}
           </div>
         </div>

@@ -44,6 +44,7 @@ import DocumentManagement from '../layouts/demo6/pages/commissionChairman/intern
 // Student & Commission Pages
 import StudentDashboard from '../layouts/demo6/pages/student/Dashboard';
 import CommissionDashboard from '../layouts/demo6/pages/commission/Dashboard';
+import AssignedApplications from '../layouts/demo6/pages/commission/AssignedApplications';
 import Unauthorized from '../layouts/demo6/Unauthorized';
 import RoleBasedDashboard from './RoleBasedDashboard';
 import Processes from '../layouts/demo6/pages/student/processes/Processes';
@@ -57,6 +58,7 @@ import Documents from '../layouts/demo6/pages/student/documents/Documents';
 import NotebookUpload from '../layouts/demo6/pages/student/notebook-upload/NotebookUpload';
 import InternshipApplicationPage from '../layouts/demo6/pages/student/InternshipApplication';
 import MyApplicationsPage from '../layouts/demo6/pages/student/MyApplications';
+import InternshipDetailPopup from '../pages/InternshipDetailPopup';
 
 
 
@@ -156,6 +158,7 @@ const AppRoutingSetup = (): ReactElement => {
       }>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<CommissionDashboard />} />
+        <Route path="assigned-applications" element={<AssignedApplications />} />
       </Route>
 
       {/* Home Route - Landing Page */}
@@ -165,6 +168,9 @@ const AppRoutingSetup = (): ReactElement => {
       <Route path="/general-announcements" element={<GeneralAnnouncements />} />
       <Route path="/internship-announcements" element={<InternshipAnnouncements />} />
       <Route path="/announcement/:id" element={<AnnouncementDetail />} />
+
+      {/* Popup Pages - Standalone pages without layout */}
+      <Route path="/internship-detail-popup" element={<InternshipDetailPopup />} />
 
       {/* Dashboard Route - Role-based redirection for authenticated users */}
       <Route path="/dashboard" element={<RoleBasedDashboard />} />

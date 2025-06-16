@@ -8,3 +8,4 @@ export * from './SidebarMenuSecondary';
 export * from './SidebarMenuCommissionChairman';
 export * from './SidebarMenuStudent';
 export * from './SidebarMenuAdmin';
+export * from './SidebarMenuCommissionMember';

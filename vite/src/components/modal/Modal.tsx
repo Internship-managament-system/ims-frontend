@@ -18,10 +18,8 @@ const Modal = forwardRef<HTMLDivElement, IModalProps>(
         onClose={onClose}
         style={{
           zIndex: `${zIndex}`,
-          opacity: open ? 1 : 0,
-          display: open ? 'block' : 'none'
         }}
-        className={clsx('modal', className)}
+        className={clsx('fixed inset-0 flex items-center justify-center p-4', className)}
         {...props} // Spread any additional props
         slots={{ backdrop: ModalBackdrop }} // Assign custom backdrop
       >

@@ -4,6 +4,7 @@ import { useAuthContext } from '@/auth';
 import { SidebarMenuCommissionChairman } from './SidebarMenuCommissionChairman';
 import { SidebarMenuStudent } from './SidebarMenuStudent';
 import { SidebarMenuAdmin } from './SidebarMenuAdmin';
+import { SidebarMenuCommissionMember } from './SidebarMenuCommissionMember';
 import clsx from 'clsx';
 import { KeenIcon } from '@/components/keenicons';
 import {
@@ -143,12 +144,7 @@ const SidebarMenuPrimary = () => {
   } else if (currentUser?.role === 'STUDENT') {
     return <SidebarMenuStudent />;
   } else if (currentUser?.role === 'COMMISSION_MEMBER') {
-    // Komisyon menüsü varsa onu ekle
-    return (
-      <Menu highlight={true} multipleExpand={false} className="sidebar-menu-primary flex flex-col w-full gap-1.5 px-3.5">
-        {menuConfig && buildMenu(menuConfig)}
-      </Menu>
-    );
+    return <SidebarMenuCommissionMember />;
   } else {
     // Diğer roller için default menü
     return (

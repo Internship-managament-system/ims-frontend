@@ -41,6 +41,8 @@ export const INTERNSHIP_APPLICATION_CREATE = `/api/v1/internship-applications`; 
 export const INTERNSHIP_APPLICATION_UPDATE = (id: string | number) => `/api/v1/internship-applications/${id}`; // Staj başvurusunu güncelle
 export const INTERNSHIP_APPLICATION_STATUS_UPDATE = (id: string | number) => `/api/v1/internship-applications/${id}/status`; // Staj başvurusu durumunu güncelle
 export const INTERNSHIP_APPLICATION_ASSIGN = (id: string | number) => `/api/v1/internship-applications/${id}/assign`; // Staj başvurusunu bir kullanıcıya ata
+export const INTERNSHIP_APPLICATIONS_AUTO_ASSIGN = `/api/v1/internships/applications/auto-assign`; // Otomatik atama
+export const INTERNSHIP_APPLICATIONS_MANUAL_ASSIGN = `/api/v1/internships/applications/assign`; // Manuel atama
 export const INTERNSHIP_APPLICATIONS_ME = `/api/v1/internship-applications/me`; // Giriş yapmış öğrencinin kendi staj başvurularını listele
 export const INTERNSHIP_APPLICATIONS_DEPARTMENT = (departmentId: string | number) => `/api/v1/internship-applications/department/${departmentId}`; // Bölüme göre staj başvurularını listele
 export const INTERNSHIP_APPLICATIONS_ASSIGNED = `/api/v1/internship-applications/assigned-to-me`; // Giriş yapmış kullanıcıya atanmış staj başvurularını listele

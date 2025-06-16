@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { KeenIcon } from '@/components/keenicons';
 import { useToast } from '@/components/ui/use-toast';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAllCommissionMembers, CommissionMember } from '@/services/commissionService';
+import { autoAssignInternshipApplications, manualAssignInternshipApplications } from '@/services/internshipService';
 
 interface AssignmentTask {
   id: string;
@@ -19,6 +20,7 @@ interface AssignmentTask {
 
 const AssignmentPanel: React.FC = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedMembers, setSelectedMembers] = useState<(string | number)[]>([]);
   const [assignmentMode, setAssignmentMode] = useState<'auto' | 'manual'>('manual');
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
@@ -31,6 +33,52 @@ const AssignmentPanel: React.FC = () => {
     queryFn: getAllCommissionMembers,
   });
 
+  // Otomatik atama mutation'ı
+  const autoAssignMutation = useMutation({
+    mutationFn: autoAssignInternshipApplications,
+    onSuccess: (data) => {
+      toast({ 
+        title: "Başarılı", 
+        description: "Otomatik atama işlemi başarıyla tamamlandı!", 
+        type: "success" 
+      });
+      // Atama sonrası verileri yenile
+      queryClient.invalidateQueries({ queryKey: ['commission-members-for-assignment'] });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Hata", 
+        description: error.response?.data?.message || "Otomatik atama işlemi başarısız oldu!", 
+        type: "error" 
+      });
+    }
+  });
+
+  // Manuel atama mutation'ı
+  const manualAssignMutation = useMutation({
+    mutationFn: manualAssignInternshipApplications,
+    onSuccess: (data) => {
+      toast({ 
+        title: "Başarılı", 
+        description: "Manuel atama işlemi başarıyla tamamlandı!", 
+        type: "success" 
+      });
+      // Atama sonrası verileri yenile
+      queryClient.invalidateQueries({ queryKey: ['commission-members-for-assignment'] });
+      // Seçimleri temizle
+      setSelectedCategories([]);
+      setSelectedMembers([]);
+      setShowAssignmentModal(false);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Hata", 
+        description: error.response?.data?.message || "Manuel atama işlemi başarısız oldu!", 
+        type: "error" 
+      });
+    }
+  });
+
   console.log('📋 Komisyon üyeleri:', commissionMembers);
 
   // Görüntülenecek isim belirle
@@ -38,35 +86,7 @@ const AssignmentPanel: React.FC = () => {
     return member.fullName || `${member.name || ''} ${member.surname || ''}`.trim();
   };
 
-  const [pendingTasks, setPendingTasks] = useState<AssignmentTask[]>([
-    {
-      id: '1',
-      type: 'application',
-      studentName: 'Mehmet Demir',
-      studentId: '20190101100',
-      title: 'Staj Başvurusu',
-      date: '26.04.2025',
-      priority: 'high'
-    },
-    {
-      id: '2',
-      type: 'notebook',
-      studentName: 'Elif Kaya',
-      studentId: '20190101101',
-      title: 'Staj Defteri',
-      date: '25.04.2025',
-      priority: 'medium'
-    },
-    {
-      id: '3',
-      type: 'graduate',
-      studentName: 'Can Yılmaz',
-      studentId: '20180101050',
-      title: 'Mezun Staj Defteri',
-      date: '24.04.2025',
-      priority: 'high'
-    }
-  ]);
+  
 
   const toggleMemberSelection = (memberId: string | number) => {
     setSelectedMembers(prev =>
@@ -118,23 +138,13 @@ const AssignmentPanel: React.FC = () => {
   };
 
   const handleAutoAssign = () => {
-    if (selectedCategories.length === 0) {
-      toast({ title: "Hata", description: "Lütfen en az bir kategori seçiniz.", type: "error" });
-      return;
-    }
-
-    if (selectedMembers.length === 0) {
-      toast({ title: "Hata", description: "Lütfen en az bir komisyon üyesi seçiniz.", type: "error" });
-      return;
-    }
-
-    // Otomatik atama işlemi
+    // Şu an için sadece başlık olarak çalışacak, atamayı bekleyen işler kısmı sonradan eklenecek
     toast({ title: "Bilgi", description: "Otomatik atama işlemi başlatılacak!", type: "info" });
     
-    // API çağrısı simülasyonu
-    setTimeout(() => {
-      toast({ title: "Başarılı", description: `${selectedCategories.length} kategori için atama başarıyla tamamlandı!`, type: "success" });
-    }, 2000);
+    // Backend'e otomatik atama isteği gönder
+    autoAssignMutation.mutate({
+      // Şu an için boş obje gönderiyoruz, backend kendi belirleyecek
+    });
   };
 
   const handleManualAssignment = () => {
@@ -150,25 +160,19 @@ const AssignmentPanel: React.FC = () => {
   };
 
   const confirmAssignments = () => {
-    // Seçilen kategoriler için atama yap
-    const categoryNames = {
-      'staj-basvurulari': 'Staj Başvuruları',
-      'staj-defterleri': 'Staj Defterleri',
-      'mezun-staj-defterleri': 'Mezun Staj Defterleri'
-    };
+    if (selectedMembers.length === 0) {
+      toast({ title: "Hata", description: "Lütfen en az bir komisyon üyesi seçiniz.", type: "error" });
+      return;
+    }
+
+    // Seçilen komisyon üyesine atama yap (şu an için ilk seçilen üyeyi kullanıyoruz)
+    const selectedUserId = selectedMembers[0].toString();
     
-    const assignments = selectedCategories.map(categoryId => ({
-      category: categoryNames[categoryId as keyof typeof categoryNames],
-      memberCount: selectedMembers.length
-    }));
-    
-    console.log('Atamalar:', assignments);
-    alert(`${selectedCategories.length} kategori için atama başarıyla tamamlandı!`);
-    
-    // Seçimleri temizle
-    setSelectedCategories([]);
-    setSelectedMembers([]);
-    setShowAssignmentModal(false);
+    // Backend'e manuel atama isteği gönder
+    manualAssignMutation.mutate({
+      userId: selectedUserId,
+      applicationIds: [] // Şu an için boş array, sonradan atamayı bekleyen işler eklenecek
+    });
   };
 
   const toggleCategorySelection = (category: string) => {
@@ -338,20 +342,24 @@ const AssignmentPanel: React.FC = () => {
               {assignmentMode === 'auto' ? (
                 <button
                   onClick={handleAutoAssign}
-                  disabled={selectedCategories.length === 0}
+                  disabled={autoAssignMutation.isPending}
                   className="flex-1 btn bg-[#13126e] text-white py-2 px-4 rounded hover:bg-[#1f1e7e] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >
-                  <KeenIcon icon="setting-2" className="mr-2" />
-                  Otomatik Ata ({selectedCategories.length} kategori)
+                  {autoAssignMutation.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                  ) : (
+                    <KeenIcon icon="setting-2" className="mr-2" />
+                  )}
+                  {autoAssignMutation.isPending ? 'Atama Yapılıyor...' : 'Otomatik Ata'}
                 </button>
               ) : (
                 <button
                   onClick={handleManualAssignment}
-                  disabled={selectedCategories.length === 0 || selectedMembers.length === 0}
+                  disabled={selectedMembers.length === 0 || manualAssignMutation.isPending}
                   className="flex-1 btn bg-[#13126e] text-white py-2 px-4 rounded hover:bg-[#1f1e7e] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >
                   <KeenIcon icon="user" className="mr-2" />
-                  Seçilen Kategorileri Ata ({selectedCategories.length})
+                  Manuel Atama Yap
                 </button>
               )}
             </div>
@@ -417,10 +425,18 @@ const AssignmentPanel: React.FC = () => {
                 İptal
               </button>
               <button 
-                className="btn bg-[#13126e] text-white py-2 px-4 rounded"
+                className="btn bg-[#13126e] text-white py-2 px-4 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
                 onClick={confirmAssignments}
+                disabled={manualAssignMutation.isPending}
               >
-                Atamaları Onayla
+                {manualAssignMutation.isPending ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    Atama Yapılıyor...
+                  </div>
+                ) : (
+                  'Atamaları Onayla'
+                )}
               </button>
             </div>
           </div>
