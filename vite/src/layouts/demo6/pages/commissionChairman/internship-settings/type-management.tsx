@@ -157,6 +157,7 @@ const TypeManagement: React.FC = () => {
       toast({ title: "Hata", description: "Lütfen zorunlu alanları doldurun!", type: "error" });
       return;
     }
+    
     try {
       const typeData = {
         name: newType.name,
@@ -333,47 +334,58 @@ const TypeManagement: React.FC = () => {
   const TypeDetailModal = ({ open, onClose, type, loading }: { open: boolean; onClose: () => void; type: any | null; loading: boolean }) => {
     if (!open) return null;
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-        <div className="bg-white rounded-2xl shadow-2xl p-10 max-w-3xl w-full relative border-2 border-[#13126e] min-h-[400px]">
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
-            <KeenIcon icon="cross" className="text-2xl" />
-          </button>
-          {loading ? (
-            <div className="flex flex-col items-center justify-center h-40">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#13126e] mb-4"></div>
-              <span className="text-gray-500">Yükleniyor...</span>
-            </div>
-          ) : type ? (
-            <>
-              <h2 className="text-3xl font-bold text-[#13126e] mb-2 flex items-center gap-2">
-                <KeenIcon icon="briefcase" className="text-[#13126e] text-2xl" />
-                {type.name}
-              </h2>
-              <p className="text-gray-600 mb-4 text-lg">{type.description}</p>
-              <div className="mb-4">
-                <span className="inline-block bg-[#13126e] text-white text-sm px-4 py-2 rounded-full font-semibold">
-                  Süre: {type.durationOfDays} iş günü
-                </span>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full relative border-2 border-[#13126e] max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="flex justify-between items-center p-6 border-b border-gray-200">
+            <h2 className="text-2xl font-bold text-[#13126e] flex items-center gap-2">
+              <KeenIcon icon="briefcase" className="text-[#13126e] text-xl" />
+              {type?.name || 'Staj Türü Detayı'}
+            </h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
+              <KeenIcon icon="cross" className="text-2xl" />
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-6">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center h-40">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#13126e] mb-4"></div>
+                <span className="text-gray-500">Yükleniyor...</span>
               </div>
-              {/* Kurallar */}
-              {type.rules && type.rules.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-base font-semibold text-gray-700 mb-2">Kurallar</h4>
-                  <ul className="list-disc pl-6 space-y-4">
-                    {type.rules.map((rule: any, idx: number) => (
-                      <li key={idx}>
-                        <span className="font-semibold text-blue-900 text-base">{rule.name}</span>
-                        <span className="ml-2 text-xs text-gray-400 align-middle">[{rule.type}]</span>
-                        {rule.description && rule.description !== rule.name && renderDescription(rule.description)}
-                      </li>
-                    ))}
-                  </ul>
+            ) : type ? (
+              <>
+                <p className="text-gray-600 mb-4 text-lg">{type.description}</p>
+                <div className="mb-6">
+                  <span className="inline-block bg-[#13126e] text-white text-sm px-4 py-2 rounded-full font-semibold">
+                    Süre: {type.durationOfDays} iş günü
+                  </span>
                 </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center text-gray-500">Detaylar yüklenemedi.</div>
-          )}
+                {/* Kurallar */}
+                {type.rules && type.rules.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-base font-semibold text-gray-700 mb-4 border-b border-gray-200 pb-2">Kurallar</h4>
+                    <ul className="space-y-4">
+                      {type.rules.map((rule: any, idx: number) => (
+                        <li key={idx} className="border-l-4 border-[#13126e] pl-4 py-2">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="font-semibold text-blue-900 text-base">{rule.name}</span>
+                            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">[{rule.type}]</span>
+                          </div>
+                          {rule.description && rule.description !== rule.name && (
+                            <div className="text-gray-600 text-sm">
+                              {renderDescription(rule.description)}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center text-gray-500">Detaylar yüklenemedi.</div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -408,7 +420,7 @@ const TypeManagement: React.FC = () => {
               </div>
             ) : (
               <>
-                {types.slice(0, 2).map((type) => (
+                {types.map((type) => (
                   <div
                     key={type.id}
                     className="p-5 rounded-2xl border-2 border-[#13126e] bg-gradient-to-br from-[#f5f7fa] to-[#e9ecf8] shadow-md hover:shadow-xl transition-shadow cursor-pointer group relative"
@@ -516,7 +528,7 @@ const TypeManagement: React.FC = () => {
                           </label>
                           <textarea
                             className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
-                            rows={3}
+                            rows={4}
                             placeholder="Staj türü hakkında detaylı açıklama..."
                             value={newType.description || ''}
                             onChange={(e) =>

@@ -136,7 +136,21 @@ const InternshipApplicationPage: React.FC = () => {
       console.error('🚨 Error response data:', error.response?.data);
       console.error('🚨 Error status:', error.response?.status);
       
-      if (error.response?.data) {
+      if (error.response?.status === 400) {
+        // Validation hatalarını kullanıcıya göster
+        const responseData = error.response.data;
+        if (responseData?.message) {
+          toast.error(`Validation Hatası: ${responseData.message}`);
+        } else if (responseData?.errors) {
+          const errorMessages = Object.values(responseData.errors).join(', ');
+          toast.error(`Form Hatası: ${errorMessages}`);
+        } else if (responseData?.violations) {
+          const violationMessages = responseData.violations.map((v: any) => v.message).join(', ');
+          toast.error(`Doğrulama Hatası: ${violationMessages}`);
+        } else {
+          toast.error('Gönderilen veriler geçersiz. Lütfen formu kontrol edin.');
+        }
+      } else if (error.response?.data) {
         toast.error(`Backend hatası: ${JSON.stringify(error.response.data)}`);
       } else {
         toast.error(`Başvuru gönderilirken hata: ${error.message || 'Bilinmeyen hata'}`);
@@ -181,10 +195,15 @@ const InternshipApplicationPage: React.FC = () => {
     };
     
     const formatProvince = (provinceValue: string) => {
-      if (provinceValue === provinceValue.toUpperCase()) {
-        return provinceValue;
-      }
-      return provinceValue.toUpperCase();
+      // Province formatını değiştirmeden olduğu gibi gönder
+      // Backend'in beklediği formatı bulana kadar
+      console.log('🔄 Province formatting - Input:', provinceValue);
+      
+      // Türkiye il kodları genellikle büyük harfle tutulur
+      const result = provinceValue.toUpperCase().trim();
+      console.log('🔄 Province formatting - Output:', result);
+      
+      return result;
     };
     
     const formatWeeklyWorkingDays = (weeklyWorkingDays: string): number => {
@@ -194,14 +213,43 @@ const InternshipApplicationPage: React.FC = () => {
       return result;
     };
     
+    // Frontend validation önce
+    const validationErrors: string[] = [];
+    
+    if (!formData.internshipId) validationErrors.push('Staj seçimi zorunludur');
+    if (!formData.province) validationErrors.push('İl seçimi zorunludur');
+    if (!formData.companyName.trim()) validationErrors.push('Şirket adı zorunludur');
+    if (!formData.activityField.trim()) validationErrors.push('Faaliyet alanı zorunludur');
+    if (!formData.companyEmail.trim()) validationErrors.push('Şirket e-postası zorunludur');
+    if (!formData.companyPhone.trim()) validationErrors.push('Şirket telefonu zorunludur');
+    if (!formData.companyAddress.trim()) validationErrors.push('Şirket adresi zorunludur');
+    if (!formData.startDate) validationErrors.push('Başlangıç tarihi zorunludur');
+    
+    // E-posta format kontrolü
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.companyEmail && !emailRegex.test(formData.companyEmail)) {
+      validationErrors.push('Geçerli bir e-posta adresi giriniz');
+    }
+    
+    // UUID format kontrolü
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (formData.internshipId && !uuidRegex.test(formData.internshipId)) {
+      validationErrors.push('Geçersiz staj ID formatı');
+    }
+    
+    if (validationErrors.length > 0) {
+      toast.error(`Form hataları: ${validationErrors.join(', ')}`);
+      return;
+    }
+    
     const submissionData: NewInternshipApplication = {
       internshipId: formData.internshipId,
       province: formatProvince(formData.province),
-      companyName: formData.companyName,
-      activityField: formData.activityField,
-      companyEmail: formData.companyEmail,
-      companyPhone: formData.companyPhone,
-      companyAddress: formData.companyAddress,
+      companyName: formData.companyName.trim(),
+      activityField: formData.activityField.trim(),
+      companyEmail: formData.companyEmail.trim(),
+      companyPhone: formData.companyPhone.trim(),
+      companyAddress: formData.companyAddress.trim(),
       startDate: formatDate(formData.startDate),
       weeklyWorkingDays: formatWeeklyWorkingDays(formData.weeklyWorkingDays),
       hasGeneralHealthInsurance: formData.hasGeneralHealthInsurance,
@@ -226,6 +274,12 @@ const InternshipApplicationPage: React.FC = () => {
     console.log('  ✓ weeklyWorkingDays:', submissionData.weeklyWorkingDays, typeof submissionData.weeklyWorkingDays);
     console.log('  ✓ hasGeneralHealthInsurance:', submissionData.hasGeneralHealthInsurance, typeof submissionData.hasGeneralHealthInsurance);
     console.log('  ✓ applicationType:', submissionData.applicationType, typeof submissionData.applicationType);
+    
+    // Province debug bilgisi ekle
+    console.log('🌍 Province Debug Info:');
+    console.log('  Original province value:', formData.province);
+    console.log('  Formatted province value:', formatProvince(formData.province));
+    console.log('  Available provinces:', provinces.map(p => ({ value: p.value, label: p.label })));
     
     createApplicationMutation.mutate(submissionData);
   };

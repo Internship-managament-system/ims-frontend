@@ -2,15 +2,8 @@
 import React, { useState } from 'react';
 import { KeenIcon } from '@/components/keenicons';
 import { useToast } from '@/components/ui/use-toast';
-
-interface CommissionMember {
-  id: number;
-  name: string;
-  title: string;
-  email: string;
-  assignedApplications: number;
-  assignedNotebooks: number;
-}
+import { useQuery } from '@tanstack/react-query';
+import { getAllCommissionMembers, CommissionMember } from '@/services/commissionService';
 
 interface AssignmentTask {
   id: string;
@@ -26,54 +19,24 @@ interface AssignmentTask {
 
 const AssignmentPanel: React.FC = () => {
   const { toast } = useToast();
-  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<(string | number)[]>([]);
   const [assignmentMode, setAssignmentMode] = useState<'auto' | 'manual'>('manual');
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
-  const [taskAssignments, setTaskAssignments] = useState<{[key: string]: number}>({});
+  const [taskAssignments, setTaskAssignments] = useState<{[key: string]: string | number}>({});
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const commissionMembers: CommissionMember[] = [
-    {
-      id: 1,
-      name: 'Prof. Dr. Ali Demir',
-      title: 'Prof. Dr.',
-      email: 'alidemir@erciyes.edu.tr',
-      assignedApplications: 8,
-      assignedNotebooks: 12,
-    },
-    {
-      id: 2,
-      name: 'Dr. Mehmet Kaya',
-      title: 'Dr.',
-      email: 'mehmetkaya@erciyes.edu.tr',
-      assignedApplications: 6,
-      assignedNotebooks: 9,
-    },
-    {
-      id: 3,
-      name: 'Prof. Dr. Ayşe Yıldız',
-      title: 'Prof. Dr.',
-      email: 'ayseyildiz@erciyes.edu.tr',
-      assignedApplications: 7,
-      assignedNotebooks: 11,
-    },
-    {
-      id: 4,
-      name: 'Arş. Gör. Osman Buğra KAHRAMAN',
-      title: 'Arş. Gör.',
-      email: 'obkahraman@erciyes.edu.tr',
-      assignedApplications: 3,
-      assignedNotebooks: 5,
-    },
-    {
-      id: 5,
-      name: 'Arş. Gör. Fatma AZİZOĞLU',
-      title: 'Arş. Gör.',
-      email: 'fatmaazizoglu@erciyes.edu.tr',
-      assignedApplications: 4,
-      assignedNotebooks: 6,
-    }
-  ];
+  // Komisyon üyelerini dinamik olarak getir
+  const { data: commissionMembers = [], isLoading: isLoadingMembers, error: membersError } = useQuery({
+    queryKey: ['commission-members-for-assignment'],
+    queryFn: getAllCommissionMembers,
+  });
+
+  console.log('📋 Komisyon üyeleri:', commissionMembers);
+
+  // Görüntülenecek isim belirle
+  const getDisplayName = (member: CommissionMember): string => {
+    return member.fullName || `${member.name || ''} ${member.surname || ''}`.trim();
+  };
 
   const [pendingTasks, setPendingTasks] = useState<AssignmentTask[]>([
     {
@@ -105,7 +68,7 @@ const AssignmentPanel: React.FC = () => {
     }
   ]);
 
-  const toggleMemberSelection = (memberId: number) => {
+  const toggleMemberSelection = (memberId: string | number) => {
     setSelectedMembers(prev =>
       prev.includes(memberId)
         ? prev.filter(id => id !== memberId)
@@ -113,7 +76,7 @@ const AssignmentPanel: React.FC = () => {
     );
   };
 
-  const handleTaskAssignment = (taskId: string, memberId: number) => {
+  const handleTaskAssignment = (taskId: string, memberId: string | number) => {
     setTaskAssignments(prev => ({
       ...prev,
       [taskId]: memberId
@@ -278,29 +241,43 @@ const AssignmentPanel: React.FC = () => {
           </div>
           
           <div className="space-y-3">
-            {commissionMembers.map((member) => (
-              <div
-                key={member.id}
-                className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center">
-                  {assignmentMode === 'manual' && (
-                    <input
-                      type="checkbox"
-                      checked={selectedMembers.includes(member.id)}
-                      onChange={() => toggleMemberSelection(member.id)}
-                      className="mr-3"
-                    />
-                  )}
-                  <div>
-                    <div className="flex items-center">
-                      <h3 className="font-medium text-gray-900">{member.name}</h3>
+            {isLoadingMembers ? (
+              <div className="py-10 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : membersError ? (
+              <div className="py-10 text-center text-red-500">
+                <p>Komisyon üyeleri yüklenirken bir hata oluştu.</p>
+              </div>
+            ) : commissionMembers.length === 0 ? (
+              <div className="py-10 text-center text-gray-500">
+                <p>Komisyon üyesi bulunamadı.</p>
+              </div>
+            ) : (
+              commissionMembers.map((member) => (
+                <div
+                  key={member.id}
+                  className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center">
+                    {assignmentMode === 'manual' && (
+                      <input
+                        type="checkbox"
+                        checked={selectedMembers.includes(member.id)}
+                        onChange={() => toggleMemberSelection(member.id)}
+                        className="mr-3"
+                      />
+                    )}
+                    <div>
+                      <div className="flex items-center">
+                        <h3 className="font-medium text-gray-900">{getDisplayName(member)}</h3>
+                      </div>
+                      <p className="text-sm text-gray-600">{member.email}</p>
                     </div>
-                    <p className="text-sm text-gray-600">{member.email}</p>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

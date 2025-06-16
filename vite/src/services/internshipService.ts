@@ -194,8 +194,43 @@ export const createInternshipApplication = async (data: NewInternshipApplication
     
     if (error.response) {
       console.error('❌ Error response status:', error.response.status);
-      console.error('❌ Error response data:', error.response.data);
+      console.error('❌ Error response data:', error.response?.data);
       console.error('❌ Error response headers:', error.response.headers);
+      
+      // Backend validation hatalarını detaylı logla
+      if (error.response.status === 400) {
+        console.error('🔍 400 Bad Request - Validation Hatası Detayları:');
+        console.error('📋 Response Data:', JSON.stringify(error.response.data, null, 2));
+        console.error('📋 Response Headers:', JSON.stringify(error.response.headers, null, 2));
+        console.error('📋 Request Data:', JSON.stringify(error.config?.data, null, 2));
+        console.error('📋 Request URL:', error.config?.url);
+        console.error('📋 Request Method:', error.config?.method);
+        
+        // Spring Boot validation hatalarını parse et
+        if (error.response.data) {
+          if (error.response.data.message) {
+            console.error('💬 Backend Message:', error.response.data.message);
+          }
+          if (error.response.data.error) {
+            console.error('💬 Backend Error:', error.response.data.error);
+          }
+          if (error.response.data.errors) {
+            console.error('🔸 Validation Errors:', error.response.data.errors);
+          }
+          if (error.response.data.violations) {
+            console.error('🔸 Constraint Violations:', error.response.data.violations);
+          }
+          if (error.response.data.details) {
+            console.error('🔸 Error Details:', error.response.data.details);
+          }
+          if (error.response.data.timestamp) {
+            console.error('🕐 Error Timestamp:', error.response.data.timestamp);
+          }
+          if (error.response.data.path) {
+            console.error('🛤️ Error Path:', error.response.data.path);
+          }
+        }
+      }
     }
     
     throw error;
@@ -412,6 +447,36 @@ export const uploadInternshipDocument = async (
     return response;
   } catch (error) {
     console.error('❌ Document yükleme hatası:', error);
+    throw error;
+  }
+};
+
+// Komisyon başkanı için staj başvurularını getir (YENİ API)
+export const getInternshipApplicationsForCommission = async (): Promise<InternshipApplicationListItem[]> => {
+  try {
+    const response: any = await axiosClient.get('/api/v1/internships/applications');
+    console.log('📋 Komisyon başkanı başvuru listesi API response:', JSON.stringify(response, null, 2));
+    
+    // API response yapısını kontrol et
+    if (response.result && Array.isArray(response.result)) {
+      console.log('✅ response.result kullanılıyor:', response.result.length, 'öğe');
+      return response.result;
+    }
+    
+    if (response.data?.result && Array.isArray(response.data.result)) {
+      console.log('✅ response.data.result kullanılıyor:', response.data.result.length, 'öğe');
+      return response.data.result;
+    }
+    
+    if (Array.isArray(response)) {
+      console.log('✅ response direkt array:', response.length, 'öğe');
+      return response;
+    }
+    
+    console.error('❌ API response beklenmeyen formatta:', typeof response);
+    return [];
+  } catch (error) {
+    console.error('Komisyon başkanı başvuru listesi getirme hatası:', error);
     throw error;
   }
 }; 

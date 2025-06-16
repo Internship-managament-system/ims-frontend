@@ -4,138 +4,63 @@ import { KeenIcon } from '@/components/keenicons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import {
-  getAllInternshipApplications,
-  getInternshipApplicationById,
-  updateInternshipApplicationStatus,
-  assignInternshipApplication,
-  InternshipApplication,
-  InternshipStatus,
+  getInternshipApplicationsForCommission,
+  getInternshipApplicationDetailById,
+  InternshipApplicationListItem,
+  InternshipApplicationDetail,
 } from '@/services/internshipService';
-import { getAllUsers, User } from '@/services/userService';
 
 // Başvuru durumu için renk ve etiket bilgileri
-const statusConfig: Record<InternshipStatus, { label: string; color: string }> = {
+const statusConfig: Record<string, { label: string; color: string }> = {
   PENDING: { label: 'Beklemede', color: 'bg-yellow-100 text-yellow-800' },
   APPROVED: { label: 'Onaylandı', color: 'bg-green-100 text-green-800' },
   REJECTED: { label: 'Reddedildi', color: 'bg-red-100 text-red-800' },
   COMPLETED: { label: 'Tamamlandı', color: 'bg-blue-100 text-blue-800' },
+  READY_FOR_ASSIGNMENT: { label: 'Atamaya Hazır', color: 'bg-purple-100 text-purple-800' },
+  ASSIGNED: { label: 'Atandı', color: 'bg-indigo-100 text-indigo-800' },
+  IN_PROGRESS: { label: 'Devam Ediyor', color: 'bg-blue-100 text-blue-800' },
 };
-
-// Modal tipleri
-type ModalType = 'details' | 'status' | 'assign' | null;
 
 const InternshipApplicationsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedApplication, setSelectedApplication] = useState<InternshipApplication | null>(null);
-  const [modalType, setModalType] = useState<ModalType>(null);
-  const [newStatus, setNewStatus] = useState<InternshipStatus>('PENDING');
-  const [statusComment, setStatusComment] = useState('');
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedApplication, setSelectedApplication] = useState<InternshipApplicationDetail | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const queryClient = useQueryClient();
 
-  // Tüm staj başvurularını getir
-  const { data: applications = [], isLoading } = useQuery({
-    queryKey: ['internship-applications'],
-    queryFn: getAllInternshipApplications,
-  });
-
-  // Başvuru durumu güncelleme mutation'ı
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status, comment }: { id: string; status: InternshipStatus; comment?: string }) =>
-      updateInternshipApplicationStatus(id, { status, comment }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['internship-applications'] });
-      closeModal();
-      toast.success('Başvuru durumu başarıyla güncellendi');
-    },
-    onError: () => {
-      toast.error('Başvuru durumu güncellenirken bir hata oluştu');
-    },
-  });
-
-  // Başvuru atama mutation'ı
-  const assignApplicationMutation = useMutation({
-    mutationFn: ({ id, userId }: { id: string; userId: string }) =>
-      assignInternshipApplication(id, { userId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['internship-applications'] });
-      closeModal();
-      toast.success('Başvuru başarıyla atandı');
-    },
-    onError: () => {
-      toast.error('Başvuru atanırken bir hata oluştu');
-    },
+  // Komisyon başkanı için staj başvurularını getir (YENİ API)
+  const { data: applications = [], isLoading, isError } = useQuery({
+    queryKey: ['commission-internship-applications'],
+    queryFn: getInternshipApplicationsForCommission,
   });
 
   // Detay modalını aç
-  const openDetailsModal = async (application: InternshipApplication) => {
+  const openDetailsModal = async (application: InternshipApplicationListItem) => {
     try {
-      // Detaylı başvuru bilgisini getir
-      const applicationDetail = await getInternshipApplicationById(application.id);
+      console.log('🔍 Detay modal açılıyor, ID:', application.id);
+      const applicationDetail = await getInternshipApplicationDetailById(application.id);
       setSelectedApplication(applicationDetail);
-      setModalType('details');
+      setShowDetailsModal(true);
     } catch (error) {
       console.error('Başvuru detayı alınırken hata:', error);
       toast.error('Başvuru detayı alınamadı');
     }
   };
 
-  // Durum güncelleme modalını aç
-  const openStatusModal = (application: InternshipApplication) => {
-    setSelectedApplication(application);
-    setNewStatus(application.status);
-    setStatusComment('');
-    setModalType('status');
-  };
-
-  // Atama modalını aç
-  const openAssignModal = (application: InternshipApplication) => {
-    setSelectedApplication(application);
-    setSelectedUserId('');
-    setModalType('assign');
-  };
-
   // Modalı kapat
   const closeModal = () => {
     setSelectedApplication(null);
-    setModalType(null);
-  };
-
-  // Durum güncelleme işlemi
-  const handleStatusUpdate = () => {
-    if (!selectedApplication) return;
-
-    updateStatusMutation.mutate({
-      id: selectedApplication.id,
-      status: newStatus,
-      comment: statusComment,
-    });
-  };
-
-  // Atama işlemi
-  const handleAssign = () => {
-    if (!selectedApplication || !selectedUserId) return;
-
-    assignApplicationMutation.mutate({
-      id: selectedApplication.id,
-      userId: selectedUserId,
-    });
+    setShowDetailsModal(false);
   };
 
   // Arama filtreleme
   const filteredApplications = applications.filter((app) => {
     const searchLower = searchTerm.toLowerCase();
-    const studentNumber = app.studentEmail?.substring(0, 10) || '';
     
     return (
-      ((app as any).companyName || '').toLowerCase().includes(searchLower) ||
-      app.status.toLowerCase().includes(searchLower) ||
-      studentNumber.toLowerCase().includes(searchLower) ||
-      (app.studentFullName || '').toLowerCase().includes(searchLower) ||
-      (app.activityField || '').toLowerCase().includes(searchLower) ||
-      (app.provinceText || '').toLowerCase().includes(searchLower) ||
-      (app.internshipTypeText || '').toLowerCase().includes(searchLower)
+      app.companyName.toLowerCase().includes(searchLower) ||
+      app.internshipName.toLowerCase().includes(searchLower) ||
+      app.status.toLowerCase().includes(searchLower)
     );
   });
 
@@ -179,16 +104,17 @@ const InternshipApplicationsPage: React.FC = () => {
               <div className="py-10 flex justify-center items-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
               </div>
+            ) : isError ? (
+              <div className="py-10 text-center text-red-500">
+                <p>Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</p>
+              </div>
             ) : (
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Öğrenci</th>
-                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Öğrenci No</th>
-                    <th className="px-4 py-2 text-sm font-medium text-gray-500">İş Yeri</th>
-                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Başlangıç</th>
-                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Bitiş</th>
-                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Staj Türü</th>
+                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Başvuru Tarihi</th>
+                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Staj Adı</th>
+                    <th className="px-4 py-2 text-sm font-medium text-gray-500">Şirket</th>
                     <th className="px-4 py-2 text-sm font-medium text-gray-500">Durum</th>
                     <th className="px-4 py-2 text-sm font-medium text-gray-500">İşlemler</th>
                   </tr>
@@ -196,7 +122,7 @@ const InternshipApplicationsPage: React.FC = () => {
                 <tbody>
                   {filteredApplications.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-4 py-4 text-center text-gray-500">
+                      <td colSpan={5} className="px-4 py-4 text-center text-gray-500">
                         Staj başvurusu bulunamadı
                       </td>
                     </tr>
@@ -204,40 +130,26 @@ const InternshipApplicationsPage: React.FC = () => {
                     filteredApplications.map((application) => (
                       <tr key={application.id} className="border-b border-gray-200">
                         <td className="px-4 py-3 text-sm text-gray-700">
-                          <div>
-                            <p className="font-medium">{application.studentFullName}</p>
-                          </div>
+                          {new Date(application.appliedDate).toLocaleDateString('tr-TR')}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                          {application.internshipName}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-700">
-                          {application.studentEmail?.substring(0, 10) || application.studentId}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">
-                          <div>
-                            <p>{(application as any).companyName || 'Şirket Adı'}</p>
-                            <p className="text-xs text-gray-500">{application.activityField}</p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">
-                          {application.startDateFormatted || new Date(application.startDate).toLocaleDateString('tr-TR')}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">
-                          {application.endDateFormatted || new Date(application.endDate).toLocaleDateString('tr-TR')}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">
-                          {application.internshipTypeText || (application.internshipType === 'VOLUNTARY' ? 'Gönüllü' : 'Zorunlu')}
+                          {application.companyName}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <span
                             className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                              statusConfig[application.status].color
+                              statusConfig[application.status]?.color || 'bg-gray-100 text-gray-800'
                             }`}
                           >
-                            {application.statusText || statusConfig[application.status].label}
+                            {statusConfig[application.status]?.label || application.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className="px-4 py-3 text-sm flex gap-2">
                           <button
-                            className="btn bg-blue-500 text-white text-xs py-1 px-2 rounded"
+                            className="btn bg-blue-500 text-white text-xs py-1 px-2 rounded hover:bg-blue-600"
                             onClick={() => openDetailsModal(application)}
                           >
                             Detay
@@ -253,262 +165,81 @@ const InternshipApplicationsPage: React.FC = () => {
         </div>
 
         {/* Detay Modalı */}
-        {modalType === 'details' && selectedApplication && (
+        {showDetailsModal && selectedApplication && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900">Staj Başvurusu Detayı</h3>
-                <button className="text-gray-500" onClick={closeModal}>
+                <button className="text-gray-500 hover:text-gray-700" onClick={closeModal}>
                   <KeenIcon icon="cross" className="h-5 w-5" />
                 </button>
               </div>
 
               <div className="space-y-6">
+                {/* Başvuru Durumu */}
                 <div>
-                  <h4 className="text-md font-medium mb-2">Öğrenci Bilgileri</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Öğrenci Adı</p>
-                      <p>{selectedApplication.studentFullName}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Öğrenci ID</p>
-                      <p>{selectedApplication.studentEmail?.substring(0, 10) || selectedApplication.studentId}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Departman</p>
-                      <p>{selectedApplication.departmentName}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">E-posta</p>
-                      <p>{selectedApplication.studentEmail}</p>
-                    </div>
+                  <h4 className="text-md font-medium mb-2">Başvuru Durumu</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <span
+                      className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
+                        statusConfig[selectedApplication.status]?.color || 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {statusConfig[selectedApplication.status]?.label || selectedApplication.status}
+                    </span>
                   </div>
                 </div>
 
+                {/* Genel Bilgiler */}
                 <div>
-                  <h4 className="text-md font-medium mb-2">Staj Bilgileri</h4>
+                  <h4 className="text-md font-medium mb-2">Genel Bilgiler</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
+                      <p className="text-sm font-medium text-gray-500">Staj Adı</p>
+                      <p>{selectedApplication.internshipName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Şirket</p>
+                      <p>{selectedApplication.companyName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Başlangıç Tarihi</p>
+                      <p>{new Date(selectedApplication.startDate).toLocaleDateString('tr-TR')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Bitiş Tarihi</p>
+                      <p>{new Date(selectedApplication.endDate).toLocaleDateString('tr-TR')}</p>
+                    </div>
+                    <div>
                       <p className="text-sm font-medium text-gray-500">Staj Türü</p>
-                      <p>{selectedApplication.internshipTypeText}</p>
+                      <p>{selectedApplication.type === 'VOLUNTARY' ? 'Gönüllü' : 'Zorunlu'}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Program</p>
-                      <p>{selectedApplication.programText}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Staj Dönemi</p>
-                      <p>{selectedApplication.internshipPeriodText}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Haftalık Çalışma</p>
-                      <p>{selectedApplication.weeklyWorkingDaysText}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Genel Sağlık Sigortası</p>
+                      <p className="text-sm font-medium text-gray-500">Sağlık Sigortası</p>
                       <p>{selectedApplication.hasGeneralHealthInsurance ? 'Var' : 'Yok'}</p>
                     </div>
                   </div>
                 </div>
 
+                {/* Öğrenci Bilgileri */}
                 <div>
-                  <h4 className="text-md font-medium mb-2">İş Yeri Bilgileri</h4>
+                  <h4 className="text-md font-medium mb-2">Öğrenci Bilgileri</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">İş Yeri Adı</p>
-                      <p>{(selectedApplication as any).companyName || 'Şirket Adı'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">İl/Ülke</p>
-                      <p>{selectedApplication.provinceText}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Faaliyet Alanı</p>
-                      <p>{selectedApplication.activityField}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">E-posta</p>
-                      <p>{selectedApplication.workplaceEmail}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Telefon</p>
-                      <p>{selectedApplication.workplacePhone}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-sm font-medium text-gray-500">Adres</p>
-                      <p>{selectedApplication.workplaceAddress}</p>
+                      <p className="text-sm font-medium text-gray-500">Ad Soyad</p>
+                      <p>{selectedApplication.studentName} {selectedApplication.studentSurname}</p>
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-md font-medium mb-2">Staj Tarihleri</h4>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Başlangıç Tarihi</p>
-                      <p>{selectedApplication.startDateFormatted || new Date(selectedApplication.startDate).toLocaleDateString('tr-TR')}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Bitiş Tarihi</p>
-                      <p>{selectedApplication.endDateFormatted || new Date(selectedApplication.endDate).toLocaleDateString('tr-TR')}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Süre</p>
-                      <p>{selectedApplication.durationInfo || `${selectedApplication.durationInDays} gün`}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-md font-medium mb-2">Başvuru Durumu</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Durum</p>
-                      <span
-                        className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                          statusConfig[selectedApplication.status].color
-                        }`}
-                      >
-                        {selectedApplication.statusText || statusConfig[selectedApplication.status].label}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Atanan Kişi</p>
-                      <p>{selectedApplication.assignedToUserName || 'Atanmamış'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Oluşturma Tarihi</p>
-                      <p>{new Date(selectedApplication.createdAt).toLocaleString('tr-TR')}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Son Güncelleme</p>
-                      <p>{new Date(selectedApplication.updatedAt).toLocaleString('tr-TR')}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <div className="flex justify-end gap-3">
                   <button
+                    className="btn bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300"
                     onClick={closeModal}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
                   >
                     Kapat
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Durum Güncelleme Modalı */}
-        {modalType === 'status' && selectedApplication && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Başvuru Durumunu Güncelle</h3>
-                <button className="text-gray-500" onClick={closeModal}>
-                  <KeenIcon icon="cross" className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Yeni Durum</label>
-                  <select
-                    className="w-full border border-gray-300 rounded-md p-2"
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value as InternshipStatus)}
-                  >
-                    <option value="PENDING">Beklemede</option>
-                    <option value="APPROVED">Onaylandı</option>
-                    <option value="REJECTED">Reddedildi</option>
-                    <option value="COMPLETED">Tamamlandı</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Açıklama</label>
-                  <textarea
-                    className="w-full border border-gray-300 rounded-md p-2"
-                    rows={3}
-                    value={statusComment}
-                    onChange={(e) => setStatusComment(e.target.value)}
-                    placeholder="Durum değişikliği için açıklama giriniz (opsiyonel)"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-6 flex justify-end space-x-2">
-                <button onClick={closeModal} className="btn bg-gray-200 text-gray-800 py-2 px-4 rounded">
-                  İptal
-                </button>
-                <button
-                  onClick={handleStatusUpdate}
-                  className="btn bg-[#13126e] text-white py-2 px-4 rounded flex items-center"
-                  disabled={updateStatusMutation.isPending}
-                >
-                  {updateStatusMutation.isPending ? (
-                    <>
-                      <span className="animate-spin mr-2">
-                        <KeenIcon icon="spinner" className="h-4 w-4" />
-                      </span>
-                      <span>İşleniyor...</span>
-                    </>
-                  ) : (
-                    'Güncelle'
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Atama Modalı */}
-        {modalType === 'assign' && selectedApplication && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Başvuruyu Kullanıcıya Ata</h3>
-                <button className="text-gray-500" onClick={closeModal}>
-                  <KeenIcon icon="cross" className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Kullanıcı ID</label>
-                <input
-                  type="text"
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  placeholder="Kullanıcı ID'sini girin"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Atamak istediğiniz kullanıcının ID'sini girin
-                </p>
-              </div>
-
-              <div className="mt-6 flex justify-end space-x-2">
-                <button onClick={closeModal} className="btn bg-gray-200 text-gray-800 py-2 px-4 rounded">
-                  İptal
-                </button>
-                <button
-                  onClick={handleAssign}
-                  className="btn bg-[#13126e] text-white py-2 px-4 rounded flex items-center"
-                  disabled={assignApplicationMutation.isPending || !selectedUserId}
-                >
-                  {assignApplicationMutation.isPending ? (
-                    <>
-                      <span className="animate-spin mr-2">
-                        <KeenIcon icon="spinner" className="h-4 w-4" />
-                      </span>
-                      <span>İşleniyor...</span>
-                    </>
-                  ) : (
-                    'Ata'
-                  )}
-                </button>
               </div>
             </div>
           </div>
