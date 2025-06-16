@@ -71,14 +71,42 @@ const TopicDescriptionRenderer: React.FC<{ description: string }> = ({ descripti
 }
 
 // Yeni başvuru durumu için renk ve etiket bilgileri
-const statusConfig: Record<string, { label: string; color: string }> = {
-  PENDING: { label: 'Beklemede', color: 'bg-yellow-100 text-yellow-800' },
-  APPROVED: { label: 'Onaylandı', color: 'bg-green-100 text-green-800' },
-  REJECTED: { label: 'Reddedildi', color: 'bg-red-100 text-red-800' },
-  COMPLETED: { label: 'Tamamlandı', color: 'bg-blue-100 text-blue-800' },
-  READY_FOR_ASSIGNMENT: { label: 'Beklemede', color: 'bg-yellow-100 text-yellow-800' },
-  ASSIGNED: { label: 'Onaylandı', color: 'bg-indigo-100 text-indigo-800' },
-  IN_PROGRESS: { label: 'Devam Ediyor', color: 'bg-orange-100 text-orange-800' },
+const statusConfig: Record<string, { label: string; color: string; description: string }> = {
+  PENDING: { 
+    label: 'Beklemede', 
+    color: 'bg-yellow-100 text-yellow-800',
+    description: 'Başvurunuz sistem tarafından alındı'
+  },
+  APPROVED: { 
+    label: 'Başvurunuz Onaylandı! 🎉', 
+    color: 'bg-green-100 text-green-800',
+    description: 'Tebrikler! Staj başvurunuz kabul edildi'
+  },
+  REJECTED: { 
+    label: 'Başvuru Reddedildi', 
+    color: 'bg-red-100 text-red-800',
+    description: 'Maalesef başvurunuz kabul edilmedi'
+  },
+  COMPLETED: { 
+    label: 'Staj Tamamlandı', 
+    color: 'bg-blue-100 text-blue-800',
+    description: 'Staj süreciniz başarıyla tamamlandı'
+  },
+  READY_FOR_ASSIGNMENT: { 
+    label: '📄 Belgelerinizi Yükleyebilirsiniz', 
+    color: 'bg-purple-100 text-purple-800',
+    description: 'Gerekli belgeleri yükleyerek başvurunuzu tamamlayın'
+  },
+  ASSIGNED: { 
+    label: '⏳ Başvurunuz İnceleniyor', 
+    color: 'bg-indigo-100 text-indigo-800',
+    description: 'Belgeleriniz komisyon üyesi tarafından değerlendiriliyor'
+  },
+  IN_PROGRESS: { 
+    label: 'Staj Devam Ediyor', 
+    color: 'bg-orange-100 text-orange-800',
+    description: 'Stajınız şu anda devam etmekte'
+  },
 };
 
 const MyApplicationsPage: React.FC = () => {
@@ -300,13 +328,20 @@ const MyApplicationsPage: React.FC = () => {
                 <div>
                   <h4 className="text-md font-medium mb-2">Başvuru Durumu</h4>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <span
-                      className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
-                        statusConfig[selectedApplication.status]?.color || 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {statusConfig[selectedApplication.status]?.label || selectedApplication.status}
-                    </span>
+                    <div className="flex flex-col gap-2">
+                      <span
+                        className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
+                          statusConfig[selectedApplication.status]?.color || 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {statusConfig[selectedApplication.status]?.label || selectedApplication.status}
+                      </span>
+                      {statusConfig[selectedApplication.status]?.description && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          {statusConfig[selectedApplication.status].description}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -373,16 +408,19 @@ const MyApplicationsPage: React.FC = () => {
                               className={`px-3 py-1 text-xs font-medium rounded-full ${
                                 requirement.status === 'APPROVED'
                                   ? 'bg-green-100 text-green-800'
-                                  : requirement.status === 'REJECTED'
+                                  : requirement.status === 'DENIED'
                                   ? 'bg-red-100 text-red-800'
                                   : requirement.status === 'WAITING_FOR_UPLOAD'
                                   ? 'bg-yellow-100 text-yellow-800'
+                                  : requirement.status === 'WAITING_FOR_APPROVAL'
+                                  ? 'bg-blue-100 text-blue-800'
                                   : 'bg-gray-100 text-gray-800'
                               }`}
                             >
-                              {requirement.status === 'WAITING_FOR_UPLOAD' ? 'Yükleme Bekleniyor' :
-                               requirement.status === 'APPROVED' ? 'Onaylandı' :
-                               requirement.status === 'REJECTED' ? 'Reddedildi' : requirement.status}
+                              {requirement.status === 'WAITING_FOR_UPLOAD' ? '📤 Belge Yükleme Bekleniyor' :
+                               requirement.status === 'WAITING_FOR_APPROVAL' ? '⏳ İnceleme Bekleniyor' :
+                               requirement.status === 'APPROVED' ? '✅ Onaylandı' :
+                               requirement.status === 'DENIED' ? '❌ Yeniden Yükleme Gerekli' : requirement.status}
                             </span>
                           </div>
                           

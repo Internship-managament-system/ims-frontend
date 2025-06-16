@@ -11,14 +11,42 @@ import {
 } from '@/services/internshipService';
 
 // Başvuru durumu için renk ve etiket bilgileri
-const statusConfig: Record<string, { label: string; color: string }> = {
-  PENDING: { label: 'Beklemede', color: 'bg-yellow-100 text-yellow-800' },
-  APPROVED: { label: 'Onaylandı', color: 'bg-green-100 text-green-800' },
-  REJECTED: { label: 'Reddedildi', color: 'bg-red-100 text-red-800' },
-  COMPLETED: { label: 'Tamamlandı', color: 'bg-blue-100 text-blue-800' },
-  READY_FOR_ASSIGNMENT: { label: 'Atamaya Hazır', color: 'bg-purple-100 text-purple-800' },
-  ASSIGNED: { label: 'Atandı', color: 'bg-indigo-100 text-indigo-800' },
-  IN_PROGRESS: { label: 'Devam Ediyor', color: 'bg-blue-100 text-blue-800' },
+const statusConfig: Record<string, { label: string; color: string; description: string }> = {
+  PENDING: { 
+    label: 'Beklemede', 
+    color: 'bg-yellow-100 text-yellow-800',
+    description: 'Yeni başvuru, işlem bekliyor'
+  },
+  APPROVED: { 
+    label: 'Onaylandı', 
+    color: 'bg-green-100 text-green-800',
+    description: 'Başvuru komisyon tarafından onaylandı'
+  },
+  REJECTED: { 
+    label: 'Reddedildi', 
+    color: 'bg-red-100 text-red-800',
+    description: 'Başvuru komisyon tarafından reddedildi'
+  },
+  COMPLETED: { 
+    label: 'Tamamlandı', 
+    color: 'bg-blue-100 text-blue-800',
+    description: 'Staj süreci başarıyla tamamlandı'
+  },
+  READY_FOR_ASSIGNMENT: { 
+    label: 'Komisyon Üyesine Atamaya Hazır', 
+    color: 'bg-purple-100 text-purple-800',
+    description: 'Belgeler tamamlandı, komisyon üyesi ataması bekliyor'
+  },
+  ASSIGNED: { 
+    label: 'Komisyon Üyesine Atandı', 
+    color: 'bg-indigo-100 text-indigo-800',
+    description: 'Başvuru komisyon üyesi tarafından inceleniyor'
+  },
+  IN_PROGRESS: { 
+    label: 'Staj Devam Ediyor', 
+    color: 'bg-blue-100 text-blue-800',
+    description: 'Onaylanan başvuru, staj süreci devam ediyor'
+  },
 };
 
 const InternshipApplicationsPage: React.FC = () => {
@@ -180,13 +208,20 @@ const InternshipApplicationsPage: React.FC = () => {
                 <div>
                   <h4 className="text-md font-medium mb-2">Başvuru Durumu</h4>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <span
-                      className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
-                        statusConfig[selectedApplication.status]?.color || 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {statusConfig[selectedApplication.status]?.label || selectedApplication.status}
-                    </span>
+                    <div className="flex flex-col gap-2">
+                      <span
+                        className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
+                          statusConfig[selectedApplication.status]?.color || 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {statusConfig[selectedApplication.status]?.label || selectedApplication.status}
+                      </span>
+                      {statusConfig[selectedApplication.status]?.description && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          {statusConfig[selectedApplication.status].description}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 

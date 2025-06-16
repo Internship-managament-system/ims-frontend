@@ -21,8 +21,6 @@ interface Topic {
   description: string;
   createdDate: string;
 }
-
-
 interface DocumentInfo {
   id: string;
   fileAddress: string;

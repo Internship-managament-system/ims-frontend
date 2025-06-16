@@ -114,8 +114,8 @@ const Dashboard: React.FC = () => {
                       <td className="px-4 py-3 text-sm text-gray-700">25.04.2025</td>
                       <td className="px-4 py-3 text-sm text-gray-700">Yaz Stajı</td>
                       <td className="px-4 py-3 text-sm">
-                        <span className="inline-block px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                          Beklemede
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
+                          ⏳ İnceleme Bekliyor
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm">
@@ -130,8 +130,8 @@ const Dashboard: React.FC = () => {
                       <td className="px-4 py-3 text-sm text-gray-700">24.04.2025</td>
                       <td className="px-4 py-3 text-sm text-gray-700">Yaz Stajı</td>
                       <td className="px-4 py-3 text-sm">
-                        <span className="inline-block px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                          Beklemede
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
+                          ⏳ İnceleme Bekliyor
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm">
@@ -146,8 +146,8 @@ const Dashboard: React.FC = () => {
                       <td className="px-4 py-3 text-sm text-gray-700">23.04.2025</td>
                       <td className="px-4 py-3 text-sm text-gray-700">Kış Stajı</td>
                       <td className="px-4 py-3 text-sm">
-                        <span className="inline-block px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                          Beklemede
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
+                          ⏳ İnceleme Bekliyor
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm">
