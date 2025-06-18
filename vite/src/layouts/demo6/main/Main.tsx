@@ -7,6 +7,8 @@ import {Sidebar, Toolbar, ToolbarActions, ToolbarHeading } from '../';
 import { useMenus } from '@/providers';
 import { useResponsive } from '@/hooks';
 import { Link } from 'react-router-dom';
+import { useAuthContext } from '@/auth';
+import { ChatbotWidget } from '@/components/chatbot';
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -22,11 +24,16 @@ const Main = () => {
   const { getMenuConfig } = useMenus();
   const menuConfig = getMenuConfig('primary');
   const menuItem = useMenuCurrentItem(pathname, menuConfig);
+  const { currentUser } = useAuthContext();
 
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(2025, 0, 20),
     to: addDays(new Date(2025, 0, 20), 20)
   });
+
+  // Chatbot'u sadece öğrenci sayfalarında göster
+  const isStudentPage = pathname.startsWith('/student');
+  const isStudent = currentUser?.role === 'STUDENT';
 
   return (
     <Fragment>
@@ -50,6 +57,9 @@ const Main = () => {
           </div>
         </div>
       </div>
+
+      {/* Chatbot Widget - sadece öğrenci sayfalarında göster */}
+      {isStudentPage && isStudent && <ChatbotWidget />}
     </Fragment>
   );
 };
