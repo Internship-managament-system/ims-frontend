@@ -31,8 +31,6 @@ import ApplicationAssignments from '../layouts/demo6/pages/commissionChairman/ap
 
 // Internship Settings Pages
 import {
-  ApplicationPeriod,
-  NotebookDates,
   RejectionReasons,
   InternshipDetails,
   TypeManagement,
@@ -45,6 +43,8 @@ import DocumentManagement from '../layouts/demo6/pages/commissionChairman/intern
 import StudentDashboard from '../layouts/demo6/pages/student/Dashboard';
 import CommissionDashboard from '../layouts/demo6/pages/commission/Dashboard';
 import AssignedApplications from '../layouts/demo6/pages/commission/AssignedApplications';
+import CommissionSettings from '../layouts/demo6/pages/commission/settings';
+import StudentSettings from '../layouts/demo6/pages/student/settings';
 import Unauthorized from '../layouts/demo6/Unauthorized';
 import RoleBasedDashboard from './RoleBasedDashboard';
 import Processes from '../layouts/demo6/pages/student/processes/Processes';
@@ -115,8 +115,6 @@ const AppRoutingSetup = (): ReactElement => {
         <Route path="internship-settings/type-management" element={<TypeManagement />} />
         <Route path="internship-settings/topic-pool" element={<TopicPool />} />
         <Route path="internship-settings/documents" element={<DocumentManagement />} />
-        <Route path="internship-settings/application-period" element={<ApplicationPeriod />} />
-        <Route path="internship-settings/notebook-dates" element={<NotebookDates />} />
         <Route path="internship-settings/rejection-reasons" element={<RejectionReasons />} />
         <Route path="internship-settings/internship-details" element={<InternshipDetails />} />
 
@@ -143,6 +141,7 @@ const AppRoutingSetup = (): ReactElement => {
         <Route path="support" element={<Support />} />
         <Route path="profile" element={<Profile />} />
         <Route path="change-password" element={<ChangePassword />} />
+        <Route path="settings" element={<StudentSettings />} />
         
         {/* Internship Application Routes */}
         <Route path="internship-application" element={<InternshipApplicationPage />} />
@@ -159,6 +158,7 @@ const AppRoutingSetup = (): ReactElement => {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<CommissionDashboard />} />
         <Route path="assigned-applications" element={<AssignedApplications />} />
+        <Route path="settings" element={<CommissionSettings />} />
       </Route>
 
       {/* Home Route - Landing Page */}

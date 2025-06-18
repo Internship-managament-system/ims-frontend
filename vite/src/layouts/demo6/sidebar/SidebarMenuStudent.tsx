@@ -37,10 +37,7 @@ const SidebarMenuStudent = () => {
     {
       title: 'Hesap Ayarları',
       icon: 'setting-2',
-      children: [
-        { title: 'Profilim', path: '/student/profile' },
-        { title: 'Şifre Değiştir', path: '/student/change-password' },
-      ],
+      path: '/student/settings',
     },
     {
       title: 'Destek',

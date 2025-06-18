@@ -44,16 +44,7 @@ const SidebarMenuCommissionMember: React.FC = () => {
     {
       title: 'Hesap Ayarları',
       icon: 'setting-2',
-      children: [
-        {
-          title: 'Profil Bilgileri',
-          path: '/account/home/settings-basic'
-        },
-        {
-          title: 'Güvenlik',
-          path: '/account/security/security-overview'
-        }
-      ]
+      path: '/commission/settings'
     }
   ];
 

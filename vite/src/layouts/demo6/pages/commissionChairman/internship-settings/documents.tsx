@@ -16,12 +16,29 @@ interface Document {
 const ConfirmModal = ({ open, onConfirm, onCancel, message }: { open: boolean; onConfirm: () => void; onCancel: () => void; message: string }) => {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-lg shadow-lg p-8 min-w-[320px]">
-        <p className="mb-6 text-gray-800">{message}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 min-w-[320px] border-2 border-red-200">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-red-100 rounded-xl">
+            <KeenIcon icon="warning" className="text-red-600 text-2xl" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900">Silme Onayı</h3>
+        </div>
+        <p className="mb-6 text-gray-700 leading-relaxed">{message}</p>
         <div className="flex justify-end gap-3">
-          <button onClick={onCancel} className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">İptal</button>
-          <button onClick={onConfirm} className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white">Sil</button>
+          <button 
+            onClick={onCancel} 
+            className="px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition-colors duration-200"
+          >
+            İptal
+          </button>
+          <button 
+            onClick={onConfirm} 
+            className="px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium transition-colors duration-200 flex items-center gap-2"
+          >
+            <KeenIcon icon="trash" />
+            Sil
+          </button>
         </div>
       </div>
     </div>
@@ -327,19 +344,52 @@ const Documents: React.FC = () => {
     }
     const ext = (document.fileName || '').split('.').pop()?.toLowerCase();
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-        <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-3xl w-full relative border-2 border-[#13126e] min-h-[400px] flex flex-col">
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
-            <KeenIcon icon="cross" className="text-2xl" />
-          </button>
-          <h2 className="text-xl font-bold text-[#13126e] mb-4">{document.fileName}</h2>
-          <div className="flex-1 flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+        <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full relative border-2 border-[#13126e] max-h-[90vh] overflow-hidden flex flex-col m-4">
+          {/* Header */}
+          <div className="relative bg-gradient-to-r from-[#13126e] to-[#1f1e7e] text-white p-6">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-xl">
+                  <KeenIcon icon="eye" className="text-white text-2xl" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">{document.fileName}</h2>
+                  <p className="text-blue-100 text-sm mt-1">Belge Önizleme</p>
+                </div>
+              </div>
+              <button 
+                onClick={onClose} 
+                className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-xl transition-all duration-200"
+              >
+                <KeenIcon icon="cross" className="text-2xl" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 flex items-center justify-center p-6 bg-gray-50">
             {ext === 'pdf' ? (
-              <iframe src={httpUrl} title="Belge" className="w-full h-[60vh] rounded border" />
+              <iframe src={httpUrl} title="Belge" className="w-full h-full rounded-xl border border-gray-200 bg-white" />
             ) : ext === 'jpg' || ext === 'jpeg' || ext === 'png' ? (
-              <img src={httpUrl} alt={document.fileName} className="max-h-[60vh] max-w-full rounded border" />
+              <img src={httpUrl} alt={document.fileName} className="max-h-full max-w-full rounded-xl border border-gray-200 shadow-lg" />
             ) : (
-              <a href={httpUrl} target="_blank" rel="noopener noreferrer" className="text-[#13126e] underline font-semibold">Belgeyi yeni sekmede aç</a>
+              <div className="text-center p-8">
+                <div className="p-4 bg-[#13126e]/10 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                  <KeenIcon icon="document" className="text-4xl text-[#13126e]" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Önizleme Mevcut Değil</h3>
+                <p className="text-gray-600 mb-4">Bu dosya türü için önizleme desteklenmiyor.</p>
+                <a 
+                  href={httpUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="inline-flex items-center gap-2 bg-[#13126e] text-white px-6 py-3 rounded-xl hover:bg-[#0f0e5a] transition-colors duration-200 font-medium"
+                >
+                  <KeenIcon icon="external-link" />
+                  Belgeyi Yeni Sekmede Aç
+                </a>
+              </div>
             )}
           </div>
         </div>
@@ -508,21 +558,35 @@ const Documents: React.FC = () => {
 
         {/* Ekleme/Düzenleme Modal */}
         {showAddModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-            <div className="relative mx-auto p-6 border w-full max-w-2xl shadow-xl rounded-xl bg-white m-4">
-              <div className="mb-6">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full relative border-2 border-[#13126e] max-h-[90vh] overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="relative bg-gradient-to-r from-[#13126e] to-[#1f1e7e] text-white p-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    {editingDocument ? 'Belgeyi Düzenle' : 'Yeni Belge Yükle'}
-                  </h3>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/20 rounded-xl">
+                      <KeenIcon icon={editingDocument ? "pencil" : "plus"} className="text-white text-2xl" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">
+                        {editingDocument ? 'Belgeyi Düzenle' : 'Yeni Belge Yükle'}
+                      </h2>
+                      <p className="text-blue-100 text-sm mt-1">
+                        {editingDocument ? 'Mevcut belgeyi güncelleyin' : 'Sisteme yeni bir belge yükleyin'}
+                      </p>
+                    </div>
+                  </div>
                   <button 
-                    className="text-gray-400 hover:text-gray-600 p-2"
                     onClick={resetForm}
+                    className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-xl transition-all duration-200"
                   >
-                    <KeenIcon icon="cross" className="text-xl" />
+                    <KeenIcon icon="cross" className="text-2xl" />
                   </button>
                 </div>
               </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
               
               <div className="space-y-6">
                 {/* Dosya Seçimi */}
@@ -622,21 +686,24 @@ const Documents: React.FC = () => {
                   />
                 </div>
 
-                {/* Modal Butonları */}
-                <div className="flex gap-4 pt-6 border-t border-gray-200">
-                  <button
-                    className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-                    onClick={resetForm}
-                  >
-                    İptal
-                  </button>
-                  <button
-                    className="flex-1 bg-[#13126e] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#0f0f5a] transition-colors"
-                    onClick={editingDocument ? handleUpdateDocument : handleAddDocument}
-                  >
-                    {editingDocument ? 'Güncelle' : 'Yükle'}
-                  </button>
                 </div>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-gray-200 bg-white p-6 flex justify-end space-x-3">
+                <button
+                  className="btn bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-medium"
+                  onClick={resetForm}
+                >
+                  İptal
+                </button>
+                <button
+                  className="btn bg-[#13126e] text-white px-6 py-3 rounded-xl hover:bg-[#0f0e5a] transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={editingDocument ? handleUpdateDocument : handleAddDocument}
+                >
+                  <KeenIcon icon={editingDocument ? "check" : "upload"} className="mr-2" />
+                  {editingDocument ? 'Güncelle' : 'Yükle'}
+                </button>
               </div>
             </div>
           </div>

@@ -70,14 +70,6 @@ const SidebarMenuCommissionChairman = () => {
       icon: 'setting-2',
       children: [
         {
-          title: 'Başvuru Süresi',
-          path: '/commissionChairman/internship-settings/application-period',
-        },
-        {
-          title: 'Defter Toplama Tarihleri',
-          path: '/commissionChairman/internship-settings/notebook-dates',
-        },
-        {
           title: 'Red Gerekçeleri',
           path: '/commissionChairman/internship-settings/rejection-reasons',
         },

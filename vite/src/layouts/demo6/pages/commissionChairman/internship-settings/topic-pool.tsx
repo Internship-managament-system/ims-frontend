@@ -299,7 +299,6 @@ const TopicPool: React.FC = () => {
                 </div>
               ))}
             
-            
             {getPaginatedTopics().length === 0 && (
               <div className="col-span-full text-center py-12 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl">
                 <KeenIcon icon="folder-minus" className="text-6xl text-gray-300 mb-4" />
@@ -379,75 +378,89 @@ const TopicPool: React.FC = () => {
 
         {/* Ekleme/Düzenleme Modal */}
         {showAddModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
-              <div className="mt-3">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    {editingTopic ? 'Konuyu Düzenle' : 'Yeni Konu Ekle'}
-                  </h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full relative border-2 border-[#13126e] max-h-[90vh] overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="relative bg-gradient-to-r from-[#13126e] to-[#1f1e7e] text-white p-6">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/20 rounded-xl">
+                      <KeenIcon icon={editingTopic ? "pencil" : "plus"} className="text-white text-2xl" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">
+                        {editingTopic ? 'Konuyu Düzenle' : 'Yeni Konu Ekle'}
+                      </h2>
+                      <p className="text-blue-100 text-sm mt-1">
+                        {editingTopic ? 'Mevcut konuyu güncelleyin' : 'Staj konu havuzuna yeni bir konu ekleyin'}
+                      </p>
+                    </div>
+                  </div>
                   <button 
-                    className="text-gray-400 hover:text-gray-600"
                     onClick={resetForm}
+                    className="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-xl transition-all duration-200"
                   >
-                    <KeenIcon icon="cross" className="text-xl" />
+                    <KeenIcon icon="cross" className="text-2xl" />
                   </button>
                 </div>
-                
-                <div className="max-h-[80vh] overflow-y-auto">
-                  <div className="space-y-6">
-                    {/* Temel Bilgiler */}
-                    <div key="basic-info" className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="text-md font-medium text-gray-900 mb-4">Temel Bilgiler</h4>
-                      <div className="grid grid-cols-1 gap-4">
-                        <div key="title-field">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Konu Adı *
-                          </label>
-                          <input 
-                            type="text" 
-                            className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
-                            placeholder="Konu adını girin"
-                            value={newTopic.title || ""}
-                            onChange={(e) => setNewTopic({...newTopic, title: e.target.value})}
-                          />
-                        </div>
-                        
-                        <div key="description-field">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Açıklama *
-                          </label>
-                          <SlateEditor
-                            value={newTopic.description || ""}
-                            onChange={(value) => setNewTopic({...newTopic, description: value})}
-                            placeholder="Konu hakkında detaylı açıklama yazın. Metin biçimlendirme araçlarını kullanabilirsiniz."
-                            className="w-full"
-                          />
-                        </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+                <div className="space-y-6">
+                  {/* Temel Bilgiler */}
+                  <div key="basic-info" className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                    <h4 className="text-md font-medium text-gray-900 mb-4">Temel Bilgiler</h4>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div key="title-field">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Konu Adı *
+                        </label>
+                        <input 
+                          type="text" 
+                          className="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
+                          placeholder="Konu adını girin"
+                          value={newTopic.title || ""}
+                          onChange={(e) => setNewTopic({...newTopic, title: e.target.value})}
+                        />
+                      </div>
+                      
+                      <div key="description-field">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Açıklama *
+                        </label>
+                        <SlateEditor
+                          value={newTopic.description || ""}
+                          onChange={(value) => setNewTopic({...newTopic, description: value})}
+                          placeholder="Konu hakkında detaylı açıklama yazın. Metin biçimlendirme araçlarını kullanabilirsiniz."
+                          className="w-full"
+                        />
                       </div>
                     </div>
                   </div>
                 </div>
-                
-                <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                  <button 
-                    className="btn bg-gray-300 text-gray-700 px-6 py-2 rounded"
-                    onClick={resetForm}
-                    disabled={createTopicMutation.isPending || updateTopicMutation.isPending}
-                  >
-                    İptal
-                  </button>
-                  <button 
-                    className="btn bg-[#13126e] text-white px-6 py-2 rounded"
-                    onClick={editingTopic ? handleUpdateTopic : handleAddTopic}
-                    disabled={createTopicMutation.isPending || updateTopicMutation.isPending}
-                  >
-                    {createTopicMutation.isPending || updateTopicMutation.isPending 
-                      ? 'İşleniyor...' 
-                      : (editingTopic ? 'Güncelle' : 'Ekle')
-                    }
-                  </button>
-                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-gray-200 bg-white p-6 flex justify-end space-x-3">
+                <button 
+                  className="btn bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition-colors duration-200 font-medium"
+                  onClick={resetForm}
+                  disabled={createTopicMutation.isPending || updateTopicMutation.isPending}
+                >
+                  İptal
+                </button>
+                <button 
+                  className="btn bg-[#13126e] text-white px-6 py-3 rounded-xl hover:bg-[#0f0e5a] transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={editingTopic ? handleUpdateTopic : handleAddTopic}
+                  disabled={createTopicMutation.isPending || updateTopicMutation.isPending}
+                >
+                  <KeenIcon icon={editingTopic ? "check" : "plus"} className="mr-2" />
+                  {createTopicMutation.isPending || updateTopicMutation.isPending 
+                    ? 'İşleniyor...' 
+                    : (editingTopic ? 'Güncelle' : 'Ekle')
+                  }
+                </button>
               </div>
             </div>
           </div>
