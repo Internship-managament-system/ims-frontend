@@ -38,6 +38,10 @@ const SidebarMenuCommissionMember: React.FC = () => {
         {
           title: 'Atanan Başvurular',
           path: '/commission/assigned-applications'
+        },
+        {
+          title: 'Atanan Defterler',
+          path: '/commission/assigned-notebooks'
         }
       ]
     },

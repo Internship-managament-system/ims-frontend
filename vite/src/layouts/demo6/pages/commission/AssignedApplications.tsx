@@ -12,6 +12,7 @@ interface AssignedInternshipApplication {
   id: string;
   studentName: string;
   studentSurname: string;
+  studentEmail: string;
   internshipName: string;
   companyName: string;
   status: string;
@@ -19,6 +20,7 @@ interface AssignedInternshipApplication {
 }
 import { KeenIcon } from '@/components/keenicons';
 import InternshipDetailsModal from '@/components/student/InternshipDetailsModal';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const AssignedApplications: React.FC = () => {
   const { currentUser } = useAuthContext();
@@ -31,6 +33,9 @@ const AssignedApplications: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const itemsPerPage = 10;
+
+  // Bildirim hook'u
+  const { getUnreadCountForApplication, markApplicationAsRead, refreshNotifications } = useNotifications();
 
   // Modal state'leri
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
@@ -52,8 +57,6 @@ const AssignedApplications: React.FC = () => {
   // API'den gelen veriyi doğru yapıya çevir
   const assignedApplications: AssignedInternshipApplication[] = (responseData as any)?.result || responseData || [];
 
-  console.log('📋 Atanmış başvurular response:', responseData);
-  console.log('📋 Processed başvurular:', assignedApplications);
 
   useEffect(() => {
     document.title = `${pageTitle} | Staj Yönetim Sistemi`;
@@ -73,8 +76,23 @@ const AssignedApplications: React.FC = () => {
   // Durum rengi
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ASSIGNED':
+      case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
+      case 'READY_FOR_ASSIGNMENT':
+        return 'bg-purple-100 text-purple-800';
+      case 'ASSIGNED':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'APPLICATION_APPROVED':
+        return 'bg-green-100 text-green-800';
+      case 'REJECTED':
+        return 'bg-red-100 text-red-800';
+      case 'IN_PROGRESS':
+        return 'bg-orange-100 text-orange-800';
+      case 'COMPLETED':
+        return 'bg-blue-100 text-blue-800';
+      // Eski APPROVED enum'u için backward compatibility
+      case 'APPROVED':
+        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -83,8 +101,23 @@ const AssignedApplications: React.FC = () => {
   // Durum metni
   const getStatusText = (status: string) => {
     switch (status) {
+      case 'PENDING':
+        return 'Beklemede';
+      case 'READY_FOR_ASSIGNMENT':
+        return '📄 Belgelerinizi Yükleyebilirsiniz';
       case 'ASSIGNED':
-        return '⏳ İnceleme Bekliyor';
+        return '⏳ Başvurunuz İnceleniyor';
+      case 'APPLICATION_APPROVED':
+        return 'Başvurunuz Onaylandı! 🎉';
+      case 'REJECTED':
+        return 'Başvuru Reddedildi';
+      case 'IN_PROGRESS':
+        return 'Staj Devam Ediyor';
+      case 'COMPLETED':
+        return 'Staj Tamamlandı';
+      // Eski APPROVED enum'u için backward compatibility
+      case 'APPROVED':
+        return 'Başvuru Onaylandı';
       default:
         return status;
     }
@@ -94,6 +127,9 @@ const AssignedApplications: React.FC = () => {
   const handleOpenDetailModal = (applicationId: string) => {
     setSelectedApplicationId(applicationId);
     setIsDetailModalOpen(true);
+    
+    // Bildirimi okundu olarak işaretle
+    markApplicationAsRead(applicationId);
   };
 
   const handleCloseDetailModal = () => {
@@ -125,7 +161,13 @@ const AssignedApplications: React.FC = () => {
                 className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
               >
                 <option value="all">Tümü</option>
-                <option value="ASSIGNED">Atanmış (İnceleme Bekleyen)</option>
+                <option value="PENDING">Beklemede</option>
+                <option value="READY_FOR_ASSIGNMENT">Belge Yükleme Bekleniyor</option>
+                <option value="ASSIGNED">İnceleme Bekliyor</option>
+                <option value="APPLICATION_APPROVED">Başvuru Onaylandı</option>
+                <option value="REJECTED">Başvuru Reddedildi</option>
+                <option value="IN_PROGRESS">Staj Devam Ediyor</option>
+                <option value="COMPLETED">Staj Tamamlandı</option>
               </select>
             </div>
             
@@ -146,8 +188,8 @@ const AssignedApplications: React.FC = () => {
             <p className="text-2xl font-bold text-gray-900">{assignedApplications.length}</p>
           </div>
           <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-            <h3 className="text-lg font-medium text-yellow-700">Atanmış (İnceleme Bekleyen)</h3>
-            <p className="text-2xl font-bold text-yellow-700">
+            <h3 className="text-lg font-medium text-indigo-700">İnceleme Bekliyor</h3>
+            <p className="text-2xl font-bold text-indigo-700">
               {assignedApplications.filter(app => app.status === 'ASSIGNED').length}
             </p>
           </div>
@@ -166,7 +208,7 @@ const AssignedApplications: React.FC = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Öğrenci Bilgileri
+                    Öğrenci
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Staj Bilgileri
@@ -178,6 +220,9 @@ const AssignedApplications: React.FC = () => {
                     Durum
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Mesajlar
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     İşlemler
                   </th>
                 </tr>
@@ -185,7 +230,7 @@ const AssignedApplications: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center">
+                    <td colSpan={6} className="px-6 py-12 text-center">
                       <div className="flex justify-center items-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#13126e]"></div>
                         <span className="ml-3 text-gray-600">Yükleniyor...</span>
@@ -194,16 +239,16 @@ const AssignedApplications: React.FC = () => {
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-red-600">
+                    <td colSpan={6} className="px-6 py-12 text-center text-red-600">
                       Veri yüklenirken hata oluştu. Lütfen sayfayı yenileyin.
                     </td>
                   </tr>
                 ) : paginatedApplications.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                       {statusFilter === 'all' 
                         ? 'Size atanmış başvuru bulunmuyor.' 
-                        : `${statusFilter} durumunda başvuru bulunmuyor.`
+                        : `${getStatusText(statusFilter)} durumunda başvuru bulunmuyor.`
                       }
                     </td>
                   </tr>
@@ -214,12 +259,6 @@ const AssignedApplications: React.FC = () => {
                         <div>
                           <div className="text-sm font-medium text-gray-900">
                             {application.studentName} {application.studentSurname}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Öğrenci No: -
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            E-posta: -
                           </div>
                         </div>
                       </td>
@@ -243,6 +282,21 @@ const AssignedApplications: React.FC = () => {
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(application.status)}`}>
                           {getStatusText(application.status)}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button
+                          onClick={() => handleOpenDetailModal(application.id)}
+                          className="relative p-2 text-gray-400 hover:text-[#13126e] transition-colors"
+                          title="Mesajları görüntüle"
+                        >
+                          <KeenIcon icon="notification" className="text-lg" />
+                          {/* Gerçek bildirim sayısı */}
+                          {getUnreadCountForApplication(application.id) > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                              {getUnreadCountForApplication(application.id)}
+                            </span>
+                          )}
+                        </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
@@ -299,6 +353,16 @@ const AssignedApplications: React.FC = () => {
           application={assignedApplications.find(app => app.id === selectedApplicationId) || null}
           detail={applicationDetail as InternshipApplicationDetail || null}
           loading={isDetailLoading}
+          isCommissionMember={true}
+          onRequirementUpdate={() => {
+            // Belge onaylandığında/reddedildiğinde modal'ı kapayıp tekrar açmak yerine
+            // sadece application detail verisini yenile
+            console.log('🔄 onRequirementUpdate tetiklendi - modal yenilenmeyecek');
+          }}
+          onMessageSent={() => {
+            // Bildirimleri yeniden yükle
+            refreshNotifications();
+          }}
         />
       </div>
     </Container>

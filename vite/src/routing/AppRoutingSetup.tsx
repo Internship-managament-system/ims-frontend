@@ -43,6 +43,7 @@ import DocumentManagement from '../layouts/demo6/pages/commissionChairman/intern
 import StudentDashboard from '../layouts/demo6/pages/student/Dashboard';
 import CommissionDashboard from '../layouts/demo6/pages/commission/Dashboard';
 import AssignedApplications from '../layouts/demo6/pages/commission/AssignedApplications';
+import AssignedNotebooks from '../layouts/demo6/pages/commission/AssignedNotebooks';
 import CommissionSettings from '../layouts/demo6/pages/commission/settings';
 import StudentSettings from '../layouts/demo6/pages/student/settings';
 import Unauthorized from '../layouts/demo6/Unauthorized';
@@ -158,6 +159,7 @@ const AppRoutingSetup = (): ReactElement => {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<CommissionDashboard />} />
         <Route path="assigned-applications" element={<AssignedApplications />} />
+        <Route path="assigned-notebooks" element={<AssignedNotebooks />} />
         <Route path="settings" element={<CommissionSettings />} />
       </Route>
 

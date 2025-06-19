@@ -44,6 +44,7 @@ export interface InternshipDetail {
 export interface InternshipApplication {
   id: string;
   studentId: string;
+  studentNumber: string;
   studentName: string;
   studentSurname: string;
   studentFullName: string;
@@ -353,6 +354,8 @@ export interface InternshipApplicationListItem {
 export interface InternshipApplicationDetail {
   id: string;
   studentId: string;
+  studentNumber: string;
+  studentEmail: string;
   internshipId: string;
   companyId: string;
   studentName: string;
@@ -361,20 +364,24 @@ export interface InternshipApplicationDetail {
   internshipName: string;
   startDate: string;
   endDate: string;
+  appliedDate: string;
   hasGeneralHealthInsurance: boolean;
   status: string;
   type: string;
-  requirements: InternshipRequirement[];
+  requirements?: InternshipRequirement[]; // Opsiyonel, backend API farklı olabilir
+  rules?: InternshipRequirement[]; // API'de rules array'i geliyor
 }
 
 export interface InternshipRequirement {
   id: string;
   name: string;
   description: string;
-  ruleType: string;
-  status: string;
-  documentIds: string[];
-  documents: InternshipDocument[];
+  type: string; // API'de "type" olarak geliyor
+  ruleType?: string; // Eski naming için backward compatibility
+  submissionType?: string;
+  status?: string;
+  documentIds?: string[];
+  documents?: InternshipDocument[];
 }
 
 export interface InternshipDocument {
@@ -416,10 +423,10 @@ export const getInternshipApplicationDetailById = async (id: string): Promise<In
   }
 };
 
-// Document yükleme endpoint'i
-const UPLOAD_DOCUMENT = (id: string, requirementId: string) => `/api/v1/internship-applications/${id}/add-document/${requirementId}`;
+// Document yükleme endpoint'i - SWAGGER'DAN ALINAN DOĞRU ENDPOINT
+const UPLOAD_DOCUMENT_ENDPOINT = (id: string, requirementId: string) => `/api/v1/internship-applications/${id}/add-document/${requirementId}`;
 
-// Document yükleme fonksiyonu
+// Document yükleme fonksiyonu - SWAGGER ENDPOINT'İ KULLANILIYOR
 export const uploadInternshipDocument = async (
   applicationId: string, 
   requirementId: string, 
@@ -429,29 +436,42 @@ export const uploadInternshipDocument = async (
   try {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('fileName', fileName);
 
     console.log('📤 Document yükleme başlatılıyor:', {
       applicationId,
       requirementId,
       fileName,
-      fileSize: file.size
+      fileSize: file.size,
+      endpoint: UPLOAD_DOCUMENT_ENDPOINT(applicationId, requirementId)
     });
 
-    const response = await axiosClient.put(
-      UPLOAD_DOCUMENT(applicationId, requirementId),
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+    // Swagger'a göre fileName query parameter olarak gönderiliyor
+    const url = `${UPLOAD_DOCUMENT_ENDPOINT(applicationId, requirementId)}?fileName=${encodeURIComponent(fileName)}`;
+    
+    console.log('🌐 Final API URL:', url);
+    console.log('📋 FormData içeriği:', {
+      file: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
+
+    const response = await axiosClient.put(url, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
       }
-    );
+    });
 
     console.log('✅ Document yükleme başarılı:', response);
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Document yükleme hatası:', error);
+    console.error('❌ Error response:', error.response);
+    
+    if (error.response) {
+      console.error('❌ Error status:', error.response.status);
+      console.error('❌ Error data:', error.response.data);
+    }
+    
     throw error;
   }
 };

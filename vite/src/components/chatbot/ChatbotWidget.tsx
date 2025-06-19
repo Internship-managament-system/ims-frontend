@@ -128,6 +128,18 @@ const ChatbotWidget: React.FC = () => {
     }
   };
 
+  const handleStop = () => {
+    // TODO: Durdurma endpoint'i eklenecek
+    setIsLoading(false);
+    setMessages(prev => 
+      prev.map(msg => 
+        msg.isStreaming 
+          ? { ...msg, text: msg.text + '\n\n[Yanıt durduruldu]', isStreaming: false }
+          : msg
+      )
+    );
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -157,8 +169,12 @@ const ChatbotWidget: React.FC = () => {
       {/* Header */}
       <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-            <KeenIcon icon="robot" className="text-sm" />
+          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center p-1">
+            <img 
+              src="/media/eru/erciyes-logo.png" 
+              alt="ERU Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
             <h3 className="font-semibold">Staj Asistanı</h3>
@@ -220,17 +236,24 @@ const ChatbotWidget: React.FC = () => {
             style={{ minHeight: '38px', maxHeight: '80px' }}
             disabled={isLoading}
           />
-          <button
-            onClick={handleSend}
-            disabled={!inputValue.trim() || isLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-          >
-            {isLoading ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <KeenIcon icon="send" className="text-sm" />
-            )}
-          </button>
+          {isLoading ? (
+            <button
+              onClick={handleStop}
+              className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center min-w-[44px]"
+              title="Yanıtı durdur"
+            >
+              <KeenIcon icon="cross" className="text-sm" />
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={!inputValue.trim()}
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center min-w-[44px]"
+              title="Mesaj gönder"
+            >
+              <KeenIcon icon="plus" className="text-sm" />
+            </button>
+          )}
         </div>
       </div>
     </div>

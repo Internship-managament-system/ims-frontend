@@ -37,6 +37,7 @@ const AssignmentStatus: React.FC<AssignmentStatusProps> = ({
   };
 
   const handleAssign = () => {
+    const selectedMembers = commissionMembers.filter(member => member.selected);
     if (selectedMembers.length === 0) {
       toast({ title: "Hata", description: "Lütfen en az bir komisyon üyesi seçiniz.", type: "error" });
       return;

@@ -11,6 +11,7 @@ interface Rule {
   name: string;
   description: string;
   ruleType: string;
+  submissionType?: string;
   documentIds?: string[];
 }
 
@@ -54,6 +55,10 @@ const TypeManagement: React.FC = () => {
   });
 
   const [newTopic, setNewTopic] = useState<{ name: string; description: string }>({
+    name: '',
+    description: ''
+  });
+  const [newSubmissionDocument, setNewSubmissionDocument] = useState<{ name: string; description: string }>({
     name: '',
     description: ''
   });
@@ -254,11 +259,30 @@ const TypeManagement: React.FC = () => {
         {
           name: newTopic.name,
           description: newTopic.description,
-          ruleType: 'TOPIC'
+          ruleType: 'TOPIC',
+          submissionType: 'APPLICATION'
         }
       ]
     });
     setNewTopic({ name: '', description: '' });
+  };
+
+  const handleAddSubmissionDocument = () => {
+    if (newSubmissionDocument.name.trim() === '' || newSubmissionDocument.description.trim() === '') return;
+
+    setNewType({
+      ...newType,
+      rules: [
+        ...(newType.rules || []),
+        {
+          name: newSubmissionDocument.name,
+          description: newSubmissionDocument.description,
+          ruleType: 'DOCUMENT',
+          submissionType: 'SUBMISSION'
+        }
+      ]
+    });
+    setNewSubmissionDocument({ name: '', description: '' });
   };
 
   const resetForm = () => {
@@ -272,6 +296,7 @@ const TypeManagement: React.FC = () => {
       rules: []
     });
     setNewTopic({ name: '', description: '' });
+    setNewSubmissionDocument({ name: '', description: '' });
   };
 
   // Kart tıklanınca detay sorgusu at
@@ -750,6 +775,7 @@ const TypeManagement: React.FC = () => {
                                   newType.rules?.some(
                                     (rule) =>
                                       rule.ruleType === 'DOCUMENT' &&
+                                      rule.submissionType === 'APPLICATION' &&
                                       rule.documentIds?.includes(doc.id)
                                   ) || false
                                 }
@@ -765,6 +791,7 @@ const TypeManagement: React.FC = () => {
                                           name: doc.fileName,
                                           description: doc.description || doc.fileName,
                                           ruleType: 'DOCUMENT',
+                                          submissionType: 'APPLICATION',
                                           documentIds: [doc.id]
                                         }
                                       ]
@@ -777,6 +804,7 @@ const TypeManagement: React.FC = () => {
                                         (rule) =>
                                           !(
                                             rule.ruleType === 'DOCUMENT' &&
+                                            rule.submissionType === 'APPLICATION' &&
                                             rule.documentIds?.includes(doc.id)
                                           )
                                       )
@@ -802,12 +830,12 @@ const TypeManagement: React.FC = () => {
                     </div>
 
                     {newType.rules &&
-                      newType.rules.filter((r) => r.ruleType === 'DOCUMENT').length > 0 && (
+                      newType.rules.filter((r) => r.ruleType === 'DOCUMENT' && r.submissionType === 'APPLICATION').length > 0 && (
                         <div className="space-y-2">
-                          <h5 className="text-sm font-medium text-gray-700">Seçilen Belgeler:</h5>
+                          <h5 className="text-sm font-medium text-gray-700">Seçilen Başvuru Belgeleri:</h5>
                           <div className="grid grid-cols-1 gap-2">
                             {newType.rules
-                              .filter((r) => r.ruleType === 'DOCUMENT')
+                              .filter((r) => r.ruleType === 'DOCUMENT' && r.submissionType === 'APPLICATION')
                               .map((rule, index) => (
                                 <div
                                   key={index}
@@ -861,7 +889,7 @@ const TypeManagement: React.FC = () => {
                                 className="rounded border-gray-300 mr-3"
                                 checked={
                                   newType.rules?.some(
-                                    (rule) => rule.ruleType === 'TOPIC' && rule.name === topic.title
+                                    (rule) => rule.ruleType === 'TOPIC' && rule.submissionType === 'APPLICATION' && rule.name === topic.title
                                   ) || false
                                 }
                                 onChange={(e) => {
@@ -875,7 +903,8 @@ const TypeManagement: React.FC = () => {
                                         {
                                           name: topic.title,
                                           description: topic.description,
-                                          ruleType: 'TOPIC'
+                                          ruleType: 'TOPIC',
+                                          submissionType: 'APPLICATION'
                                         }
                                       ]
                                     });
@@ -885,7 +914,7 @@ const TypeManagement: React.FC = () => {
                                       ...newType,
                                       rules: currentRules.filter(
                                         (rule) =>
-                                          !(rule.ruleType === 'TOPIC' && rule.name === topic.title)
+                                          !(rule.ruleType === 'TOPIC' && rule.submissionType === 'APPLICATION' && rule.name === topic.title)
                                       )
                                     });
                                   }
@@ -953,12 +982,12 @@ const TypeManagement: React.FC = () => {
                     </div>
 
                     {newType.rules &&
-                      newType.rules.filter((r) => r.ruleType === 'TOPIC').length > 0 && (
+                      newType.rules.filter((r) => r.ruleType === 'TOPIC' && r.submissionType === 'APPLICATION').length > 0 && (
                         <div className="mt-4 space-y-2">
                           <h5 className="text-sm font-medium text-gray-700">Seçilen Konular:</h5>
                           <div className="grid grid-cols-1 gap-2">
                             {newType.rules
-                              .filter((r) => r.ruleType === 'TOPIC')
+                              .filter((r) => r.ruleType === 'TOPIC' && r.submissionType === 'APPLICATION')
                               .map((rule, index) => (
                                 <div
                                   key={index}
@@ -970,6 +999,94 @@ const TypeManagement: React.FC = () => {
                                     </span>
                                     <span className="text-xs text-gray-500 block">
                                       {rule.description}
+                                    </span>
+                                  </div>
+                                  <button
+                                    className="btn bg-red-100 text-red-700 p-1 rounded"
+                                    onClick={() =>
+                                      handleRemoveRule(newType.rules?.indexOf(rule) || 0)
+                                    }
+                                    type="button"
+                                  >
+                                    <KeenIcon icon="trash" className="text-sm" />
+                                  </button>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                  </div>
+
+                  {/* Staj Defteri Ekle */}
+                  <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                    <h4 className="text-md font-medium text-gray-900 mb-4">Staj Defteri Belgeleri</h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Staj sırasında öğrencinin teslim etmesi gereken belgeleri ekleyin:
+                    </p>
+
+                    <div className="space-y-6">
+                      {/* Yeni Staj Defteri Belgesi Ekleme */}
+                      <div className="border-t border-gray-200 pt-4">
+                        <h5 className="text-sm font-medium text-gray-700 mb-3">Yeni Staj Defteri Belgesi Ekle</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Belge Adı *
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
+                              placeholder="Örn: Haftalık Staj Raporu"
+                              value={newSubmissionDocument.name}
+                              onChange={(e) => setNewSubmissionDocument({ ...newSubmissionDocument, name: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Açıklama *
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#13126e] focus:border-transparent"
+                              placeholder="Belge hakkında açıklama"
+                              value={newSubmissionDocument.description}
+                              onChange={(e) =>
+                                setNewSubmissionDocument({ ...newSubmissionDocument, description: e.target.value })
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <button
+                          className="btn bg-[#13126e] text-white px-4 py-2 rounded w-full mt-3"
+                          onClick={handleAddSubmissionDocument}
+                          type="button"
+                          disabled={!newSubmissionDocument.name.trim() || !newSubmissionDocument.description.trim()}
+                        >
+                          <KeenIcon icon="plus" className="mr-2" />
+                          Staj Defteri Belgesi Ekle
+                        </button>
+                      </div>
+                    </div>
+
+                    {newType.rules &&
+                      newType.rules.filter((r) => r.ruleType === 'DOCUMENT' && r.submissionType === 'SUBMISSION').length > 0 && (
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-gray-700">Seçilen Staj Defteri Belgeleri:</h5>
+                          <div className="grid grid-cols-1 gap-2">
+                            {newType.rules
+                              .filter((r) => r.ruleType === 'DOCUMENT' && r.submissionType === 'SUBMISSION')
+                              .map((rule, index) => (
+                                <div
+                                  key={`submission_rule_${index}`}
+                                  className="flex items-center justify-between bg-blue-50 p-3 rounded border border-blue-200"
+                                >
+                                  <div>
+                                    <span className="text-sm font-medium text-gray-900">
+                                      📖 {rule.name}
+                                    </span>
+                                    <span className="text-xs text-blue-600 block">
+                                      Staj Defteri - {rule.description}
                                     </span>
                                   </div>
                                   <button

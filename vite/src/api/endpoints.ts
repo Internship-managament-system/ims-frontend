@@ -46,7 +46,7 @@ export const INTERNSHIP_APPLICATIONS_MANUAL_ASSIGN = `/api/v1/internships/applic
 export const INTERNSHIP_APPLICATIONS_ME = `/api/v1/internship-applications/me`; // Giriş yapmış öğrencinin kendi staj başvurularını listele
 export const INTERNSHIP_APPLICATIONS_DEPARTMENT = (departmentId: string | number) => `/api/v1/internship-applications/department/${departmentId}`; // Bölüme göre staj başvurularını listele
 export const INTERNSHIP_APPLICATIONS_ASSIGNED = `/api/v1/internship-applications/assigned-to-me`; // Giriş yapmış kullanıcıya atanmış staj başvurularını listele
-
+ // Giriş yapmış kullanıcıya atanmış staj başvurularının yorumlarını listele
 export const INTERNSHIP_FORM_OPTIONS_PROVINCES = `/api/v1/internship-form-options/provinces`; // İlleri listele
 
 // Internships endpoints

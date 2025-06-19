@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getInternshipApplicationDetailById, InternshipApplicationDetail } from '@/services/internshipService';
 import { KeenIcon } from '@/components/keenicons';
+import axiosClient from '@/api/axiosClient';
 
 const InternshipDetailPopup: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -15,8 +16,35 @@ const InternshipDetailPopup: React.FC = () => {
     enabled: !!applicationId,
   });
 
-  // Sadece Document türündeki gereksinimleri filtrele
-  const documentRequirements = applicationDetail?.requirements?.filter(req => req.ruleType === 'DOCUMENT') || [];
+  // API'den gelen rules veya requirements array'ini al
+  const rulesArray = applicationDetail?.rules || applicationDetail?.requirements || [];
+  
+  // Staj başvurusunun durumuna göre belge gereksinimlerini filtrele
+  const shouldShowSubmissionDocuments = applicationDetail?.status === 'APPLICATION_APPROVED' || 
+                                       applicationDetail?.status === 'IN_PROGRESS' || 
+                                       applicationDetail?.status === 'COMPLETED';
+
+  // APPLICATION belgeleri - staj başvurusu sırasında yüklenen belgeler
+  const applicationDocuments = rulesArray.filter(req => 
+    (req.type === 'DOCUMENT' || req.ruleType === 'DOCUMENT') && 
+    (req.submissionType === 'APPLICATION' || req.submissionType === undefined)
+  );
+
+  // SUBMISSION belgeleri - staj onaylandıktan sonra yüklenen belgeler (staj defteri vb.)
+  const submissionDocuments = rulesArray.filter(req => 
+    (req.type === 'DOCUMENT' || req.ruleType === 'DOCUMENT') && 
+    req.submissionType === 'SUBMISSION'
+  );
+
+  // Gösterilecek tüm belgeler
+  const documentRequirements = shouldShowSubmissionDocuments 
+    ? [...applicationDocuments, ...submissionDocuments]
+    : applicationDocuments;
+
+  // Topic gereksinimleri - TOPIC tipindeki gereksinimleri filtrele (otomatik approved)
+  const topicRequirements = rulesArray.filter(req => 
+    req.type === 'TOPIC' || req.ruleType === 'TOPIC'
+  );
 
   // Durum rengini belirle
   const getStatusColor = (status: string) => {
@@ -40,7 +68,7 @@ const InternshipDetailPopup: React.FC = () => {
       case 'WAITING_FOR_UPLOAD':
         return '📄 Yükleme Bekleniyor';
       case 'WAITING_FOR_APPROVAL':
-        return '⏳ Onay Bekleniyor';
+        return '⏳ İnceleniyor';
       case 'APPROVED':
         return '✅ Onaylandı';
       case 'REJECTED':
@@ -50,9 +78,87 @@ const InternshipDetailPopup: React.FC = () => {
     }
   };
 
+  // Dosya açma fonksiyonu
+  const openDocument = (document: InternshipDocument) => {
+    if (!document.fileAddress) {
+      alert('Dosya adresi bulunamadı');
+      return;
+    }
+
+    try {
+      // fileAddress'den sadece dosya adını al
+      const fileName = document.fileAddress.split('/').pop() || document.fileName;
+      
+      // Sabit Downloads klasörü yolu
+      const localFilePath = `file:///C:/Users/Mikdat%20Can%20Simsek/Downloads/${fileName}`;
+      
+      console.log('📁 Dosya açılıyor:', {
+        originalPath: document.fileAddress,
+        fileName: fileName,
+        localPath: localFilePath
+      });
+
+      // Önce doğrudan açmayı dene
+      window.open(localFilePath, '_blank');
+
+      alert(`📄 ${fileName} dosyası Downloads klasöründe aranıyor...`);
+    } catch (error) {
+      console.error('Dosya açma hatası:', error);
+      alert('❌ Dosya açılamadı. Downloads klasörünü manuel kontrol edin.');
+    }
+  };
+
+  // Topic'leri otomatik olarak onayla (popup açıldığında)
+  const autoApproveTopics = useCallback(async () => {
+    if (!applicationId || !topicRequirements.length) return;
+    
+    console.log('🎯 Popup Topic auto-approval başlatılıyor...', {
+      applicationId,
+      topicCount: topicRequirements.length,
+      topics: topicRequirements.map(t => ({ id: t.id, name: t.name, status: t.status }))
+    });
+
+    // Sadece henüz approved olmamış topic'leri onayla
+    const unapprovedTopics = topicRequirements.filter(topic => topic.status !== 'APPROVED');
+    
+    if (unapprovedTopics.length === 0) {
+      console.log('✅ Tüm topic\'ler zaten onaylanmış');
+      return;
+    }
+
+    try {
+      // Her topic için onaylama API'sini çağır
+      const approvalPromises = unapprovedTopics.map(async (topic) => {
+        try {
+          const response = await axiosClient.put(`/api/v1/internship-applications/${applicationId}/requirement/${topic.id}/approve`);
+          console.log(`✅ Topic otomatik onaylandı: ${topic.name}`, response);
+          return { success: true, topicId: topic.id, topicName: topic.name };
+        } catch (error: any) {
+          console.error(`❌ Topic onaylanamadı: ${topic.name}`, error);
+          return { success: false, topicId: topic.id, topicName: topic.name, error };
+        }
+      });
+
+      const results = await Promise.allSettled(approvalPromises);
+      const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+      
+      console.log(`🎯 Popup Topic otomatik onaylama tamamlandı: ${successCount}/${unapprovedTopics.length}`);
+      
+    } catch (error) {
+      console.error('❌ Popup Topic otomatik onaylama genel hatası:', error);
+    }
+  }, [applicationId, topicRequirements]);
+
   useEffect(() => {
     document.title = 'Staj Başvuru Detayları';
-  }, []);
+    
+    // Topic'leri otomatik onayla (veri yüklendikten sonra)
+    if (applicationDetail && topicRequirements.length > 0) {
+      setTimeout(() => {
+        autoApproveTopics();
+      }, 1000);
+    }
+  }, [applicationDetail, autoApproveTopics]);
 
   if (!applicationId) {
     return (
@@ -177,8 +283,8 @@ const InternshipDetailPopup: React.FC = () => {
                             dangerouslySetInnerHTML={{ __html: requirement.description }} 
                           />
                         </div>
-                        <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(requirement.status)} ml-4`}>
-                          {getStatusText(requirement.status)}
+                        <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(requirement.status || 'WAITING_FOR_UPLOAD')} ml-4`}>
+                          {getStatusText(requirement.status || 'WAITING_FOR_UPLOAD')}
                         </span>
                       </div>
                       
@@ -188,17 +294,25 @@ const InternshipDetailPopup: React.FC = () => {
                           <h4 className="font-medium text-gray-900 mb-3">Yüklenen Belgeler:</h4>
                           <div className="space-y-2">
                             {requirement.documents.map((document) => (
-                              <div key={document.id} className="flex items-center p-3 bg-white rounded border border-gray-200">
-                                <KeenIcon icon="document" className="w-5 h-5 text-gray-400 mr-3" />
+                              <div 
+                                key={document.id} 
+                                onClick={() => openDocument(document)}
+                                className="flex items-center p-3 bg-white rounded border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer group"
+                                title={`${document.fileName} dosyasını aç`}
+                              >
+                                <KeenIcon icon="document" className="w-5 h-5 text-gray-400 group-hover:text-blue-600 mr-3 transition-colors" />
                                 <div className="flex-1">
-                                  <span className="text-gray-900 font-medium">{document.fileName}</span>
+                                  <span className="text-gray-900 group-hover:text-blue-900 font-medium transition-colors">{document.fileName}</span>
                                   {document.description && (
                                     <p className="text-sm text-gray-500 mt-1">{document.description}</p>
                                   )}
                                 </div>
-                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                  {document.documentType}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-500 bg-gray-100 group-hover:bg-blue-100 px-2 py-1 rounded transition-colors">
+                                    {document.documentType}
+                                  </span>
+                                  <KeenIcon icon="eye" className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -218,6 +332,46 @@ const InternshipDetailPopup: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* İlgili Konular (Topics) */}
+            {topicRequirements.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  İlgili Konular ({topicRequirements.length} konu)
+                </h2>
+                
+                <div className="space-y-4">
+                  {topicRequirements.map((topic, index) => (
+                    <div key={topic.id} className="border border-green-200 rounded-lg p-6 bg-green-50">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            {index + 1}. {topic.name}
+                          </h3>
+                          {topic.description && topic.description !== topic.name && (
+                            <div 
+                              className="text-gray-600 prose prose-sm max-w-none"
+                              dangerouslySetInnerHTML={{ __html: topic.description }} 
+                            />
+                          )}
+                        </div>
+
+                      </div>
+                      
+                      {/* Topic bilgi mesajı */}
+                      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center">
+                          <KeenIcon icon="information" className="w-5 h-5 text-blue-600 mr-2" />
+                          <span className="text-blue-800 font-medium">
+                            Bu konu başlığı ile ilgili herhangi bir belge yüklemenize gerek yoktur.
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">

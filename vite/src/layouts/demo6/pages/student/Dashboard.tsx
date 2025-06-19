@@ -101,18 +101,21 @@ const Dashboard: React.FC = () => {
     switch (status) {
       case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
-      case 'APPROVED':
-        return 'bg-green-100 text-green-800';
-      case 'REJECTED':
-        return 'bg-red-100 text-red-800';
-      case 'COMPLETED':
-        return 'bg-blue-100 text-blue-800';
       case 'READY_FOR_ASSIGNMENT':
         return 'bg-purple-100 text-purple-800';
       case 'ASSIGNED':
         return 'bg-indigo-100 text-indigo-800';
+      case 'APPLICATION_APPROVED':
+        return 'bg-green-100 text-green-800';
+      case 'REJECTED':
+        return 'bg-red-100 text-red-800';
       case 'IN_PROGRESS':
         return 'bg-orange-100 text-orange-800';
+      case 'COMPLETED':
+        return 'bg-blue-100 text-blue-800';
+      // Eski APPROVED enum'u için backward compatibility
+      case 'APPROVED':
+        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -122,18 +125,21 @@ const Dashboard: React.FC = () => {
     switch (status) {
       case 'PENDING':
         return 'Beklemede';
-      case 'APPROVED':
-        return 'Onaylandı';
-      case 'REJECTED':
-        return 'Reddedildi';
-      case 'COMPLETED':
-        return 'Tamamlandı';
       case 'READY_FOR_ASSIGNMENT':
-        return 'Atamaya Hazır';
+        return '📄 Belgelerinizi Yükleyebilirsiniz';
       case 'ASSIGNED':
-        return 'Atandı';
+        return '⏳ Başvurunuz İnceleniyor';
+      case 'APPLICATION_APPROVED':
+        return 'Başvurunuz Onaylandı! 🎉';
+      case 'REJECTED':
+        return 'Başvuru Reddedildi';
       case 'IN_PROGRESS':
-        return 'Devam Ediyor';
+        return 'Staj Devam Ediyor';
+      case 'COMPLETED':
+        return 'Staj Tamamlandı';
+      // Eski APPROVED enum'u için backward compatibility
+      case 'APPROVED':
+        return 'Başvurunuz Onaylandı! 🎉';
       default:
         return status;
     }
@@ -339,8 +345,59 @@ const Dashboard: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-900">Tamamlanan Stajlar</h2>
             </div>
             <div className="space-y-3">
-              <div className="text-center py-8 bg-white rounded-lg border border-gray-200">
-                <p className="text-gray-500">Henüz tamamlanmış stajınız bulunmuyor.</p>
+              {/* Mock Tamamlanan Staj Verisi */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="px-4 py-2 text-sm font-medium text-gray-500">Staj Adı</th>
+                      <th className="px-4 py-2 text-sm font-medium text-gray-500">Şirket</th>
+                      <th className="px-4 py-2 text-sm font-medium text-gray-500">Başvuru Tarihi</th>
+                      <th className="px-4 py-2 text-sm font-medium text-gray-500">Durum</th>
+                      <th className="px-4 py-2 text-sm font-medium text-gray-500">İşlem</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="font-medium">Yazılım (Kısaltılmış)</p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span>Deneme Yazılım Firması</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="text-sm">30.06.2025</p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Stajınız Onaylandı! 🎉
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => navigate(`/student/my-applications`)}
+                          className="text-xs py-1 px-2"
+                        >
+                          Detaylar
+                        </Button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="text-center mt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/student/my-applications')}
+                  className="text-sm"
+                >
+                  Tümünü Görüntüle
+                </Button>
               </div>
             </div>
           </div>

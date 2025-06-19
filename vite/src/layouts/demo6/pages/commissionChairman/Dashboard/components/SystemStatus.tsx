@@ -72,11 +72,6 @@ const SystemStatus: React.FC = () => {
           </span>
         </div>
       </div>
-      
-      <button className="btn bg-gradient-to-r from-[#13126e] to-[#3a3a8e] text-white w-full py-3 px-4 rounded-xl mt-6 hover:from-[#0f0f5a] hover:to-[#2d2d75] transition-all duration-300 font-medium flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
-        <KeenIcon icon="setting-2" />
-        Sistem Ayarlarını Düzenle
-      </button>
     </div>
   );
 };

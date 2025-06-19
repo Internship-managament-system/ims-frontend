@@ -32,8 +32,8 @@ const Dashboard: React.FC = () => {
   const getUserDisplayName = () => {
     if (currentUser?.name && currentUser?.surname) {
       return `${currentUser.name} ${currentUser.surname}`;
-    } else if (currentUser?.fullName) {
-      return currentUser.fullName;
+    } else if (currentUser?.fullname) {
+      return currentUser.fullname;
     } else if (currentUser?.email) {
       return currentUser.email.split('@')[0]; // Email'den isim çıkar
     }

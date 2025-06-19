@@ -33,6 +33,8 @@ const AssignmentPanel: React.FC = () => {
     queryFn: getAllCommissionMembers,
   });
 
+  // Komisyon başkanlarını çıkar, sadece komisyon üyelerini göster
+  const assignableMembers = commissionMembers.filter((member: CommissionMember) => member.role !== 'COMMISSION_CHAIRMAN');
   // Otomatik atama mutation'ı
   const autoAssignMutation = useMutation({
     mutationFn: autoAssignInternshipApplications,
@@ -79,7 +81,7 @@ const AssignmentPanel: React.FC = () => {
     }
   });
 
-  console.log('📋 Komisyon üyeleri:', commissionMembers);
+  console.log('📋 Atanabilir komisyon üyeleri:', assignableMembers);
 
   // Görüntülenecek isim belirle
   const getDisplayName = (member: CommissionMember): string => {
@@ -253,12 +255,12 @@ const AssignmentPanel: React.FC = () => {
               <div className="py-10 text-center text-red-500">
                 <p>Komisyon üyeleri yüklenirken bir hata oluştu.</p>
               </div>
-            ) : commissionMembers.length === 0 ? (
+            ) : assignableMembers.length === 0 ? (
               <div className="py-10 text-center text-gray-500">
-                <p>Komisyon üyesi bulunamadı.</p>
+                <p>Atanabilir komisyon üyesi bulunamadı.</p>
               </div>
             ) : (
-              commissionMembers.map((member) => (
+              assignableMembers.map((member) => (
                 <div
                   key={member.id}
                   className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
@@ -369,7 +371,7 @@ const AssignmentPanel: React.FC = () => {
 
       {/* Assignment Modal */}
       {showAssignmentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-gray-900">

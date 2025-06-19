@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { KeenIcon } from '@/components/keenicons';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { 
   createInternshipApplication, 
   NewInternshipApplication, 
@@ -54,6 +56,68 @@ const InternshipApplicationPage: React.FC = () => {
   // Kullanıcı bilgilerini al
   const auth = useAuthContext();
   const userId = auth.currentUser?.id || '';
+
+  // Minimum başvuru tarihi hesapla (bugünden 14 gün sonra)
+  // Ana tarih hesaplama fonksiyonu - tek kaynak
+  const getMinimumDate = (): Date => {
+    const today = new Date();
+    today.setDate(today.getDate() + 14);
+    return today;
+  };
+
+  const getMinimumApplicationDate = (): string => {
+    return getMinimumDate().toISOString().split('T')[0]; // YYYY-MM-DD formatında döndür
+  };
+
+  // Minimum tarihi human-readable formatta göster
+  const getMinimumDateForDisplay = (): string => {
+    return getMinimumDate().toLocaleDateString('tr-TR', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
+  // Date picker için tarihleri kısıtla
+  const isDateDisabled = (date: Date): boolean => {
+    const minimumDate = getMinimumDate();
+    
+    // Sadece tarih kısmını karşılaştır (saat bilgisini göz ardı et)
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const minDateOnly = new Date(minimumDate.getFullYear(), minimumDate.getMonth(), minimumDate.getDate());
+    
+    // Minimum tarih seçilebilir olmalı, ondan öncekiler seçilemez
+    return dateOnly < minDateOnly;
+  };
+
+  // Kırmızı günler için custom day rendering
+  const renderCustomDay = (day: number, date: Date) => {
+    const isToday = date.toDateString() === new Date().toDateString();
+    
+    return (
+      <span title={isToday ? '📅 Bugün' : ''}>
+        {day}
+      </span>
+    );
+  };
+
+  // Date picker değer değişimi
+  const handleDateChange = (date: Date | null) => {
+    if (date && !isDateDisabled(date)) {
+      // Timezone sorunu için local date formatı kullan
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      
+      setFormData(prev => ({
+        ...prev,
+        startDate: formattedDate
+      }));
+    } else if (date && isDateDisabled(date)) {
+      toast.error('⚠️ Bu tarih seçilemez! En az 14 gün sonrası seçiniz.');
+    }
+  };
 
   // Stajları getir
   const { data: internships = [], isLoading: internshipsLoading, error: internshipsError } = useQuery({
@@ -158,9 +222,32 @@ const InternshipApplicationPage: React.FC = () => {
     }
   });
 
+  // Tarih validasyonu fonksiyonu
+  const validateStartDate = (dateString: string): boolean => {
+    if (!dateString) return false;
+    
+    const selectedDate = new Date(dateString);
+    const minimumDate = getMinimumDate();
+    
+    // Sadece tarih kısmını karşılaştır (saat bilgisini göz ardı et)
+    const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+    const minDateOnly = new Date(minimumDate.getFullYear(), minimumDate.getMonth(), minimumDate.getDate());
+    
+    return selectedDateOnly >= minDateOnly;
+  };
+
   // Form alanlarını güncelle
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    
+    // Başlangıç tarihi kontrolü
+    if (name === 'startDate' && value) {
+      if (!validateStartDate(value)) {
+        toast.error('⚠️ Staj başlangıç tarihi en az 14 gün sonrası olmalıdır!');
+        return; // Geçersiz tarihi kaydetme
+      }
+    }
+    
     if (type === 'checkbox') {
       const isChecked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({
@@ -224,6 +311,11 @@ const InternshipApplicationPage: React.FC = () => {
     if (!formData.companyPhone.trim()) validationErrors.push('Şirket telefonu zorunludur');
     if (!formData.companyAddress.trim()) validationErrors.push('Şirket adresi zorunludur');
     if (!formData.startDate) validationErrors.push('Başlangıç tarihi zorunludur');
+    
+    // 14 günlük kısıtlama kontrolü
+    if (formData.startDate && !validateStartDate(formData.startDate)) {
+      validationErrors.push('Staj başlangıç tarihi en az 14 gün sonrası olmalıdır');
+    }
     
     // E-posta format kontrolü
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -302,8 +394,177 @@ const InternshipApplicationPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-16">
-      <div className="container mx-auto pt-6 pb-20 px-6">
+    <>
+      {/* CSS for disabled dates styling */}
+      <style>{`
+        /* React DatePicker Custom Styling */
+        .react-datepicker-wrapper {
+          width: 100%;
+        }
+        
+        .react-datepicker__input-container input {
+          width: 100%;
+          padding: 12px 16px;
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          background: white;
+          color: #374151;
+          font-weight: 500;
+          font-size: 14px;
+          transition: all 0.3s ease;
+        }
+        
+        .react-datepicker__input-container input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+        }
+        
+        .react-datepicker__input-container input::placeholder {
+          color: #9ca3af;
+          opacity: 0.7;
+        }
+        
+        /* DatePicker Popup Styling */
+        .react-datepicker {
+          border: 2px solid #ef4444;
+          border-radius: 12px;
+          box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.3);
+          background: white;
+        }
+        
+        .react-datepicker__header {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+          border-bottom: none;
+          border-radius: 10px 10px 0 0;
+          color: white;
+        }
+        
+        .react-datepicker__current-month {
+          color: white;
+          font-weight: bold;
+          font-size: 16px;
+        }
+        
+        .react-datepicker__day-name {
+          color: white;
+          font-weight: 600;
+          width: 2rem;
+          height: 2rem;
+          line-height: 2rem;
+        }
+        
+        .react-datepicker__navigation {
+          top: 12px;
+        }
+        
+        .react-datepicker__navigation--previous {
+          border-right-color: white;
+        }
+        
+        .react-datepicker__navigation--next {
+          border-left-color: white;
+        }
+        
+        /* Beyaz günler (disabled) */
+        .react-datepicker__day--disabled {
+          background-color: #f9fafb !important;
+          color: #9ca3af !important;
+          font-weight: normal !important;
+          border: 1px solid #e5e7eb !important;
+          border-radius: 6px !important;
+          cursor: not-allowed !important;
+          position: relative;
+        }
+        
+        .react-datepicker__day--disabled:hover {
+          background-color: #f3f4f6 !important;
+          transform: scale(1.05);
+        }
+        
+        /* Seçilebilir günler */
+        .react-datepicker__day:not(.react-datepicker__day--disabled) {
+          border-radius: 6px;
+          transition: all 0.2s ease;
+        }
+        
+        .react-datepicker__day:not(.react-datepicker__day--disabled):hover {
+          background-color: #dbeafe;
+          color: #1e40af;
+          transform: scale(1.1);
+        }
+        
+        .react-datepicker__day--selected {
+          background-color: #10b981 !important;
+          color: white !important;
+          font-weight: bold;
+          border-radius: 6px;
+        }
+        
+        .react-datepicker__day--today {
+          background-color: #fbbf24;
+          color: white;
+          font-weight: bold;
+          border-radius: 6px;
+        }
+        
+        /* Kırmızı uyarı kutusu */
+        .date-warning {
+          animation: slideInLeft 0.4s ease-out;
+          background: linear-gradient(135deg, #fee2e2, #fecaca);
+          border: 1px solid #ef4444;
+          border-left: 4px solid #dc2626;
+          padding: 12px 16px;
+          border-radius: 8px;
+          margin-top: 8px;
+          box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);
+        }
+        
+        @keyframes slideInLeft {
+          from { 
+            opacity: 0; 
+            transform: translateX(-20px);
+          }
+          to { 
+            opacity: 1; 
+            transform: translateX(0);
+          }
+        }
+        
+        /* Pulse efekti */
+        .date-input-pulse {
+          animation: pulseRed 2s infinite;
+        }
+        
+        @keyframes pulseRed {
+          0%, 100% { 
+            border-color: #ef4444;
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+          }
+          50% { 
+            border-color: #dc2626;
+            box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+          }
+        }
+        
+        /* Hover animasyonları */
+        .react-datepicker__day--disabled:before {
+          content: '🚫';
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          font-size: 10px;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        
+        .react-datepicker__day--disabled:hover:before {
+          opacity: 1;
+        }
+      `}</style>
+      
+      <div className="min-h-screen bg-white pb-16">
+        <div className="container mx-auto pt-6 pb-20 px-6">
         <div className="mb-8">
           <h1 className="text-xl font-semibold mb-2">
             Staj Başvurusu
@@ -395,13 +656,39 @@ const InternshipApplicationPage: React.FC = () => {
           </div>
           <div className="bg-white p-6 rounded-lg border border-gray-200">
             <h2 className="text-lg font-medium mb-4">Staj Tarihleri ve Çalışma Günleri</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 items-end">
               <div className="flex flex-col">
-                <label className="mb-1 text-sm font-medium">Başlangıç Tarihi</label>
-                <input type="date" name="startDate" value={formData.startDate} onChange={handleInputChange} className="border border-gray-300 rounded p-2" required />
+                <label className="mb-1 text-sm font-medium h-20 flex flex-col justify-start">
+                  <span>Başlangıç Tarihi</span>
+                  <span className="text-xs text-red-600 block mt-1">
+                    ⚠️ En erken başlangıç tarihi: {getMinimumDateForDisplay()}
+                  </span>
+                  <span className="text-xs text-gray-500 block">
+                    📅 Bugünden itibaren 14 gün sonrası seçilebilir
+                  </span>
+                </label>
+                <DatePicker
+                  selected={formData.startDate ? new Date(formData.startDate) : null}
+                  onChange={handleDateChange}
+                  filterDate={(date) => !isDateDisabled(date)}
+                  minDate={new Date(getMinimumApplicationDate())}
+                  placeholderText={`En erken: ${getMinimumDateForDisplay()}`}
+                  dateFormat="dd/MM/yyyy"
+                  locale="tr"
+                  showPopperArrow={false}
+                  className="w-full"
+                  calendarClassName="custom-datepicker"
+                  renderDayContents={renderCustomDay}
+                  monthsShown={1}
+                  showMonthDropdown={false}
+                  showYearDropdown={false}
+                  required
+                />
+                
+
               </div>
               <div className="flex flex-col">
-                <label className="mb-1 text-sm font-medium">Haftalık Çalışma Gün Sayısı</label>
+                <label className="mb-1 text-sm font-medium h-20 flex items-end">Haftalık Çalışma Gün Sayısı</label>
                 <select
                   name="weeklyWorkingDays"
                   value={formData.weeklyWorkingDays}
@@ -414,7 +701,7 @@ const InternshipApplicationPage: React.FC = () => {
                 </select>
               </div>
               <div className="flex flex-col">
-                <label className="mb-1 text-sm font-medium">Toplam Süre</label>
+                <label className="mb-1 text-sm font-medium h-20 flex items-end">Toplam Süre</label>
                 <input 
                   type="text" 
                   value={selectedInternshipDetail ? `${selectedInternshipDetail.durationOfDays} iş günü` : ''} 
@@ -424,7 +711,7 @@ const InternshipApplicationPage: React.FC = () => {
                 />
               </div>
               <div className="flex flex-col">
-                <label className="mb-1 text-sm font-medium">Bitiş Tarihi</label>
+                <label className="mb-1 text-sm font-medium h-20 flex items-end">Bitiş Tarihi</label>
                 <input 
                   type="text" 
                   value={
@@ -454,8 +741,9 @@ const InternshipApplicationPage: React.FC = () => {
             </button>
           </div>
         </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
